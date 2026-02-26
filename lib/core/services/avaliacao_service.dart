@@ -2,15 +2,11 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../database/daos/avaliacoes_dao.dart';
-import '../database/daos/indicadores_dao.dart';
 
 class AvaliacaoService {
   final AvaliacoesDao _avaliacoesDao;
-  final IndicadoresDao _indicadoresDao;
 
-  AvaliacaoService(AppDatabase db)
-      : _avaliacoesDao = AvaliacoesDao(db),
-        _indicadoresDao = IndicadoresDao(db);
+  AvaliacaoService(AppDatabase db) : _avaliacoesDao = AvaliacoesDao(db);
 
   /// Cria uma nova avaliação com seus itens
   Future<void> criarAvaliacao({

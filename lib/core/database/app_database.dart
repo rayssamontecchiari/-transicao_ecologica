@@ -37,6 +37,44 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  /// We override [migration] so we can insert seed data when the database is
+  /// first created. This ensures every install starts with the same base
+  /// information; the values can also be modified directly with SQL later.
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+
+          // Seed default regions and categories. Add more entries here as needed.
+          await into(regioes).insert(RegioesCompanion.insert(nome: 'Norte'));
+          await into(regioes).insert(RegioesCompanion.insert(nome: 'Sul'));
+          await into(regioes).insert(RegioesCompanion.insert(nome: 'Leste'));
+          await into(regioes).insert(RegioesCompanion.insert(nome: 'Oeste'));
+
+          await into(categorias).insert(CategoriasCompanion.insert(
+              nome: 'Campesinidade',
+              descricao: Value('modo de vida, valores e práticas camponesas')));
+          await into(categorias).insert(CategoriasCompanion.insert(
+              nome: 'Sustentabilidade',
+              descricao: Value('ambiental, social e econômica')));
+          await into(categorias).insert(CategoriasCompanion.insert(
+              nome: 'Organização social',
+              descricao: Value('associações, cooperativas, ação coletiva')));
+          await into(categorias).insert(CategoriasCompanion.insert(
+              nome: 'Agenciamento do desenvolvimento rural',
+              descricao: Value(
+                  'capacidade dos atores locais de conduzir seu próprio desenvolvimento')));
+
+          // Optionally insert some indicators as examples
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Consumo de água',
+            descricao: 'Litragem diária',
+            peso: Value(1.0),
+            categoriaId: 1,
+          ));
+        },
+      );
 }
 
 Future<QueryExecutor> _openConnection() async {

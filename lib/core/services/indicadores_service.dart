@@ -24,4 +24,9 @@ class IndicadoresService {
   Future<void> atualizarPesoIndicador(int indicadorId, double novoPeso) {
     return _indicadoresDao.atualizarPeso(indicadorId, novoPeso);
   }
+
+  /// Insere um novo indicador no banco
+  Future<int> inserirIndicador(IndicadoresCompanion indicador) {
+    return _indicadoresDao.into(_indicadoresDao.indicadores).insert(indicador);
+  }
 }
