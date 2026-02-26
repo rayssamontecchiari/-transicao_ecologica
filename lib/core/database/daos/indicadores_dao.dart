@@ -20,4 +20,20 @@ class IndicadoresDao extends DatabaseAccessor<AppDatabase>
           ..where((i) => i.categoriaId.equals(categoriaId)))
         .get();
   }
+
+  Future<List<(Indicadore, Categoria)>> getComCategoria() {
+    final query = select(indicadores).join([
+      innerJoin(
+        categorias,
+        categorias.id.equalsExp(indicadores.categoriaId),
+      ),
+    ]);
+
+    return query.map((row) {
+      return (
+        row.readTable(indicadores),
+        row.readTable(categorias),
+      );
+    }).get();
+  }
 }
