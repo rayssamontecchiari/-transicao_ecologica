@@ -8,6 +8,8 @@ mixin _$AvaliacoesDaoMixin on DatabaseAccessor<AppDatabase> {
   $FamiliasTable get familias => attachedDatabase.familias;
   $AvaliacoesTable get avaliacoes => attachedDatabase.avaliacoes;
   $CategoriasTable get categorias => attachedDatabase.categorias;
+  $DimensoesTable get dimensoes => attachedDatabase.dimensoes;
   $IndicadoresTable get indicadores => attachedDatabase.indicadores;
+  $PraticasTable get praticas => attachedDatabase.praticas;
   $AvaliacaoItensTable get avaliacaoItens => attachedDatabase.avaliacaoItens;
 }

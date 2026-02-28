@@ -15,10 +15,25 @@ class IndicadoresDao extends DatabaseAccessor<AppDatabase>
         .write(IndicadoresCompanion(peso: Value(novoPeso)));
   }
 
+  /// Retorna indicadores de uma categoria específica
   Future<List<Indicadore>> getPorCategoria(int categoriaId) {
     return (select(indicadores)
           ..where((i) => i.categoriaId.equals(categoriaId)))
         .get();
+  }
+
+  /// Conta o número total de indicadores
+  Future<int> contarTotal() {
+    return (select(indicadores)
+          ..orderBy([(i) => OrderingTerm(expression: i.id)]))
+        .get()
+        .then((list) => list.length);
+  }
+
+  /// Verifica se existe algum indicador cadastrado
+  Future<bool> existeIndicadores() async {
+    final count = await contarTotal();
+    return count > 0;
   }
 
   Future<List<(Indicadore, Categoria)>> getComCategoria() {

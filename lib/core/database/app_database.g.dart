@@ -704,6 +704,453 @@ class CategoriasCompanion extends UpdateCompanion<Categoria> {
   }
 }
 
+class $DimensoesTable extends Dimensoes
+    with TableInfo<$DimensoesTable, Dimensoe> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DimensoesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
+  @override
+  late final GeneratedColumn<String> nome = GeneratedColumn<String>(
+      'nome', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoriaIdMeta =
+      const VerificationMeta('categoriaId');
+  @override
+  late final GeneratedColumn<int> categoriaId = GeneratedColumn<int>(
+      'categoria_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES categorias (id)'));
+  @override
+  List<GeneratedColumn> get $columns => [id, nome, categoriaId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dimensoes';
+  @override
+  VerificationContext validateIntegrity(Insertable<Dimensoe> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('nome')) {
+      context.handle(
+          _nomeMeta, nome.isAcceptableOrUnknown(data['nome']!, _nomeMeta));
+    } else if (isInserting) {
+      context.missing(_nomeMeta);
+    }
+    if (data.containsKey('categoria_id')) {
+      context.handle(
+          _categoriaIdMeta,
+          categoriaId.isAcceptableOrUnknown(
+              data['categoria_id']!, _categoriaIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoriaIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Dimensoe map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Dimensoe(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      nome: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nome'])!,
+      categoriaId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}categoria_id'])!,
+    );
+  }
+
+  @override
+  $DimensoesTable createAlias(String alias) {
+    return $DimensoesTable(attachedDatabase, alias);
+  }
+}
+
+class Dimensoe extends DataClass implements Insertable<Dimensoe> {
+  final int id;
+  final String nome;
+
+  /// referência para a categoria à qual esta dimensão pertence. Mantemos o
+  /// vínculo à categoria para consultas mais simples e para manter coerência
+  /// quando vários níveis de hierarquia forem necessários.
+  final int categoriaId;
+  const Dimensoe(
+      {required this.id, required this.nome, required this.categoriaId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['nome'] = Variable<String>(nome);
+    map['categoria_id'] = Variable<int>(categoriaId);
+    return map;
+  }
+
+  DimensoesCompanion toCompanion(bool nullToAbsent) {
+    return DimensoesCompanion(
+      id: Value(id),
+      nome: Value(nome),
+      categoriaId: Value(categoriaId),
+    );
+  }
+
+  factory Dimensoe.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Dimensoe(
+      id: serializer.fromJson<int>(json['id']),
+      nome: serializer.fromJson<String>(json['nome']),
+      categoriaId: serializer.fromJson<int>(json['categoriaId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nome': serializer.toJson<String>(nome),
+      'categoriaId': serializer.toJson<int>(categoriaId),
+    };
+  }
+
+  Dimensoe copyWith({int? id, String? nome, int? categoriaId}) => Dimensoe(
+        id: id ?? this.id,
+        nome: nome ?? this.nome,
+        categoriaId: categoriaId ?? this.categoriaId,
+      );
+  Dimensoe copyWithCompanion(DimensoesCompanion data) {
+    return Dimensoe(
+      id: data.id.present ? data.id.value : this.id,
+      nome: data.nome.present ? data.nome.value : this.nome,
+      categoriaId:
+          data.categoriaId.present ? data.categoriaId.value : this.categoriaId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Dimensoe(')
+          ..write('id: $id, ')
+          ..write('nome: $nome, ')
+          ..write('categoriaId: $categoriaId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, nome, categoriaId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Dimensoe &&
+          other.id == this.id &&
+          other.nome == this.nome &&
+          other.categoriaId == this.categoriaId);
+}
+
+class DimensoesCompanion extends UpdateCompanion<Dimensoe> {
+  final Value<int> id;
+  final Value<String> nome;
+  final Value<int> categoriaId;
+  const DimensoesCompanion({
+    this.id = const Value.absent(),
+    this.nome = const Value.absent(),
+    this.categoriaId = const Value.absent(),
+  });
+  DimensoesCompanion.insert({
+    this.id = const Value.absent(),
+    required String nome,
+    required int categoriaId,
+  })  : nome = Value(nome),
+        categoriaId = Value(categoriaId);
+  static Insertable<Dimensoe> custom({
+    Expression<int>? id,
+    Expression<String>? nome,
+    Expression<int>? categoriaId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nome != null) 'nome': nome,
+      if (categoriaId != null) 'categoria_id': categoriaId,
+    });
+  }
+
+  DimensoesCompanion copyWith(
+      {Value<int>? id, Value<String>? nome, Value<int>? categoriaId}) {
+    return DimensoesCompanion(
+      id: id ?? this.id,
+      nome: nome ?? this.nome,
+      categoriaId: categoriaId ?? this.categoriaId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nome.present) {
+      map['nome'] = Variable<String>(nome.value);
+    }
+    if (categoriaId.present) {
+      map['categoria_id'] = Variable<int>(categoriaId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DimensoesCompanion(')
+          ..write('id: $id, ')
+          ..write('nome: $nome, ')
+          ..write('categoriaId: $categoriaId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PraticasTable extends Praticas with TableInfo<$PraticasTable, Pratica> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PraticasTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nomeMeta = const VerificationMeta('nome');
+  @override
+  late final GeneratedColumn<String> nome = GeneratedColumn<String>(
+      'nome', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _categoriaIdMeta =
+      const VerificationMeta('categoriaId');
+  @override
+  late final GeneratedColumn<int> categoriaId = GeneratedColumn<int>(
+      'categoria_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES categorias (id)'));
+  @override
+  List<GeneratedColumn> get $columns => [id, nome, categoriaId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'praticas';
+  @override
+  VerificationContext validateIntegrity(Insertable<Pratica> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('nome')) {
+      context.handle(
+          _nomeMeta, nome.isAcceptableOrUnknown(data['nome']!, _nomeMeta));
+    } else if (isInserting) {
+      context.missing(_nomeMeta);
+    }
+    if (data.containsKey('categoria_id')) {
+      context.handle(
+          _categoriaIdMeta,
+          categoriaId.isAcceptableOrUnknown(
+              data['categoria_id']!, _categoriaIdMeta));
+    } else if (isInserting) {
+      context.missing(_categoriaIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Pratica map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Pratica(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      nome: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nome'])!,
+      categoriaId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}categoria_id'])!,
+    );
+  }
+
+  @override
+  $PraticasTable createAlias(String alias) {
+    return $PraticasTable(attachedDatabase, alias);
+  }
+}
+
+class Pratica extends DataClass implements Insertable<Pratica> {
+  final int id;
+  final String nome;
+
+  /// Referência para a categoria à qual esta prática pertence.
+  final int categoriaId;
+  const Pratica(
+      {required this.id, required this.nome, required this.categoriaId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['nome'] = Variable<String>(nome);
+    map['categoria_id'] = Variable<int>(categoriaId);
+    return map;
+  }
+
+  PraticasCompanion toCompanion(bool nullToAbsent) {
+    return PraticasCompanion(
+      id: Value(id),
+      nome: Value(nome),
+      categoriaId: Value(categoriaId),
+    );
+  }
+
+  factory Pratica.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Pratica(
+      id: serializer.fromJson<int>(json['id']),
+      nome: serializer.fromJson<String>(json['nome']),
+      categoriaId: serializer.fromJson<int>(json['categoriaId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nome': serializer.toJson<String>(nome),
+      'categoriaId': serializer.toJson<int>(categoriaId),
+    };
+  }
+
+  Pratica copyWith({int? id, String? nome, int? categoriaId}) => Pratica(
+        id: id ?? this.id,
+        nome: nome ?? this.nome,
+        categoriaId: categoriaId ?? this.categoriaId,
+      );
+  Pratica copyWithCompanion(PraticasCompanion data) {
+    return Pratica(
+      id: data.id.present ? data.id.value : this.id,
+      nome: data.nome.present ? data.nome.value : this.nome,
+      categoriaId:
+          data.categoriaId.present ? data.categoriaId.value : this.categoriaId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Pratica(')
+          ..write('id: $id, ')
+          ..write('nome: $nome, ')
+          ..write('categoriaId: $categoriaId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, nome, categoriaId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Pratica &&
+          other.id == this.id &&
+          other.nome == this.nome &&
+          other.categoriaId == this.categoriaId);
+}
+
+class PraticasCompanion extends UpdateCompanion<Pratica> {
+  final Value<int> id;
+  final Value<String> nome;
+  final Value<int> categoriaId;
+  const PraticasCompanion({
+    this.id = const Value.absent(),
+    this.nome = const Value.absent(),
+    this.categoriaId = const Value.absent(),
+  });
+  PraticasCompanion.insert({
+    this.id = const Value.absent(),
+    required String nome,
+    required int categoriaId,
+  })  : nome = Value(nome),
+        categoriaId = Value(categoriaId);
+  static Insertable<Pratica> custom({
+    Expression<int>? id,
+    Expression<String>? nome,
+    Expression<int>? categoriaId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nome != null) 'nome': nome,
+      if (categoriaId != null) 'categoria_id': categoriaId,
+    });
+  }
+
+  PraticasCompanion copyWith(
+      {Value<int>? id, Value<String>? nome, Value<int>? categoriaId}) {
+    return PraticasCompanion(
+      id: id ?? this.id,
+      nome: nome ?? this.nome,
+      categoriaId: categoriaId ?? this.categoriaId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nome.present) {
+      map['nome'] = Variable<String>(nome.value);
+    }
+    if (categoriaId.present) {
+      map['categoria_id'] = Variable<int>(categoriaId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PraticasCompanion(')
+          ..write('id: $id, ')
+          ..write('nome: $nome, ')
+          ..write('categoriaId: $categoriaId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $IndicadoresTable extends Indicadores
     with TableInfo<$IndicadoresTable, Indicadore> {
   @override
@@ -746,9 +1193,18 @@ class $IndicadoresTable extends Indicadores
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES categorias (id)'));
+  static const VerificationMeta _dimensaoIdMeta =
+      const VerificationMeta('dimensaoId');
+  @override
+  late final GeneratedColumn<int> dimensaoId = GeneratedColumn<int>(
+      'dimensao_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES dimensoes (id)'));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, nome, descricao, peso, categoriaId];
+      [id, nome, descricao, peso, categoriaId, dimensaoId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -786,6 +1242,12 @@ class $IndicadoresTable extends Indicadores
     } else if (isInserting) {
       context.missing(_categoriaIdMeta);
     }
+    if (data.containsKey('dimensao_id')) {
+      context.handle(
+          _dimensaoIdMeta,
+          dimensaoId.isAcceptableOrUnknown(
+              data['dimensao_id']!, _dimensaoIdMeta));
+    }
     return context;
   }
 
@@ -805,6 +1267,8 @@ class $IndicadoresTable extends Indicadores
           .read(DriftSqlType.double, data['${effectivePrefix}peso'])!,
       categoriaId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}categoria_id'])!,
+      dimensaoId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}dimensao_id']),
     );
   }
 
@@ -820,12 +1284,14 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
   final String descricao;
   final double peso;
   final int categoriaId;
+  final int? dimensaoId;
   const Indicadore(
       {required this.id,
       required this.nome,
       required this.descricao,
       required this.peso,
-      required this.categoriaId});
+      required this.categoriaId,
+      this.dimensaoId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -834,6 +1300,9 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
     map['descricao'] = Variable<String>(descricao);
     map['peso'] = Variable<double>(peso);
     map['categoria_id'] = Variable<int>(categoriaId);
+    if (!nullToAbsent || dimensaoId != null) {
+      map['dimensao_id'] = Variable<int>(dimensaoId);
+    }
     return map;
   }
 
@@ -844,6 +1313,9 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
       descricao: Value(descricao),
       peso: Value(peso),
       categoriaId: Value(categoriaId),
+      dimensaoId: dimensaoId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dimensaoId),
     );
   }
 
@@ -856,6 +1328,7 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
       descricao: serializer.fromJson<String>(json['descricao']),
       peso: serializer.fromJson<double>(json['peso']),
       categoriaId: serializer.fromJson<int>(json['categoriaId']),
+      dimensaoId: serializer.fromJson<int?>(json['dimensaoId']),
     );
   }
   @override
@@ -867,6 +1340,7 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
       'descricao': serializer.toJson<String>(descricao),
       'peso': serializer.toJson<double>(peso),
       'categoriaId': serializer.toJson<int>(categoriaId),
+      'dimensaoId': serializer.toJson<int?>(dimensaoId),
     };
   }
 
@@ -875,13 +1349,15 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
           String? nome,
           String? descricao,
           double? peso,
-          int? categoriaId}) =>
+          int? categoriaId,
+          Value<int?> dimensaoId = const Value.absent()}) =>
       Indicadore(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         descricao: descricao ?? this.descricao,
         peso: peso ?? this.peso,
         categoriaId: categoriaId ?? this.categoriaId,
+        dimensaoId: dimensaoId.present ? dimensaoId.value : this.dimensaoId,
       );
   Indicadore copyWithCompanion(IndicadoresCompanion data) {
     return Indicadore(
@@ -891,6 +1367,8 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
       peso: data.peso.present ? data.peso.value : this.peso,
       categoriaId:
           data.categoriaId.present ? data.categoriaId.value : this.categoriaId,
+      dimensaoId:
+          data.dimensaoId.present ? data.dimensaoId.value : this.dimensaoId,
     );
   }
 
@@ -901,13 +1379,15 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
           ..write('peso: $peso, ')
-          ..write('categoriaId: $categoriaId')
+          ..write('categoriaId: $categoriaId, ')
+          ..write('dimensaoId: $dimensaoId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nome, descricao, peso, categoriaId);
+  int get hashCode =>
+      Object.hash(id, nome, descricao, peso, categoriaId, dimensaoId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -916,7 +1396,8 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
           other.nome == this.nome &&
           other.descricao == this.descricao &&
           other.peso == this.peso &&
-          other.categoriaId == this.categoriaId);
+          other.categoriaId == this.categoriaId &&
+          other.dimensaoId == this.dimensaoId);
 }
 
 class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
@@ -925,12 +1406,14 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
   final Value<String> descricao;
   final Value<double> peso;
   final Value<int> categoriaId;
+  final Value<int?> dimensaoId;
   const IndicadoresCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
     this.descricao = const Value.absent(),
     this.peso = const Value.absent(),
     this.categoriaId = const Value.absent(),
+    this.dimensaoId = const Value.absent(),
   });
   IndicadoresCompanion.insert({
     this.id = const Value.absent(),
@@ -938,6 +1421,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
     required String descricao,
     this.peso = const Value.absent(),
     required int categoriaId,
+    this.dimensaoId = const Value.absent(),
   })  : nome = Value(nome),
         descricao = Value(descricao),
         categoriaId = Value(categoriaId);
@@ -947,6 +1431,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
     Expression<String>? descricao,
     Expression<double>? peso,
     Expression<int>? categoriaId,
+    Expression<int>? dimensaoId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -954,6 +1439,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
       if (descricao != null) 'descricao': descricao,
       if (peso != null) 'peso': peso,
       if (categoriaId != null) 'categoria_id': categoriaId,
+      if (dimensaoId != null) 'dimensao_id': dimensaoId,
     });
   }
 
@@ -962,13 +1448,15 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
       Value<String>? nome,
       Value<String>? descricao,
       Value<double>? peso,
-      Value<int>? categoriaId}) {
+      Value<int>? categoriaId,
+      Value<int?>? dimensaoId}) {
     return IndicadoresCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
       peso: peso ?? this.peso,
       categoriaId: categoriaId ?? this.categoriaId,
+      dimensaoId: dimensaoId ?? this.dimensaoId,
     );
   }
 
@@ -990,6 +1478,9 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
     if (categoriaId.present) {
       map['categoria_id'] = Variable<int>(categoriaId.value);
     }
+    if (dimensaoId.present) {
+      map['dimensao_id'] = Variable<int>(dimensaoId.value);
+    }
     return map;
   }
 
@@ -1000,7 +1491,8 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
           ..write('peso: $peso, ')
-          ..write('categoriaId: $categoriaId')
+          ..write('categoriaId: $categoriaId, ')
+          ..write('dimensaoId: $dimensaoId')
           ..write(')'))
         .toString();
   }
@@ -1343,6 +1835,15 @@ class $AvaliacaoItensTable extends AvaliacaoItens
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES indicadores (id)'));
+  static const VerificationMeta _praticaIdMeta =
+      const VerificationMeta('praticaId');
+  @override
+  late final GeneratedColumn<int> praticaId = GeneratedColumn<int>(
+      'pratica_id', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES praticas (id)'));
   static const VerificationMeta _valorLikertMeta =
       const VerificationMeta('valorLikert');
   @override
@@ -1359,7 +1860,7 @@ class $AvaliacaoItensTable extends AvaliacaoItens
       type: DriftSqlType.double, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, avaliacaoId, indicadorId, valorLikert, valorFuzzy];
+      [id, avaliacaoId, indicadorId, praticaId, valorLikert, valorFuzzy];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1389,6 +1890,10 @@ class $AvaliacaoItensTable extends AvaliacaoItens
     } else if (isInserting) {
       context.missing(_indicadorIdMeta);
     }
+    if (data.containsKey('pratica_id')) {
+      context.handle(_praticaIdMeta,
+          praticaId.isAcceptableOrUnknown(data['pratica_id']!, _praticaIdMeta));
+    }
     if (data.containsKey('valor_likert')) {
       context.handle(
           _valorLikertMeta,
@@ -1416,6 +1921,8 @@ class $AvaliacaoItensTable extends AvaliacaoItens
           .read(DriftSqlType.int, data['${effectivePrefix}avaliacao_id'])!,
       indicadorId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}indicador_id'])!,
+      praticaId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}pratica_id']),
       valorLikert: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}valor_likert']),
       valorFuzzy: attachedDatabase.typeMapping
@@ -1433,12 +1940,18 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
   final int id;
   final int avaliacaoId;
   final int indicadorId;
+
+  /// When evaluating the special "Multidimensional" category, an item is
+  /// tied to a particular agricultural practice. For other categories this
+  /// column remains null.
+  final int? praticaId;
   final int? valorLikert;
   final double? valorFuzzy;
   const AvaliacaoIten(
       {required this.id,
       required this.avaliacaoId,
       required this.indicadorId,
+      this.praticaId,
       this.valorLikert,
       this.valorFuzzy});
   @override
@@ -1447,6 +1960,9 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
     map['id'] = Variable<int>(id);
     map['avaliacao_id'] = Variable<int>(avaliacaoId);
     map['indicador_id'] = Variable<int>(indicadorId);
+    if (!nullToAbsent || praticaId != null) {
+      map['pratica_id'] = Variable<int>(praticaId);
+    }
     if (!nullToAbsent || valorLikert != null) {
       map['valor_likert'] = Variable<int>(valorLikert);
     }
@@ -1461,6 +1977,9 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
       id: Value(id),
       avaliacaoId: Value(avaliacaoId),
       indicadorId: Value(indicadorId),
+      praticaId: praticaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(praticaId),
       valorLikert: valorLikert == null && nullToAbsent
           ? const Value.absent()
           : Value(valorLikert),
@@ -1477,6 +1996,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
       id: serializer.fromJson<int>(json['id']),
       avaliacaoId: serializer.fromJson<int>(json['avaliacaoId']),
       indicadorId: serializer.fromJson<int>(json['indicadorId']),
+      praticaId: serializer.fromJson<int?>(json['praticaId']),
       valorLikert: serializer.fromJson<int?>(json['valorLikert']),
       valorFuzzy: serializer.fromJson<double?>(json['valorFuzzy']),
     );
@@ -1488,6 +2008,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
       'id': serializer.toJson<int>(id),
       'avaliacaoId': serializer.toJson<int>(avaliacaoId),
       'indicadorId': serializer.toJson<int>(indicadorId),
+      'praticaId': serializer.toJson<int?>(praticaId),
       'valorLikert': serializer.toJson<int?>(valorLikert),
       'valorFuzzy': serializer.toJson<double?>(valorFuzzy),
     };
@@ -1497,12 +2018,14 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
           {int? id,
           int? avaliacaoId,
           int? indicadorId,
+          Value<int?> praticaId = const Value.absent(),
           Value<int?> valorLikert = const Value.absent(),
           Value<double?> valorFuzzy = const Value.absent()}) =>
       AvaliacaoIten(
         id: id ?? this.id,
         avaliacaoId: avaliacaoId ?? this.avaliacaoId,
         indicadorId: indicadorId ?? this.indicadorId,
+        praticaId: praticaId.present ? praticaId.value : this.praticaId,
         valorLikert: valorLikert.present ? valorLikert.value : this.valorLikert,
         valorFuzzy: valorFuzzy.present ? valorFuzzy.value : this.valorFuzzy,
       );
@@ -1513,6 +2036,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
           data.avaliacaoId.present ? data.avaliacaoId.value : this.avaliacaoId,
       indicadorId:
           data.indicadorId.present ? data.indicadorId.value : this.indicadorId,
+      praticaId: data.praticaId.present ? data.praticaId.value : this.praticaId,
       valorLikert:
           data.valorLikert.present ? data.valorLikert.value : this.valorLikert,
       valorFuzzy:
@@ -1526,6 +2050,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
           ..write('id: $id, ')
           ..write('avaliacaoId: $avaliacaoId, ')
           ..write('indicadorId: $indicadorId, ')
+          ..write('praticaId: $praticaId, ')
           ..write('valorLikert: $valorLikert, ')
           ..write('valorFuzzy: $valorFuzzy')
           ..write(')'))
@@ -1533,8 +2058,8 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, avaliacaoId, indicadorId, valorLikert, valorFuzzy);
+  int get hashCode => Object.hash(
+      id, avaliacaoId, indicadorId, praticaId, valorLikert, valorFuzzy);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1542,6 +2067,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
           other.id == this.id &&
           other.avaliacaoId == this.avaliacaoId &&
           other.indicadorId == this.indicadorId &&
+          other.praticaId == this.praticaId &&
           other.valorLikert == this.valorLikert &&
           other.valorFuzzy == this.valorFuzzy);
 }
@@ -1550,12 +2076,14 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
   final Value<int> id;
   final Value<int> avaliacaoId;
   final Value<int> indicadorId;
+  final Value<int?> praticaId;
   final Value<int?> valorLikert;
   final Value<double?> valorFuzzy;
   const AvaliacaoItensCompanion({
     this.id = const Value.absent(),
     this.avaliacaoId = const Value.absent(),
     this.indicadorId = const Value.absent(),
+    this.praticaId = const Value.absent(),
     this.valorLikert = const Value.absent(),
     this.valorFuzzy = const Value.absent(),
   });
@@ -1563,6 +2091,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
     this.id = const Value.absent(),
     required int avaliacaoId,
     required int indicadorId,
+    this.praticaId = const Value.absent(),
     this.valorLikert = const Value.absent(),
     this.valorFuzzy = const Value.absent(),
   })  : avaliacaoId = Value(avaliacaoId),
@@ -1571,6 +2100,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
     Expression<int>? id,
     Expression<int>? avaliacaoId,
     Expression<int>? indicadorId,
+    Expression<int>? praticaId,
     Expression<int>? valorLikert,
     Expression<double>? valorFuzzy,
   }) {
@@ -1578,6 +2108,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
       if (id != null) 'id': id,
       if (avaliacaoId != null) 'avaliacao_id': avaliacaoId,
       if (indicadorId != null) 'indicador_id': indicadorId,
+      if (praticaId != null) 'pratica_id': praticaId,
       if (valorLikert != null) 'valor_likert': valorLikert,
       if (valorFuzzy != null) 'valor_fuzzy': valorFuzzy,
     });
@@ -1587,12 +2118,14 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
       {Value<int>? id,
       Value<int>? avaliacaoId,
       Value<int>? indicadorId,
+      Value<int?>? praticaId,
       Value<int?>? valorLikert,
       Value<double?>? valorFuzzy}) {
     return AvaliacaoItensCompanion(
       id: id ?? this.id,
       avaliacaoId: avaliacaoId ?? this.avaliacaoId,
       indicadorId: indicadorId ?? this.indicadorId,
+      praticaId: praticaId ?? this.praticaId,
       valorLikert: valorLikert ?? this.valorLikert,
       valorFuzzy: valorFuzzy ?? this.valorFuzzy,
     );
@@ -1610,6 +2143,9 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
     if (indicadorId.present) {
       map['indicador_id'] = Variable<int>(indicadorId.value);
     }
+    if (praticaId.present) {
+      map['pratica_id'] = Variable<int>(praticaId.value);
+    }
     if (valorLikert.present) {
       map['valor_likert'] = Variable<int>(valorLikert.value);
     }
@@ -1625,6 +2161,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
           ..write('id: $id, ')
           ..write('avaliacaoId: $avaliacaoId, ')
           ..write('indicadorId: $indicadorId, ')
+          ..write('praticaId: $praticaId, ')
           ..write('valorLikert: $valorLikert, ')
           ..write('valorFuzzy: $valorFuzzy')
           ..write(')'))
@@ -1638,6 +2175,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RegioesTable regioes = $RegioesTable(this);
   late final $FamiliasTable familias = $FamiliasTable(this);
   late final $CategoriasTable categorias = $CategoriasTable(this);
+  late final $DimensoesTable dimensoes = $DimensoesTable(this);
+  late final $PraticasTable praticas = $PraticasTable(this);
   late final $IndicadoresTable indicadores = $IndicadoresTable(this);
   late final $AvaliacoesTable avaliacoes = $AvaliacoesTable(this);
   late final $AvaliacaoItensTable avaliacaoItens = $AvaliacaoItensTable(this);
@@ -1645,8 +2184,16 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [regioes, familias, categorias, indicadores, avaliacoes, avaliacaoItens];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        regioes,
+        familias,
+        categorias,
+        dimensoes,
+        praticas,
+        indicadores,
+        avaliacoes,
+        avaliacaoItens
+      ];
 }
 
 typedef $$RegioesTableCreateCompanionBuilder = RegioesCompanion Function({
@@ -1949,6 +2496,32 @@ class $$CategoriasTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
+  ComposableFilter dimensoesRefs(
+      ComposableFilter Function($$DimensoesTableFilterComposer f) f) {
+    final $$DimensoesTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $state.db.dimensoes,
+        getReferencedColumn: (t) => t.categoriaId,
+        builder: (joinBuilder, parentComposers) =>
+            $$DimensoesTableFilterComposer(ComposerState(
+                $state.db, $state.db.dimensoes, joinBuilder, parentComposers)));
+    return f(composer);
+  }
+
+  ComposableFilter praticasRefs(
+      ComposableFilter Function($$PraticasTableFilterComposer f) f) {
+    final $$PraticasTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $state.db.praticas,
+        getReferencedColumn: (t) => t.categoriaId,
+        builder: (joinBuilder, parentComposers) =>
+            $$PraticasTableFilterComposer(ComposerState(
+                $state.db, $state.db.praticas, joinBuilder, parentComposers)));
+    return f(composer);
+  }
+
   ComposableFilter indicadoresRefs(
       ComposableFilter Function($$IndicadoresTableFilterComposer f) f) {
     final $$IndicadoresTableFilterComposer composer = $state.composerBuilder(
@@ -1982,6 +2555,236 @@ class $$CategoriasTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
+typedef $$DimensoesTableCreateCompanionBuilder = DimensoesCompanion Function({
+  Value<int> id,
+  required String nome,
+  required int categoriaId,
+});
+typedef $$DimensoesTableUpdateCompanionBuilder = DimensoesCompanion Function({
+  Value<int> id,
+  Value<String> nome,
+  Value<int> categoriaId,
+});
+
+class $$DimensoesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DimensoesTable,
+    Dimensoe,
+    $$DimensoesTableFilterComposer,
+    $$DimensoesTableOrderingComposer,
+    $$DimensoesTableCreateCompanionBuilder,
+    $$DimensoesTableUpdateCompanionBuilder> {
+  $$DimensoesTableTableManager(_$AppDatabase db, $DimensoesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$DimensoesTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$DimensoesTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> nome = const Value.absent(),
+            Value<int> categoriaId = const Value.absent(),
+          }) =>
+              DimensoesCompanion(
+            id: id,
+            nome: nome,
+            categoriaId: categoriaId,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String nome,
+            required int categoriaId,
+          }) =>
+              DimensoesCompanion.insert(
+            id: id,
+            nome: nome,
+            categoriaId: categoriaId,
+          ),
+        ));
+}
+
+class $$DimensoesTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $DimensoesTable> {
+  $$DimensoesTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get nome => $state.composableBuilder(
+      column: $state.table.nome,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  $$CategoriasTableFilterComposer get categoriaId {
+    final $$CategoriasTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.categoriaId,
+        referencedTable: $state.db.categorias,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$CategoriasTableFilterComposer(ComposerState($state.db,
+                $state.db.categorias, joinBuilder, parentComposers)));
+    return composer;
+  }
+
+  ComposableFilter indicadoresRefs(
+      ComposableFilter Function($$IndicadoresTableFilterComposer f) f) {
+    final $$IndicadoresTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $state.db.indicadores,
+        getReferencedColumn: (t) => t.dimensaoId,
+        builder: (joinBuilder, parentComposers) =>
+            $$IndicadoresTableFilterComposer(ComposerState($state.db,
+                $state.db.indicadores, joinBuilder, parentComposers)));
+    return f(composer);
+  }
+}
+
+class $$DimensoesTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $DimensoesTable> {
+  $$DimensoesTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get nome => $state.composableBuilder(
+      column: $state.table.nome,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  $$CategoriasTableOrderingComposer get categoriaId {
+    final $$CategoriasTableOrderingComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.categoriaId,
+        referencedTable: $state.db.categorias,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$CategoriasTableOrderingComposer(ComposerState($state.db,
+                $state.db.categorias, joinBuilder, parentComposers)));
+    return composer;
+  }
+}
+
+typedef $$PraticasTableCreateCompanionBuilder = PraticasCompanion Function({
+  Value<int> id,
+  required String nome,
+  required int categoriaId,
+});
+typedef $$PraticasTableUpdateCompanionBuilder = PraticasCompanion Function({
+  Value<int> id,
+  Value<String> nome,
+  Value<int> categoriaId,
+});
+
+class $$PraticasTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $PraticasTable,
+    Pratica,
+    $$PraticasTableFilterComposer,
+    $$PraticasTableOrderingComposer,
+    $$PraticasTableCreateCompanionBuilder,
+    $$PraticasTableUpdateCompanionBuilder> {
+  $$PraticasTableTableManager(_$AppDatabase db, $PraticasTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$PraticasTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$PraticasTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> nome = const Value.absent(),
+            Value<int> categoriaId = const Value.absent(),
+          }) =>
+              PraticasCompanion(
+            id: id,
+            nome: nome,
+            categoriaId: categoriaId,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String nome,
+            required int categoriaId,
+          }) =>
+              PraticasCompanion.insert(
+            id: id,
+            nome: nome,
+            categoriaId: categoriaId,
+          ),
+        ));
+}
+
+class $$PraticasTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $PraticasTable> {
+  $$PraticasTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get nome => $state.composableBuilder(
+      column: $state.table.nome,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  $$CategoriasTableFilterComposer get categoriaId {
+    final $$CategoriasTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.categoriaId,
+        referencedTable: $state.db.categorias,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$CategoriasTableFilterComposer(ComposerState($state.db,
+                $state.db.categorias, joinBuilder, parentComposers)));
+    return composer;
+  }
+
+  ComposableFilter avaliacaoItensRefs(
+      ComposableFilter Function($$AvaliacaoItensTableFilterComposer f) f) {
+    final $$AvaliacaoItensTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $state.db.avaliacaoItens,
+        getReferencedColumn: (t) => t.praticaId,
+        builder: (joinBuilder, parentComposers) =>
+            $$AvaliacaoItensTableFilterComposer(ComposerState($state.db,
+                $state.db.avaliacaoItens, joinBuilder, parentComposers)));
+    return f(composer);
+  }
+}
+
+class $$PraticasTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $PraticasTable> {
+  $$PraticasTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get nome => $state.composableBuilder(
+      column: $state.table.nome,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  $$CategoriasTableOrderingComposer get categoriaId {
+    final $$CategoriasTableOrderingComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.categoriaId,
+        referencedTable: $state.db.categorias,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$CategoriasTableOrderingComposer(ComposerState($state.db,
+                $state.db.categorias, joinBuilder, parentComposers)));
+    return composer;
+  }
+}
+
 typedef $$IndicadoresTableCreateCompanionBuilder = IndicadoresCompanion
     Function({
   Value<int> id,
@@ -1989,6 +2792,7 @@ typedef $$IndicadoresTableCreateCompanionBuilder = IndicadoresCompanion
   required String descricao,
   Value<double> peso,
   required int categoriaId,
+  Value<int?> dimensaoId,
 });
 typedef $$IndicadoresTableUpdateCompanionBuilder = IndicadoresCompanion
     Function({
@@ -1997,6 +2801,7 @@ typedef $$IndicadoresTableUpdateCompanionBuilder = IndicadoresCompanion
   Value<String> descricao,
   Value<double> peso,
   Value<int> categoriaId,
+  Value<int?> dimensaoId,
 });
 
 class $$IndicadoresTableTableManager extends RootTableManager<
@@ -2021,6 +2826,7 @@ class $$IndicadoresTableTableManager extends RootTableManager<
             Value<String> descricao = const Value.absent(),
             Value<double> peso = const Value.absent(),
             Value<int> categoriaId = const Value.absent(),
+            Value<int?> dimensaoId = const Value.absent(),
           }) =>
               IndicadoresCompanion(
             id: id,
@@ -2028,6 +2834,7 @@ class $$IndicadoresTableTableManager extends RootTableManager<
             descricao: descricao,
             peso: peso,
             categoriaId: categoriaId,
+            dimensaoId: dimensaoId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2035,6 +2842,7 @@ class $$IndicadoresTableTableManager extends RootTableManager<
             required String descricao,
             Value<double> peso = const Value.absent(),
             required int categoriaId,
+            Value<int?> dimensaoId = const Value.absent(),
           }) =>
               IndicadoresCompanion.insert(
             id: id,
@@ -2042,6 +2850,7 @@ class $$IndicadoresTableTableManager extends RootTableManager<
             descricao: descricao,
             peso: peso,
             categoriaId: categoriaId,
+            dimensaoId: dimensaoId,
           ),
         ));
 }
@@ -2078,6 +2887,18 @@ class $$IndicadoresTableFilterComposer
         builder: (joinBuilder, parentComposers) =>
             $$CategoriasTableFilterComposer(ComposerState($state.db,
                 $state.db.categorias, joinBuilder, parentComposers)));
+    return composer;
+  }
+
+  $$DimensoesTableFilterComposer get dimensaoId {
+    final $$DimensoesTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.dimensaoId,
+        referencedTable: $state.db.dimensoes,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$DimensoesTableFilterComposer(ComposerState(
+                $state.db, $state.db.dimensoes, joinBuilder, parentComposers)));
     return composer;
   }
 
@@ -2127,6 +2948,18 @@ class $$IndicadoresTableOrderingComposer
         builder: (joinBuilder, parentComposers) =>
             $$CategoriasTableOrderingComposer(ComposerState($state.db,
                 $state.db.categorias, joinBuilder, parentComposers)));
+    return composer;
+  }
+
+  $$DimensoesTableOrderingComposer get dimensaoId {
+    final $$DimensoesTableOrderingComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.dimensaoId,
+        referencedTable: $state.db.dimensoes,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$DimensoesTableOrderingComposer(ComposerState(
+                $state.db, $state.db.dimensoes, joinBuilder, parentComposers)));
     return composer;
   }
 }
@@ -2283,6 +3116,7 @@ typedef $$AvaliacaoItensTableCreateCompanionBuilder = AvaliacaoItensCompanion
   Value<int> id,
   required int avaliacaoId,
   required int indicadorId,
+  Value<int?> praticaId,
   Value<int?> valorLikert,
   Value<double?> valorFuzzy,
 });
@@ -2291,6 +3125,7 @@ typedef $$AvaliacaoItensTableUpdateCompanionBuilder = AvaliacaoItensCompanion
   Value<int> id,
   Value<int> avaliacaoId,
   Value<int> indicadorId,
+  Value<int?> praticaId,
   Value<int?> valorLikert,
   Value<double?> valorFuzzy,
 });
@@ -2316,6 +3151,7 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> avaliacaoId = const Value.absent(),
             Value<int> indicadorId = const Value.absent(),
+            Value<int?> praticaId = const Value.absent(),
             Value<int?> valorLikert = const Value.absent(),
             Value<double?> valorFuzzy = const Value.absent(),
           }) =>
@@ -2323,6 +3159,7 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
             id: id,
             avaliacaoId: avaliacaoId,
             indicadorId: indicadorId,
+            praticaId: praticaId,
             valorLikert: valorLikert,
             valorFuzzy: valorFuzzy,
           ),
@@ -2330,6 +3167,7 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int avaliacaoId,
             required int indicadorId,
+            Value<int?> praticaId = const Value.absent(),
             Value<int?> valorLikert = const Value.absent(),
             Value<double?> valorFuzzy = const Value.absent(),
           }) =>
@@ -2337,6 +3175,7 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
             id: id,
             avaliacaoId: avaliacaoId,
             indicadorId: indicadorId,
+            praticaId: praticaId,
             valorLikert: valorLikert,
             valorFuzzy: valorFuzzy,
           ),
@@ -2384,6 +3223,18 @@ class $$AvaliacaoItensTableFilterComposer
                 $state.db.indicadores, joinBuilder, parentComposers)));
     return composer;
   }
+
+  $$PraticasTableFilterComposer get praticaId {
+    final $$PraticasTableFilterComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.praticaId,
+        referencedTable: $state.db.praticas,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$PraticasTableFilterComposer(ComposerState(
+                $state.db, $state.db.praticas, joinBuilder, parentComposers)));
+    return composer;
+  }
 }
 
 class $$AvaliacaoItensTableOrderingComposer
@@ -2427,6 +3278,18 @@ class $$AvaliacaoItensTableOrderingComposer
                 $state.db.indicadores, joinBuilder, parentComposers)));
     return composer;
   }
+
+  $$PraticasTableOrderingComposer get praticaId {
+    final $$PraticasTableOrderingComposer composer = $state.composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.praticaId,
+        referencedTable: $state.db.praticas,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder, parentComposers) =>
+            $$PraticasTableOrderingComposer(ComposerState(
+                $state.db, $state.db.praticas, joinBuilder, parentComposers)));
+    return composer;
+  }
 }
 
 class $AppDatabaseManager {
@@ -2438,6 +3301,10 @@ class $AppDatabaseManager {
       $$FamiliasTableTableManager(_db, _db.familias);
   $$CategoriasTableTableManager get categorias =>
       $$CategoriasTableTableManager(_db, _db.categorias);
+  $$DimensoesTableTableManager get dimensoes =>
+      $$DimensoesTableTableManager(_db, _db.dimensoes);
+  $$PraticasTableTableManager get praticas =>
+      $$PraticasTableTableManager(_db, _db.praticas);
   $$IndicadoresTableTableManager get indicadores =>
       $$IndicadoresTableTableManager(_db, _db.indicadores);
   $$AvaliacoesTableTableManager get avaliacoes =>
