@@ -221,6 +221,131 @@ class AppDatabase extends _$AppDatabase {
             await into(praticas).insert(
                 PraticasCompanion.insert(nome: nome, categoriaId: cat2.id));
           }
+
+          // --- indicators for "Organização social" category ---
+          final cat3 = await (select(categorias)
+                ..where((c) => c.nome.equals('Organização social')))
+              .getSingle();
+
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Participação',
+            descricao:
+                'Nível de participação nas atividades de interesse comum das organizações comunitárias (discussões nas reuniões, planejamento de eventos, construção de propostas, elaboração e implantação de projetos).',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Representatividade',
+            descricao:
+                'Diversidade de opinião, raça, crença, nível educacional, cultura, gênero e geração entre os membros.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Representação',
+            descricao:
+                'Forma como o presidente representa a organização e envolve os demais membros, delegando funções com a criação de comissões específicas e permanentes.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Planejamento e gestão',
+            descricao:
+                'Elaboração de diagnósticos, planejamento de ações e projetos a partir de planos de curto, médio e longo prazo com monitoramento e avaliação.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Transparência',
+            descricao:
+                'Disponibilidade de atas, prestações de contas e documentos ao público. Exposição de planejamento e resultados em painéis acessíveis.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Decisão',
+            descricao:
+                'Tomada de decisão através de processos dialógicos e democráticos visando consenso, com métodos como circularidade da fala e escuta ativa.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Disposição dos participantes nas reuniões',
+            descricao:
+                'Arranjo físico das reuniões em círculo sem lugar de destaque, onde todos ensinam e aprendem caracterizando a singularidade dos saberes.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Temas relevantes',
+            descricao:
+                'Abordagem de temas prioritários hierarquizados para discussão em comissões permanentes. Capacitação técnica e política em diversos temas.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Formação',
+            descricao:
+                'Promoção de oficinas, palestras temáticas e atividades de formação continuada para capacitação dos associados.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Sucessão',
+            descricao:
+                'Renovação regular dos quadros da diretoria com eleições periódicas, evitando permanência indefinida do mesmo grupo.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Empoderamento',
+            descricao:
+                'Ocupação de espaços de representação em conselhos, comitês e fóruns regionais pela organização e seus representantes.',
+            peso: Value(1.0),
+            categoriaId: cat3.id,
+          ));
+
+          // --- indicators for "Agenciamento do desenvolvimento rural" category ---
+          final cat4 = await (select(categorias)
+                ..where((c) =>
+                    c.nome.equals('Agenciamento do desenvolvimento rural')))
+              .getSingle();
+
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Ações coletivas em unidade de produção',
+            descricao:
+                'Reuniões técnicas, demonstrações de método e dias de campo realizados na propriedade. Nota máxima: 5.0 (0.2 para cada um ou dois eventos anuais, iniciando em 4.2).',
+            peso: Value(5.0),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Orientação técnica individual em unidade de produção',
+            descricao:
+                'Visitas técnicas individuais e acompanhamento direto na propriedade. Nota máxima: 4.0 (0.2 para cada um ou dois eventos anuais, iniciando em 3.2).',
+            peso: Value(4.0),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Ações coletivas em associações, sindicatos e organizações',
+            descricao:
+                'Participação em eventos coletivos realizados por associações, sindicatos e outras organizações. Nota máxima: 3.0 (0.2 para cada um ou dois eventos anuais, iniciando em 2.2).',
+            peso: Value(3.0),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Orientação técnica individual em loja ou escritório',
+            descricao:
+                'Atendimento técnico em espaços comerciais ou de escritório. Nota máxima: 2.0 (0.2 para cada um ou dois eventos anuais, iniciando em 1.2).',
+            peso: Value(2.0),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Informação esporádica de fonte diversa',
+            descricao:
+                'Acesso ocasional a informações advindas de diferentes fontes (internet, rádio, vizinhos, etc.). Nota máxima: 1.0 (sem variação).',
+            peso: Value(1.0),
+            categoriaId: cat4.id,
+          ));
         },
         onUpgrade: (m, from, to) async {
           if (from == 1) {
