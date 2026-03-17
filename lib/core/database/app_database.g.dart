@@ -3,7 +3,7 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regioe> {
+class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regiao> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -30,7 +30,7 @@ class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regioe> {
   String get actualTableName => $name;
   static const String $name = 'regioes';
   @override
-  VerificationContext validateIntegrity(Insertable<Regioe> instance,
+  VerificationContext validateIntegrity(Insertable<Regiao> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -49,9 +49,9 @@ class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regioe> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Regioe map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Regiao map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Regioe(
+    return Regiao(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -65,10 +65,10 @@ class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regioe> {
   }
 }
 
-class Regioe extends DataClass implements Insertable<Regioe> {
+class Regiao extends DataClass implements Insertable<Regiao> {
   final int id;
   final String nome;
-  const Regioe({required this.id, required this.nome});
+  const Regiao({required this.id, required this.nome});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -84,10 +84,10 @@ class Regioe extends DataClass implements Insertable<Regioe> {
     );
   }
 
-  factory Regioe.fromJson(Map<String, dynamic> json,
+  factory Regiao.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Regioe(
+    return Regiao(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
     );
@@ -101,12 +101,12 @@ class Regioe extends DataClass implements Insertable<Regioe> {
     };
   }
 
-  Regioe copyWith({int? id, String? nome}) => Regioe(
+  Regiao copyWith({int? id, String? nome}) => Regiao(
         id: id ?? this.id,
         nome: nome ?? this.nome,
       );
-  Regioe copyWithCompanion(RegioesCompanion data) {
-    return Regioe(
+  Regiao copyWithCompanion(RegioesCompanion data) {
+    return Regiao(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
     );
@@ -114,7 +114,7 @@ class Regioe extends DataClass implements Insertable<Regioe> {
 
   @override
   String toString() {
-    return (StringBuffer('Regioe(')
+    return (StringBuffer('Regiao(')
           ..write('id: $id, ')
           ..write('nome: $nome')
           ..write(')'))
@@ -126,10 +126,10 @@ class Regioe extends DataClass implements Insertable<Regioe> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Regioe && other.id == this.id && other.nome == this.nome);
+      (other is Regiao && other.id == this.id && other.nome == this.nome);
 }
 
-class RegioesCompanion extends UpdateCompanion<Regioe> {
+class RegioesCompanion extends UpdateCompanion<Regiao> {
   final Value<int> id;
   final Value<String> nome;
   const RegioesCompanion({
@@ -140,7 +140,7 @@ class RegioesCompanion extends UpdateCompanion<Regioe> {
     this.id = const Value.absent(),
     required String nome,
   }) : nome = Value(nome);
-  static Insertable<Regioe> custom({
+  static Insertable<Regiao> custom({
     Expression<int>? id,
     Expression<String>? nome,
   }) {
@@ -705,7 +705,7 @@ class CategoriasCompanion extends UpdateCompanion<Categoria> {
 }
 
 class $DimensoesTable extends Dimensoes
-    with TableInfo<$DimensoesTable, Dimensoe> {
+    with TableInfo<$DimensoesTable, Dimensao> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -741,7 +741,7 @@ class $DimensoesTable extends Dimensoes
   String get actualTableName => $name;
   static const String $name = 'dimensoes';
   @override
-  VerificationContext validateIntegrity(Insertable<Dimensoe> instance,
+  VerificationContext validateIntegrity(Insertable<Dimensao> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -768,9 +768,9 @@ class $DimensoesTable extends Dimensoes
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Dimensoe map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Dimensao map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Dimensoe(
+    return Dimensao(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -786,7 +786,7 @@ class $DimensoesTable extends Dimensoes
   }
 }
 
-class Dimensoe extends DataClass implements Insertable<Dimensoe> {
+class Dimensao extends DataClass implements Insertable<Dimensao> {
   final int id;
   final String nome;
 
@@ -794,7 +794,7 @@ class Dimensoe extends DataClass implements Insertable<Dimensoe> {
   /// vínculo à categoria para consultas mais simples e para manter coerência
   /// quando vários níveis de hierarquia forem necessários.
   final int categoriaId;
-  const Dimensoe(
+  const Dimensao(
       {required this.id, required this.nome, required this.categoriaId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -813,10 +813,10 @@ class Dimensoe extends DataClass implements Insertable<Dimensoe> {
     );
   }
 
-  factory Dimensoe.fromJson(Map<String, dynamic> json,
+  factory Dimensao.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Dimensoe(
+    return Dimensao(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       categoriaId: serializer.fromJson<int>(json['categoriaId']),
@@ -832,13 +832,13 @@ class Dimensoe extends DataClass implements Insertable<Dimensoe> {
     };
   }
 
-  Dimensoe copyWith({int? id, String? nome, int? categoriaId}) => Dimensoe(
+  Dimensao copyWith({int? id, String? nome, int? categoriaId}) => Dimensao(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         categoriaId: categoriaId ?? this.categoriaId,
       );
-  Dimensoe copyWithCompanion(DimensoesCompanion data) {
-    return Dimensoe(
+  Dimensao copyWithCompanion(DimensoesCompanion data) {
+    return Dimensao(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       categoriaId:
@@ -848,7 +848,7 @@ class Dimensoe extends DataClass implements Insertable<Dimensoe> {
 
   @override
   String toString() {
-    return (StringBuffer('Dimensoe(')
+    return (StringBuffer('Dimensao(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('categoriaId: $categoriaId')
@@ -861,13 +861,13 @@ class Dimensoe extends DataClass implements Insertable<Dimensoe> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Dimensoe &&
+      (other is Dimensao &&
           other.id == this.id &&
           other.nome == this.nome &&
           other.categoriaId == this.categoriaId);
 }
 
-class DimensoesCompanion extends UpdateCompanion<Dimensoe> {
+class DimensoesCompanion extends UpdateCompanion<Dimensao> {
   final Value<int> id;
   final Value<String> nome;
   final Value<int> categoriaId;
@@ -882,7 +882,7 @@ class DimensoesCompanion extends UpdateCompanion<Dimensoe> {
     required int categoriaId,
   })  : nome = Value(nome),
         categoriaId = Value(categoriaId);
-  static Insertable<Dimensoe> custom({
+  static Insertable<Dimensao> custom({
     Expression<int>? id,
     Expression<String>? nome,
     Expression<int>? categoriaId,
@@ -1152,7 +1152,7 @@ class PraticasCompanion extends UpdateCompanion<Pratica> {
 }
 
 class $IndicadoresTable extends Indicadores
-    with TableInfo<$IndicadoresTable, Indicadore> {
+    with TableInfo<$IndicadoresTable, Indicador> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1211,7 +1211,7 @@ class $IndicadoresTable extends Indicadores
   String get actualTableName => $name;
   static const String $name = 'indicadores';
   @override
-  VerificationContext validateIntegrity(Insertable<Indicadore> instance,
+  VerificationContext validateIntegrity(Insertable<Indicador> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1254,9 +1254,9 @@ class $IndicadoresTable extends Indicadores
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Indicadore map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Indicador map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Indicadore(
+    return Indicador(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -1278,14 +1278,14 @@ class $IndicadoresTable extends Indicadores
   }
 }
 
-class Indicadore extends DataClass implements Insertable<Indicadore> {
+class Indicador extends DataClass implements Insertable<Indicador> {
   final int id;
   final String nome;
   final String descricao;
   final double peso;
   final int categoriaId;
   final int? dimensaoId;
-  const Indicadore(
+  const Indicador(
       {required this.id,
       required this.nome,
       required this.descricao,
@@ -1319,10 +1319,10 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
     );
   }
 
-  factory Indicadore.fromJson(Map<String, dynamic> json,
+  factory Indicador.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Indicadore(
+    return Indicador(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       descricao: serializer.fromJson<String>(json['descricao']),
@@ -1344,14 +1344,14 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
     };
   }
 
-  Indicadore copyWith(
+  Indicador copyWith(
           {int? id,
           String? nome,
           String? descricao,
           double? peso,
           int? categoriaId,
           Value<int?> dimensaoId = const Value.absent()}) =>
-      Indicadore(
+      Indicador(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         descricao: descricao ?? this.descricao,
@@ -1359,8 +1359,8 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
         categoriaId: categoriaId ?? this.categoriaId,
         dimensaoId: dimensaoId.present ? dimensaoId.value : this.dimensaoId,
       );
-  Indicadore copyWithCompanion(IndicadoresCompanion data) {
-    return Indicadore(
+  Indicador copyWithCompanion(IndicadoresCompanion data) {
+    return Indicador(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       descricao: data.descricao.present ? data.descricao.value : this.descricao,
@@ -1374,7 +1374,7 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
 
   @override
   String toString() {
-    return (StringBuffer('Indicadore(')
+    return (StringBuffer('Indicador(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
@@ -1391,7 +1391,7 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Indicadore &&
+      (other is Indicador &&
           other.id == this.id &&
           other.nome == this.nome &&
           other.descricao == this.descricao &&
@@ -1400,7 +1400,7 @@ class Indicadore extends DataClass implements Insertable<Indicadore> {
           other.dimensaoId == this.dimensaoId);
 }
 
-class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
+class IndicadoresCompanion extends UpdateCompanion<Indicador> {
   final Value<int> id;
   final Value<String> nome;
   final Value<String> descricao;
@@ -1425,7 +1425,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
   })  : nome = Value(nome),
         descricao = Value(descricao),
         categoriaId = Value(categoriaId);
-  static Insertable<Indicadore> custom({
+  static Insertable<Indicador> custom({
     Expression<int>? id,
     Expression<String>? nome,
     Expression<String>? descricao,
@@ -1499,7 +1499,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicadore> {
 }
 
 class $AvaliacoesTable extends Avaliacoes
-    with TableInfo<$AvaliacoesTable, Avaliacoe> {
+    with TableInfo<$AvaliacoesTable, Avaliacao> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1550,7 +1550,7 @@ class $AvaliacoesTable extends Avaliacoes
   String get actualTableName => $name;
   static const String $name = 'avaliacoes';
   @override
-  VerificationContext validateIntegrity(Insertable<Avaliacoe> instance,
+  VerificationContext validateIntegrity(Insertable<Avaliacao> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1585,9 +1585,9 @@ class $AvaliacoesTable extends Avaliacoes
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Avaliacoe map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Avaliacao map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Avaliacoe(
+    return Avaliacao(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       data: attachedDatabase.typeMapping
@@ -1607,13 +1607,13 @@ class $AvaliacoesTable extends Avaliacoes
   }
 }
 
-class Avaliacoe extends DataClass implements Insertable<Avaliacoe> {
+class Avaliacao extends DataClass implements Insertable<Avaliacao> {
   final int id;
   final DateTime data;
   final String avaliador;
   final String? observacoes;
   final int familiaId;
-  const Avaliacoe(
+  const Avaliacao(
       {required this.id,
       required this.data,
       required this.avaliador,
@@ -1644,10 +1644,10 @@ class Avaliacoe extends DataClass implements Insertable<Avaliacoe> {
     );
   }
 
-  factory Avaliacoe.fromJson(Map<String, dynamic> json,
+  factory Avaliacao.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Avaliacoe(
+    return Avaliacao(
       id: serializer.fromJson<int>(json['id']),
       data: serializer.fromJson<DateTime>(json['data']),
       avaliador: serializer.fromJson<String>(json['avaliador']),
@@ -1667,21 +1667,21 @@ class Avaliacoe extends DataClass implements Insertable<Avaliacoe> {
     };
   }
 
-  Avaliacoe copyWith(
+  Avaliacao copyWith(
           {int? id,
           DateTime? data,
           String? avaliador,
           Value<String?> observacoes = const Value.absent(),
           int? familiaId}) =>
-      Avaliacoe(
+      Avaliacao(
         id: id ?? this.id,
         data: data ?? this.data,
         avaliador: avaliador ?? this.avaliador,
         observacoes: observacoes.present ? observacoes.value : this.observacoes,
         familiaId: familiaId ?? this.familiaId,
       );
-  Avaliacoe copyWithCompanion(AvaliacoesCompanion data) {
-    return Avaliacoe(
+  Avaliacao copyWithCompanion(AvaliacoesCompanion data) {
+    return Avaliacao(
       id: data.id.present ? data.id.value : this.id,
       data: data.data.present ? data.data.value : this.data,
       avaliador: data.avaliador.present ? data.avaliador.value : this.avaliador,
@@ -1693,7 +1693,7 @@ class Avaliacoe extends DataClass implements Insertable<Avaliacoe> {
 
   @override
   String toString() {
-    return (StringBuffer('Avaliacoe(')
+    return (StringBuffer('Avaliacao(')
           ..write('id: $id, ')
           ..write('data: $data, ')
           ..write('avaliador: $avaliador, ')
@@ -1708,7 +1708,7 @@ class Avaliacoe extends DataClass implements Insertable<Avaliacoe> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Avaliacoe &&
+      (other is Avaliacao &&
           other.id == this.id &&
           other.data == this.data &&
           other.avaliador == this.avaliador &&
@@ -1716,7 +1716,7 @@ class Avaliacoe extends DataClass implements Insertable<Avaliacoe> {
           other.familiaId == this.familiaId);
 }
 
-class AvaliacoesCompanion extends UpdateCompanion<Avaliacoe> {
+class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
   final Value<int> id;
   final Value<DateTime> data;
   final Value<String> avaliador;
@@ -1737,7 +1737,7 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacoe> {
     required int familiaId,
   })  : avaliador = Value(avaliador),
         familiaId = Value(familiaId);
-  static Insertable<Avaliacoe> custom({
+  static Insertable<Avaliacao> custom({
     Expression<int>? id,
     Expression<DateTime>? data,
     Expression<String>? avaliador,
@@ -1803,7 +1803,7 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacoe> {
 }
 
 class $AvaliacaoItensTable extends AvaliacaoItens
-    with TableInfo<$AvaliacaoItensTable, AvaliacaoIten> {
+    with TableInfo<$AvaliacaoItensTable, AvaliacaoItem> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1867,7 +1867,7 @@ class $AvaliacaoItensTable extends AvaliacaoItens
   String get actualTableName => $name;
   static const String $name = 'avaliacao_itens';
   @override
-  VerificationContext validateIntegrity(Insertable<AvaliacaoIten> instance,
+  VerificationContext validateIntegrity(Insertable<AvaliacaoItem> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1912,9 +1912,9 @@ class $AvaliacaoItensTable extends AvaliacaoItens
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  AvaliacaoIten map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AvaliacaoItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AvaliacaoIten(
+    return AvaliacaoItem(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       avaliacaoId: attachedDatabase.typeMapping
@@ -1936,7 +1936,7 @@ class $AvaliacaoItensTable extends AvaliacaoItens
   }
 }
 
-class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
+class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
   final int id;
   final int avaliacaoId;
   final int indicadorId;
@@ -1947,7 +1947,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
   final int? praticaId;
   final int? valorLikert;
   final double? valorFuzzy;
-  const AvaliacaoIten(
+  const AvaliacaoItem(
       {required this.id,
       required this.avaliacaoId,
       required this.indicadorId,
@@ -1989,10 +1989,10 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
     );
   }
 
-  factory AvaliacaoIten.fromJson(Map<String, dynamic> json,
+  factory AvaliacaoItem.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AvaliacaoIten(
+    return AvaliacaoItem(
       id: serializer.fromJson<int>(json['id']),
       avaliacaoId: serializer.fromJson<int>(json['avaliacaoId']),
       indicadorId: serializer.fromJson<int>(json['indicadorId']),
@@ -2014,14 +2014,14 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
     };
   }
 
-  AvaliacaoIten copyWith(
+  AvaliacaoItem copyWith(
           {int? id,
           int? avaliacaoId,
           int? indicadorId,
           Value<int?> praticaId = const Value.absent(),
           Value<int?> valorLikert = const Value.absent(),
           Value<double?> valorFuzzy = const Value.absent()}) =>
-      AvaliacaoIten(
+      AvaliacaoItem(
         id: id ?? this.id,
         avaliacaoId: avaliacaoId ?? this.avaliacaoId,
         indicadorId: indicadorId ?? this.indicadorId,
@@ -2029,8 +2029,8 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
         valorLikert: valorLikert.present ? valorLikert.value : this.valorLikert,
         valorFuzzy: valorFuzzy.present ? valorFuzzy.value : this.valorFuzzy,
       );
-  AvaliacaoIten copyWithCompanion(AvaliacaoItensCompanion data) {
-    return AvaliacaoIten(
+  AvaliacaoItem copyWithCompanion(AvaliacaoItensCompanion data) {
+    return AvaliacaoItem(
       id: data.id.present ? data.id.value : this.id,
       avaliacaoId:
           data.avaliacaoId.present ? data.avaliacaoId.value : this.avaliacaoId,
@@ -2046,7 +2046,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
 
   @override
   String toString() {
-    return (StringBuffer('AvaliacaoIten(')
+    return (StringBuffer('AvaliacaoItem(')
           ..write('id: $id, ')
           ..write('avaliacaoId: $avaliacaoId, ')
           ..write('indicadorId: $indicadorId, ')
@@ -2063,7 +2063,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is AvaliacaoIten &&
+      (other is AvaliacaoItem &&
           other.id == this.id &&
           other.avaliacaoId == this.avaliacaoId &&
           other.indicadorId == this.indicadorId &&
@@ -2072,7 +2072,7 @@ class AvaliacaoIten extends DataClass implements Insertable<AvaliacaoIten> {
           other.valorFuzzy == this.valorFuzzy);
 }
 
-class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
+class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
   final Value<int> id;
   final Value<int> avaliacaoId;
   final Value<int> indicadorId;
@@ -2096,7 +2096,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoIten> {
     this.valorFuzzy = const Value.absent(),
   })  : avaliacaoId = Value(avaliacaoId),
         indicadorId = Value(indicadorId);
-  static Insertable<AvaliacaoIten> custom({
+  static Insertable<AvaliacaoItem> custom({
     Expression<int>? id,
     Expression<int>? avaliacaoId,
     Expression<int>? indicadorId,
@@ -2208,7 +2208,7 @@ typedef $$RegioesTableUpdateCompanionBuilder = RegioesCompanion Function({
 class $$RegioesTableTableManager extends RootTableManager<
     _$AppDatabase,
     $RegioesTable,
-    Regioe,
+    Regiao,
     $$RegioesTableFilterComposer,
     $$RegioesTableOrderingComposer,
     $$RegioesTableCreateCompanionBuilder,
@@ -2569,7 +2569,7 @@ typedef $$DimensoesTableUpdateCompanionBuilder = DimensoesCompanion Function({
 class $$DimensoesTableTableManager extends RootTableManager<
     _$AppDatabase,
     $DimensoesTable,
-    Dimensoe,
+    Dimensao,
     $$DimensoesTableFilterComposer,
     $$DimensoesTableOrderingComposer,
     $$DimensoesTableCreateCompanionBuilder,
@@ -2807,7 +2807,7 @@ typedef $$IndicadoresTableUpdateCompanionBuilder = IndicadoresCompanion
 class $$IndicadoresTableTableManager extends RootTableManager<
     _$AppDatabase,
     $IndicadoresTable,
-    Indicadore,
+    Indicador,
     $$IndicadoresTableFilterComposer,
     $$IndicadoresTableOrderingComposer,
     $$IndicadoresTableCreateCompanionBuilder,
@@ -2982,7 +2982,7 @@ typedef $$AvaliacoesTableUpdateCompanionBuilder = AvaliacoesCompanion Function({
 class $$AvaliacoesTableTableManager extends RootTableManager<
     _$AppDatabase,
     $AvaliacoesTable,
-    Avaliacoe,
+    Avaliacao,
     $$AvaliacoesTableFilterComposer,
     $$AvaliacoesTableOrderingComposer,
     $$AvaliacoesTableCreateCompanionBuilder,
@@ -3133,7 +3133,7 @@ typedef $$AvaliacaoItensTableUpdateCompanionBuilder = AvaliacaoItensCompanion
 class $$AvaliacaoItensTableTableManager extends RootTableManager<
     _$AppDatabase,
     $AvaliacaoItensTable,
-    AvaliacaoIten,
+    AvaliacaoItem,
     $$AvaliacaoItensTableFilterComposer,
     $$AvaliacaoItensTableOrderingComposer,
     $$AvaliacaoItensTableCreateCompanionBuilder,

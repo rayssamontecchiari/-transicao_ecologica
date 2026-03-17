@@ -64,4 +64,19 @@ class AvaliacaoService {
       }
     });
   }
+
+  /// Obtém todas as avaliações de uma família
+  Future<List<Avaliacao>> getAvaliacoesPorFamilia(int familiaId) {
+    return _avaliacoesDao.getPorFamilia(familiaId);
+  }
+
+  /// Obtém itens de uma avaliação específica
+  Future<List<AvaliacaoItem>> getItensPorAvaliacao(int avaliacaoId) {
+    return _avaliacoesDao.getItensPorAvaliacao(avaliacaoId);
+  }
+
+  /// Deleta uma avaliação e seus itens associados
+  Future<void> deletarAvaliacao(int avaliacaoId) {
+    return _avaliacoesDao.deletarAvaliacao(avaliacaoId);
+  }
 }

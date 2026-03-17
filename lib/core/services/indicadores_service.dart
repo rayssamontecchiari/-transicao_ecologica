@@ -19,7 +19,7 @@ class IndicadoresService {
   }
 
   /// Retorna todos os indicadores de uma categoria específica
-  Future<List<Indicadore>> getIndicadoresByCategoria(int categoriaId) {
+  Future<List<Indicador>> getIndicadoresByCategoria(int categoriaId) {
     return _indicadoresDao.getPorCategoria(categoriaId);
   }
 
@@ -34,10 +34,10 @@ class IndicadoresService {
   }
 
   /// Retorna indicadores agrupados por categoria
-  Future<Map<Categoria, List<Indicadore>>> getPorCategoria() async {
+  Future<Map<Categoria, List<Indicador>>> getPorCategoria() async {
     final registros = await _indicadoresDao.getComCategoria();
 
-    final Map<Categoria, List<Indicadore>> mapa = {};
+    final Map<Categoria, List<Indicador>> mapa = {};
 
     for (final (indicador, categoria) in registros) {
       mapa.putIfAbsent(categoria, () => []);

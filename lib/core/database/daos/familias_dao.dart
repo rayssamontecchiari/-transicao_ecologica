@@ -16,4 +16,9 @@ class FamiliasDao extends DatabaseAccessor<AppDatabase>
   Future<int> inserir(FamiliasCompanion familia) {
     return into(familias).insert(familia);
   }
+
+  /// Deleta uma família pelo ID
+  Future<int> deletar(int id) {
+    return (delete(familias)..where((f) => f.id.equals(id))).go();
+  }
 }

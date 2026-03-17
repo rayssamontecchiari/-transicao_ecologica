@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'familias_table.dart';
 
+@DataClassName('Avaliacao')
 class Avaliacoes extends Table {
   IntColumn get id => integer().autoIncrement()();
 

@@ -27,7 +27,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
   late FamiliasService _familiasService;
 
   Categoria? _categoria;
-  List<Indicadore> _indicadores = [];
+  List<Indicador> _indicadores = [];
   List<Familia> _familias = [];
   List<Pratica> _praticas = [];
   Familia? _selectedFamilia;
@@ -195,8 +195,13 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
         ),
       );
 
+      // Mostrar resumo da avaliação
+      await _mostrarResumoAvaliacao(avaliacaoId);
+
       // Retornar true para indicar que a avaliação foi salva
-      Navigator.pop(context, true);
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -467,7 +472,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
     );
   }
 
-  Widget _buildIndicadorTile(Indicadore indicador) {
+  Widget _buildIndicadorTile(Indicador indicador) {
     final valor = _respostas[indicador.id];
 
     return Card(
@@ -655,5 +660,109 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _mostrarResumoAvaliacao(int avaliacaoId) async {
+    try {
+      final itens = await _db.select(_db.avaliacaoItens)
+        ..where((a) => a.avaliacaoId.equals(avaliacaoId));
+      final itensData = await itens.get();
+
+      // Agrupar itens por indicador
+      final Map<int, (Indicador?, AvaliacaoItem)> itensAgrupados = {};
+      for (final item in itensData) {
+        final indicador = _indicadores.firstWhere(
+          (i) => i.id == item.indicadorId,
+          orElse: () => Indicador(
+            id: item.indicadorId,
+            nome: 'Indicador ${item.indicadorId}',
+            descricao: '',
+            peso: 1.0,
+            dimensaoId: null,
+            categoriaId: widget.categoriaId,
+          ),
+        );
+        itensAgrupados[item.indicadorId] = (indicador, item);
+      }
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              const SizedBox(width: 8),
+              const Text('Resumo da Avaliação'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_categoria != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Categoria:',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(_categoria!.nome),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                Text(
+                  'Itens Avaliados:',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ...itensAgrupados.entries.map((entry) {
+                  final indicador = entry.value.$1;
+                  final item = entry.value.$2;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          indicador?.nome ?? 'Indicador ${item.indicadorId}',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        if (item.valorLikert != null)
+                          Text(
+                            'Valor: ${item.valorLikert}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar resumo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

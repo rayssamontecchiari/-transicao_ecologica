@@ -22,8 +22,8 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   late FamiliasService _familiasService;
   late RegioesService _regioesService;
 
-  List<Regioe> _regioes = [];
-  Regioe? _selectedRegiao;
+  List<Regiao> _regioes = [];
+  Regiao? _selectedRegiao;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -164,7 +164,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<Regioe>(
+                    DropdownButtonFormField<Regiao>(
                       value: _selectedRegiao,
                       decoration: const InputDecoration(
                         labelText: 'Região',

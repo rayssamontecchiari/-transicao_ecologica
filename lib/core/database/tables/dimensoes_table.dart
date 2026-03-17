@@ -6,6 +6,7 @@ import 'categorias_table.dart';
 /// No caso da segunda categoria ("Análise Multidimensional da Sustentabilidade
 /// das Práticas Agrícolas") existem três dimensões: Ecológica, Social e
 /// Econômica. Outras categorias podem não utilizar dimensões.
+@DataClassName('Dimensao')
 class Dimensoes extends Table {
   IntColumn get id => integer().autoIncrement()();
 

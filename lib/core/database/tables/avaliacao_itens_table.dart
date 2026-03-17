@@ -3,6 +3,7 @@ import 'avaliacoes_table.dart';
 import 'indicadores_table.dart';
 import 'praticas_table.dart';
 
+@DataClassName('AvaliacaoItem')
 class AvaliacaoItens extends Table {
   IntColumn get id => integer().autoIncrement()();
 

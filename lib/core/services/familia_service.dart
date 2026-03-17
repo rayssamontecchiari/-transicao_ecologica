@@ -13,4 +13,9 @@ class FamiliasService {
   Future<int> cadastrarFamilia(FamiliasCompanion familia) {
     return _familiasDao.inserir(familia);
   }
+
+  /// Deleta uma família pelo ID
+  Future<void> deletarFamilia(int familiaId) {
+    return _familiasDao.deletar(familiaId);
+  }
 }

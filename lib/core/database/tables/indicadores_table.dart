@@ -8,6 +8,7 @@ import 'dimensoes_table.dart';
 /// categoria necessita de uma hierarquia adicional (dimensões → indicadores).
 /// Ele referencia a tabela [Dimensoes] e pode ser nulo para categorias que não
 /// utilizam dimensões.
+@DataClassName('Indicador')
 class Indicadores extends Table {
   IntColumn get id => integer().autoIncrement()();
 

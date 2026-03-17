@@ -6,7 +6,7 @@ class RegioesService {
 
   RegioesService(AppDatabase db) : _regioesDao = RegioesDao(db);
 
-  Future<List<Regioe>> getTodas() {
+  Future<List<Regiao>> getTodas() {
     return _regioesDao.getTodas();
   }
 

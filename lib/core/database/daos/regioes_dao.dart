@@ -8,7 +8,7 @@ part 'regioes_dao.g.dart';
 class RegioesDao extends DatabaseAccessor<AppDatabase> with _$RegioesDaoMixin {
   RegioesDao(AppDatabase db) : super(db);
 
-  Future<List<Regioe>> getTodas() {
+  Future<List<Regiao>> getTodas() {
     return select(regioes).get();
   }
 

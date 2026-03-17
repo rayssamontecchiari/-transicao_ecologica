@@ -16,7 +16,7 @@ class IndicadoresDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Retorna indicadores de uma categoria específica
-  Future<List<Indicadore>> getPorCategoria(int categoriaId) {
+  Future<List<Indicador>> getPorCategoria(int categoriaId) {
     return (select(indicadores)
           ..where((i) => i.categoriaId.equals(categoriaId)))
         .get();
@@ -36,7 +36,7 @@ class IndicadoresDao extends DatabaseAccessor<AppDatabase>
     return count > 0;
   }
 
-  Future<List<(Indicadore, Categoria)>> getComCategoria() {
+  Future<List<(Indicador, Categoria)>> getComCategoria() {
     final query = select(indicadores).join([
       innerJoin(
         categorias,

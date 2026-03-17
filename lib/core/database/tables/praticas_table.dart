@@ -7,6 +7,7 @@ import 'categorias_table.dart';
 /// mas sim à categoria como um todo. Elas são utilizadas na avaliação da
 /// categoria "Análise Multidimensional da Sustentabilidade das Práticas
 /// Agrícolas".
+@DataClassName('Pratica')
 class Praticas extends Table {
   IntColumn get id => integer().autoIncrement()();
 

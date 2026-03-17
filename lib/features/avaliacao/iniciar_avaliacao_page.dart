@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' hide Column, Table;
 
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
@@ -25,6 +26,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   bool _isLoading = true;
   int _categoriaAtual = 0;
   bool _isProcessing = false;
+  List<Avaliacao> _avaliacoesFamilia = [];
 
   @override
   void initState() {
@@ -99,6 +101,63 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
+        // Recarregar avaliações
+        await _carregarAvaliacoesFamilia();
+      }
+    }
+  }
+
+  Future<void> _carregarAvaliacoesFamilia() async {
+    if (_selectedFamilia == null) return;
+
+    try {
+      final avaliacoes = _db.select(_db.avaliacoes)
+        ..where((a) => a.familiaId.equals(_selectedFamilia!.id))
+        ..orderBy([(a) => OrderingTerm.desc(a.data)]);
+
+      final avaliacoesData = await avaliacoes.get();
+
+      if (mounted) {
+        setState(() {
+          _avaliacoesFamilia = avaliacoesData;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar avaliações: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deletarAvaliacao(int avaliacaoId) async {
+    try {
+      await _db.delete(_db.avaliacaoItens)
+        ..where((a) => a.avaliacaoId.equals(avaliacaoId));
+      await _db.delete(_db.avaliacoes)
+        ..where((a) => a.id.equals(avaliacaoId));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Avaliação deletada com sucesso!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        await _carregarAvaliacoesFamilia();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao deletar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -198,7 +257,12 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                           .toList(),
                       onChanged: _isProcessing
                           ? null
-                          : (f) => setState(() => _selectedFamilia = f),
+                          : (f) {
+                              setState(() => _selectedFamilia = f);
+                              if (f != null) {
+                                _carregarAvaliacoesFamilia();
+                              }
+                            },
                     ),
 
                     const SizedBox(height: 32),
@@ -306,28 +370,132 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
 
                     const SizedBox(height: 32),
 
+                    // Avaliações Existentes
+                    if (_selectedFamilia != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          'Avaliações Existentes (${_avaliacoesFamilia.length})',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                      ),
+                      if (_avaliacoesFamilia.isEmpty)
+                        Card(
+                          color: Colors.grey[100],
+                          child: const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              'Nenhuma avaliação registrada para esta família',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _avaliacoesFamilia.length,
+                          itemBuilder: (context, index) {
+                            final avaliacao = _avaliacoesFamilia[index];
+                            final data = avaliacao.data;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Card(
+                                child: ListTile(
+                                  trailing: PopupMenuButton(
+                                    itemBuilder: (context) => [
+                                      PopupMenuItem(
+                                        child: const Row(
+                                          children: [
+                                            Icon(Icons.delete,
+                                                color: Colors.red, size: 20),
+                                            SizedBox(width: 8),
+                                            Text('Deletar',
+                                                style: TextStyle(
+                                                    color: Colors.red)),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text(
+                                                  'Confirmar Deleção'),
+                                              content: const Text(
+                                                'Tem certeza que deseja deletar esta avaliação? Esta ação não pode ser desfeita.',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: const Text('Cancelar'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    _deletarAvaliacao(
+                                                        avaliacao.id);
+                                                  },
+                                                  child: const Text('Deletar',
+                                                      style: TextStyle(
+                                                          color: Colors.red)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  title: Text(avaliacao.avaliador),
+                                  subtitle: Text(
+                                    '${data.day}/${data.month}/${data.year} às ${data.hour}:${data.minute.toString().padLeft(2, '0')}',
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      const SizedBox(height: 32),
+                    ],
+
                     // Botão de ação
                     SizedBox(
                       height: 48,
-                      child: ElevatedButton.icon(
+                      width: double.infinity,
+                      child: ElevatedButton(
                         onPressed: _isProcessing ? null : _iniciarAvaliacao,
-                        icon: _isProcessing
-                            ? const SizedBox(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (_isProcessing)
+                              const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
+                                      Colors.white),
                                 ),
                               )
-                            : const Icon(Icons.play_arrow),
-                        label: Text(
-                          _isProcessing
-                              ? 'Processando Avaliação...'
-                              : 'Iniciar Avaliação',
-                          style: const TextStyle(fontSize: 16),
+                            else
+                              const Icon(Icons.play_arrow),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isProcessing
+                                  ? 'Processando Avaliação...'
+                                  : 'Iniciar Avaliação',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
                         ),
                       ),
                     ),
