@@ -14,54 +14,47 @@ class ResultadoAvaliacaoService {
     required int categoriaId,
   }) async {
     try {
-      // Recuperar indicadores da categoria
       final indicadores = await (_db.select(_db.indicadores)
             ..where((i) => i.categoriaId.equals(categoriaId)))
           .get();
 
       if (indicadores.isEmpty) return null;
 
-      // Recuperar itens de avaliação (respostas)
       final itens = await (_db.select(_db.avaliacaoItens)
             ..where((ai) => ai.avaliacaoId.equals(avaliacaoId)))
           .get();
 
-      // Filtrar itens que pertencem a indicadores desta categoria
       final indicadorIds = indicadores.map((i) => i.id).toSet();
+
       final itensDaCategoria = itens
           .where((item) => indicadorIds.contains(item.indicadorId))
           .toList();
 
       if (itensDaCategoria.isEmpty) return null;
 
-      // Montar lista de notas e pesos
       final notas = <int>[];
       final pesos = <double>[];
 
       for (final item in itensDaCategoria) {
         if (item.valorLikert != null) {
-          // Modo Likert: usar a nota diretamente
-          notas.add(item.valorLikert!);
-
-          // Encontrar o indicador para pegar o peso
           final indicador =
               indicadores.firstWhere((i) => i.id == item.indicadorId);
-          pesos.add(indicador.peso);
+
+          notas.add(item.valorLikert!);
+          pesos.add(indicador.peso ?? 1.0); // 🔧 proteção extra
         }
       }
 
       if (notas.isEmpty) return null;
 
-      // Calcular resultado fuzzy
       final fuzzyResult = FuzzyCalculator.calcularPorNotas(notas, pesos);
+
       final valor = fuzzyResult['resultado'] ?? 0.0;
-      final interpretacao = FuzzyCalculator.interpretarResultado(valor);
 
       return ResultadoAvaliacao.fromCalculation(
         avaliacaoId: avaliacaoId,
         categoriaId: categoriaId,
         fuzzyResult: fuzzyResult,
-        interpretacao: interpretacao,
       );
     } catch (e) {
       print('Erro ao calcular resultado: $e');
@@ -121,7 +114,6 @@ class ResultadoAvaliacaoService {
         'minValor': minValor,
         'maxValor': maxValor,
         'totalCategorias': resultados.length,
-        'interpretacaoMedia': FuzzyCalculator.interpretarResultado(media),
       };
     } catch (e) {
       print('Erro ao obter estatísticas: $e');

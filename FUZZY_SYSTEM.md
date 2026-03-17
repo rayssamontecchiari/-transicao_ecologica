@@ -63,7 +63,6 @@ class ResultadoAvaliacao {
   final int avaliacaoId;
   final int categoriaId;
   final double valorFuzzyFinal;      // Valor normalizado (0-10)
-  final String interpretacao;        // "Muito Bom", "Bom", etc.
   
   // Detalhes do cálculo
   final double sumD, sumA, sumB, sumC;
@@ -94,7 +93,6 @@ final resultado = await service.calcularResultadoCategoria(
 );
 
 print('Valor: ${resultado?.valorFuzzyFinal}');
-print('Interpretação: ${resultado?.interpretacao}');
 ```
 
 #### 2. Obter estatísticas completas
@@ -105,7 +103,6 @@ final stats = await service.obterEstatisticasAvaliacao(1);
 print('Média: ${stats['media']}');
 print('Mínima: ${stats['minValor']}');
 print('Máxima: ${stats['maxValor']}');
-print('Interpretação: ${stats['interpretacaoMedia']}');
 ```
 
 #### 3. Exibir resultados na UI

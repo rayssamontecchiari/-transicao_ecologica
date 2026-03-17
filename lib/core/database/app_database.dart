@@ -84,56 +84,56 @@ class AppDatabase extends _$AppDatabase {
             nome: 'Escala',
             descricao:
                 'Área de produção e prevalência de monocultura versus parcelas pequenas e diversificadas',
-            peso: Value(1.0),
+            peso: Value(0.5),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Autossuficiência / Dependência de insumos',
             descricao:
                 'Proporção de insumos externos (adubos químicos, agrotóxicos, sementes comerciais) versus insumos locais',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Força de trabalho',
             descricao:
                 'Predominância de mão de obra familiar versus contratação de terceiros',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Agrobiodiversidade',
             descricao:
                 'Diversidade de espécies/variedades e uso de sementes locais versus híbridas/transgênicas',
-            peso: Value(1.0),
+            peso: Value(0.9),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Produtividade ecológica / Grau de artificialização',
             descricao:
                 'Presença de elementos naturais, matéria orgânica do solo e práticas agroecológicas',
-            peso: Value(1.0),
+            peso: Value(0.7),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Multifuncionalidade do trabalho',
             descricao:
                 'Diversificação das atividades, presença de autoconsumo e serviços locais',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Conhecimento',
             descricao:
                 'Predominância de saberes tradicionais adaptados localmente versus pacotes tecnológicos',
-            peso: Value(1.0),
+            peso: Value(0.9),
             categoriaId: 1,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Cosmovisão',
             descricao:
                 'Visão de mundo: antropocêntrica/pragmática versus harmônica/integrada',
-            peso: Value(1.0),
+            peso: Value(0.6),
             categoriaId: 1,
           ));
 
@@ -222,6 +222,56 @@ class AppDatabase extends _$AppDatabase {
                 PraticasCompanion.insert(nome: nome, categoriaId: cat2.id));
           }
 
+          // --- additional indicators for "Sustentabilidade" category (práticas) ---
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Controle de ervas espontâneas',
+            descricao: 'Estratégias de controle de plantas espontâneas.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Preparo do solo',
+            descricao: 'Técnicas de preparo e manejo do solo.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Adubação verde',
+            descricao: 'Uso de adubação verde para fertilidade do solo.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Calagem e adubação',
+            descricao: 'Aplicação de calcário e fertilizantes.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Controle de pragas e doenças',
+            descricao: 'Manejo integrado de pragas e doenças.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Sementes',
+            descricao: 'Qualidade e manejo de sementes e mudas.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Irrigação',
+            descricao: 'Sistemas e práticas de irrigação.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Sistema de cultivo',
+            descricao: 'Arranjo e sistema de cultivo.',
+            peso: Value(1.0),
+            categoriaId: cat2.id,
+          ));
+
           // --- indicators for "Organização social" category ---
           final cat3 = await (select(categorias)
                 ..where((c) => c.nome.equals('Organização social')))
@@ -238,70 +288,70 @@ class AppDatabase extends _$AppDatabase {
             nome: 'Representatividade',
             descricao:
                 'Diversidade de opinião, raça, crença, nível educacional, cultura, gênero e geração entre os membros.',
-            peso: Value(1.0),
+            peso: Value(0.9),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Representação',
             descricao:
                 'Forma como o presidente representa a organização e envolve os demais membros, delegando funções com a criação de comissões específicas e permanentes.',
-            peso: Value(1.0),
+            peso: Value(0.6),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Planejamento e gestão',
             descricao:
                 'Elaboração de diagnósticos, planejamento de ações e projetos a partir de planos de curto, médio e longo prazo com monitoramento e avaliação.',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Transparência',
             descricao:
                 'Disponibilidade de atas, prestações de contas e documentos ao público. Exposição de planejamento e resultados em painéis acessíveis.',
-            peso: Value(1.0),
+            peso: Value(0.9),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Decisão',
             descricao:
                 'Tomada de decisão através de processos dialógicos e democráticos visando consenso, com métodos como circularidade da fala e escuta ativa.',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Disposição dos participantes nas reuniões',
             descricao:
                 'Arranjo físico das reuniões em círculo sem lugar de destaque, onde todos ensinam e aprendem caracterizando a singularidade dos saberes.',
-            peso: Value(1.0),
+            peso: Value(0.5),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Temas relevantes',
             descricao:
                 'Abordagem de temas prioritários hierarquizados para discussão em comissões permanentes. Capacitação técnica e política em diversos temas.',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Formação',
             descricao:
                 'Promoção de oficinas, palestras temáticas e atividades de formação continuada para capacitação dos associados.',
-            peso: Value(1.0),
+            peso: Value(0.8),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Sucessão',
             descricao:
                 'Renovação regular dos quadros da diretoria com eleições periódicas, evitando permanência indefinida do mesmo grupo.',
-            peso: Value(1.0),
+            peso: Value(0.7),
             categoriaId: cat3.id,
           ));
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Empoderamento',
             descricao:
                 'Ocupação de espaços de representação em conselhos, comitês e fóruns regionais pela organização e seus representantes.',
-            peso: Value(1.0),
+            peso: Value(0.7),
             categoriaId: cat3.id,
           ));
 
@@ -314,36 +364,36 @@ class AppDatabase extends _$AppDatabase {
           await into(indicadores).insert(IndicadoresCompanion.insert(
             nome: 'Ações coletivas em unidade de produção',
             descricao:
-                'Reuniões técnicas, demonstrações de método e dias de campo realizados na propriedade. Nota máxima: 5.0 (0.2 para cada um ou dois eventos anuais, iniciando em 4.2).',
-            peso: Value(5.0),
-            categoriaId: cat4.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Orientação técnica individual em unidade de produção',
-            descricao:
-                'Visitas técnicas individuais e acompanhamento direto na propriedade. Nota máxima: 4.0 (0.2 para cada um ou dois eventos anuais, iniciando em 3.2).',
-            peso: Value(4.0),
-            categoriaId: cat4.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Ações coletivas em associações, sindicatos e organizações',
-            descricao:
-                'Participação em eventos coletivos realizados por associações, sindicatos e outras organizações. Nota máxima: 3.0 (0.2 para cada um ou dois eventos anuais, iniciando em 2.2).',
-            peso: Value(3.0),
-            categoriaId: cat4.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Orientação técnica individual em loja ou escritório',
-            descricao:
-                'Atendimento técnico em espaços comerciais ou de escritório. Nota máxima: 2.0 (0.2 para cada um ou dois eventos anuais, iniciando em 1.2).',
-            peso: Value(2.0),
-            categoriaId: cat4.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Informação esporádica de fonte diversa',
-            descricao:
-                'Acesso ocasional a informações advindas de diferentes fontes (internet, rádio, vizinhos, etc.). Nota máxima: 1.0 (sem variação).',
+                'Reuniões técnicas, demonstrações de método e dias de campo realizados na propriedade.',
             peso: Value(1.0),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Ação coletiva em organização',
+            descricao:
+                'Participação em eventos coletivos realizados por associações, sindicatos e outras organizações.',
+            peso: Value(0.7),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Ação individual em unidade produtiva',
+            descricao:
+                'Visitas técnicas individuais e acompanhamento direto na propriedade.',
+            peso: Value(0.6),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Ação individual em estabelecimento',
+            descricao:
+                'Atendimento técnico em espaços comerciais ou de escritório.',
+            peso: Value(0.4),
+            categoriaId: cat4.id,
+          ));
+          await into(indicadores).insert(IndicadoresCompanion.insert(
+            nome: 'Ação educativa não disponibilizada',
+            descricao:
+                'Acesso ocasional a informações advindas de diferentes fontes.',
+            peso: Value(0.11),
             categoriaId: cat4.id,
           ));
         },

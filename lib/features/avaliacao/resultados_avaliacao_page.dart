@@ -258,13 +258,6 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
                           fontSize: 14,
                         ),
                       ),
-                      Text(
-                        resultado.interpretacao,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: cor,
-                        ),
-                      ),
                     ],
                   ),
                 ),
