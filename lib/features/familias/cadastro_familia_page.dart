@@ -7,7 +7,9 @@ import '../../core/services/regioes_service.dart';
 
 /// Página para cadastro de novas famílias.
 class CadastroFamiliaPage extends StatefulWidget {
-  const CadastroFamiliaPage({super.key});
+  final Familia? familia;
+
+  const CadastroFamiliaPage({super.key, this.familia});
 
   @override
   State<CadastroFamiliaPage> createState() => _CadastroFamiliaPageState();
@@ -27,6 +29,8 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   bool _isLoading = true;
   bool _isSaving = false;
 
+  bool get _isEditing => widget.familia != null;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +42,13 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
     _familiasService = FamiliasService(db);
     _regioesService = RegioesService(db);
     await _loadRegioes();
+
+    // Se estiver editando, preencher os campos
+    if (_isEditing) {
+      _nomeResponsavelController.text = widget.familia!.nomeResponsavel;
+      _telefoneController.text = widget.familia!.telefone ?? '';
+      _enderecoController.text = widget.familia!.endereco ?? '';
+    }
   }
 
   Future<void> _loadRegioes() async {
@@ -47,7 +58,14 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
         _regioes = regioes;
         _isLoading = false;
         if (_regioes.isNotEmpty) {
-          _selectedRegiao = _regioes.first;
+          if (_isEditing) {
+            _selectedRegiao = _regioes.firstWhere(
+              (r) => r.id == widget.familia!.regiaoId,
+              orElse: () => _regioes.first,
+            );
+          } else {
+            _selectedRegiao = _regioes.first;
+          }
         }
       });
     } catch (e) {
@@ -79,18 +97,31 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
         regiaoId: Value(_selectedRegiao!.id),
       );
 
-      await _familiasService.cadastrarFamilia(familia);
+      if (_isEditing) {
+        await _familiasService.atualizarFamilia(widget.familia!.id, familia);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Família atualizada com sucesso!')),
+          );
+        }
+      } else {
+        await _familiasService.cadastrarFamilia(familia);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Família cadastrada com sucesso!')),
+          );
+        }
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Família cadastrada com sucesso!')),
-        );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao cadastrar família: $e')),
+          SnackBar(
+              content: Text(
+                  'Erro ao ${_isEditing ? 'atualizar' : 'cadastrar'} família: $e')),
         );
       }
     } finally {
@@ -110,7 +141,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastro de Família'),
+        title: Text(_isEditing ? 'Editar Família' : 'Cadastro de Família'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -199,7 +230,9 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text('Cadastrar Família'),
+                            : Text(_isEditing
+                                ? 'Atualizar Família'
+                                : 'Cadastrar Família'),
                       ),
                     ),
                   ],

@@ -18,4 +18,9 @@ class FamiliasService {
   Future<void> deletarFamilia(int familiaId) {
     return _familiasDao.deletar(familiaId);
   }
+
+  /// Atualiza uma família
+  Future<bool> atualizarFamilia(int familiaId, FamiliasCompanion familia) {
+    return _familiasDao.atualizar(familiaId, familia);
+  }
 }

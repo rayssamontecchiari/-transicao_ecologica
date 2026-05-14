@@ -6,7 +6,7 @@ part 'regioes_dao.g.dart';
 
 @DriftAccessor(tables: [Regioes])
 class RegioesDao extends DatabaseAccessor<AppDatabase> with _$RegioesDaoMixin {
-  RegioesDao(AppDatabase db) : super(db);
+  RegioesDao(super.db);
 
   Future<List<Regiao>> getTodas() {
     return select(regioes).get();

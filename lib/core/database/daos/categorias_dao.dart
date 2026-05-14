@@ -7,7 +7,7 @@ part 'categorias_dao.g.dart';
 @DriftAccessor(tables: [Categorias])
 class CategoriasDao extends DatabaseAccessor<AppDatabase>
     with _$CategoriasDaoMixin {
-  CategoriasDao(AppDatabase db) : super(db);
+  CategoriasDao(super.db);
 
   /// Retorna uma categoria específica pelo ID
   Future<Categoria?> getById(int id) {

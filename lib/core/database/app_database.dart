@@ -28,7 +28,7 @@ part 'app_database.g.dart';
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase._internal(QueryExecutor e) : super(e);
+  AppDatabase._internal(super.e);
 
   static AppDatabase? _instance;
 
@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// We override [migration] so we can insert seed data when the database is
   /// first created. This ensures every install starts with the same base
@@ -222,56 +222,6 @@ class AppDatabase extends _$AppDatabase {
                 PraticasCompanion.insert(nome: nome, categoriaId: cat2.id));
           }
 
-          // --- additional indicators for "Sustentabilidade" category (práticas) ---
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Controle de ervas espontâneas',
-            descricao: 'Estratégias de controle de plantas espontâneas.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Preparo do solo',
-            descricao: 'Técnicas de preparo e manejo do solo.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Adubação verde',
-            descricao: 'Uso de adubação verde para fertilidade do solo.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Calagem e adubação',
-            descricao: 'Aplicação de calcário e fertilizantes.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Controle de pragas e doenças',
-            descricao: 'Manejo integrado de pragas e doenças.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Sementes',
-            descricao: 'Qualidade e manejo de sementes e mudas.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Irrigação',
-            descricao: 'Sistemas e práticas de irrigação.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-          await into(indicadores).insert(IndicadoresCompanion.insert(
-            nome: 'Sistema de cultivo',
-            descricao: 'Arranjo e sistema de cultivo.',
-            peso: Value(1.0),
-            categoriaId: cat2.id,
-          ));
-
           // --- indicators for "Organização social" category ---
           final cat3 = await (select(categorias)
                 ..where((c) => c.nome.equals('Organização social')))
@@ -410,6 +360,24 @@ class AppDatabase extends _$AppDatabase {
             // version 3 adds a praticaId to evaluation items (multidimensional
             // grid scoring)
             await m.addColumn(avaliacaoItens, avaliacaoItens.praticaId);
+          }
+
+          if (from == 3) {
+            // version 4 adds support for draft evaluations and editing
+            // Use raw SQL to add new columns
+            final executor = m.database;
+            // Add columns - SQLite doesn't allow CURRENT_TIMESTAMP as default in ALTER TABLE
+            await executor.customStatement(
+              'ALTER TABLE avaliacoes ADD COLUMN data_alteracao DATETIME DEFAULT NULL',
+            );
+            await executor.customStatement(
+              "ALTER TABLE avaliacoes ADD COLUMN status TEXT DEFAULT 'draft'",
+            );
+            await executor.customStatement(
+              'ALTER TABLE avaliacoes ADD COLUMN categoria_atual INTEGER DEFAULT 0',
+            );
+            // Note: existing rows will have NULL for data_alteracao - this is ok
+            // The app will set the value when updating records
           }
         },
       );

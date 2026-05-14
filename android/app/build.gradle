@@ -22,9 +22,17 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.jetbrains.kotlin') {
+            details.useVersion '1.8.10'
+        }
+    }
+}
+
 android {
     namespace "com.example.transicao_ecologica"
-    compileSdk flutter.compileSdkVersion
+    compileSdkVersion 34
     ndkVersion flutter.ndkVersion
 
     compileOptions {

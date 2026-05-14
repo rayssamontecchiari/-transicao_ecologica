@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
 import '../../core/services/avaliacao_service.dart';
+import '../avaliacao/avaliacao_form.dart';
 
 class FamiliaDetalhesPage extends StatefulWidget {
   final int familiaId;
@@ -111,6 +112,20 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
     );
   }
 
+  Future<void> _editarAvaliacao(Avaliacao avaliacao) async {
+    // Navegar para o formulário de avaliação com os dados da avaliação existente
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CategoriaFormPage(
+          categoriaId: 1, // Você pode precisar determinar a categoria correta
+          familiaId: widget.familiaId,
+          avaliacaoExistente: avaliacao,
+        ),
+      ),
+    );
+    _carregarDados();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,13 +214,42 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
                                       '${data.day}/${data.month}/${data.year} '
                                       'às ${data.hour}:${data.minute.toString().padLeft(2, '0')}',
                                     ),
-                                    trailing: IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () =>
-                                          _confirmarDelecao(avaliacao.id),
+                                    trailing: PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'edit') {
+                                          _editarAvaliacao(avaliacao);
+                                        } else if (value == 'delete') {
+                                          _confirmarDelecao(avaliacao.id);
+                                        }
+                                      },
+                                      itemBuilder: (context) => const [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.edit,
+                                                  color: Colors.blue, size: 20),
+                                              SizedBox(width: 8),
+                                              Text('Editar'),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.delete,
+                                                  color: Colors.red, size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Deletar',
+                                                style: TextStyle(
+                                                    color: Colors.red),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),

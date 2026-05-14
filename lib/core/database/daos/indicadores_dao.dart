@@ -8,7 +8,7 @@ part 'indicadores_dao.g.dart';
 @DriftAccessor(tables: [Indicadores, Categorias])
 class IndicadoresDao extends DatabaseAccessor<AppDatabase>
     with _$IndicadoresDaoMixin {
-  IndicadoresDao(AppDatabase db) : super(db);
+  IndicadoresDao(super.db);
 
   Future<void> atualizarPeso(int id, double novoPeso) {
     return (update(indicadores)..where((i) => i.id.equals(id)))

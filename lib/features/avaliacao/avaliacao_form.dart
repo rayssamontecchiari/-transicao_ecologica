@@ -7,10 +7,18 @@ import '../../core/services/familia_service.dart';
 
 class CategoriaFormPage extends StatefulWidget {
   final int categoriaId;
+  final int? familiaId;
+  final Avaliacao? avaliacaoExistente;
+  final int? categoriaAtual;
+  final int? totalCategorias;
 
   const CategoriaFormPage({
     super.key,
     required this.categoriaId,
+    this.familiaId,
+    this.avaliacaoExistente,
+    this.categoriaAtual,
+    this.totalCategorias,
   });
 
   @override
@@ -36,6 +44,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
   int? _categoriaAtual;
   int? _totalCategorias;
   bool _vemDoFluxo = false;
+  int? _avaliacaoId; // ID da avaliação em progresso
 
   /// respostas para avaliações comuns: indicadorId -> valor (1..5)
   final Map<int, int?> _respostas = {};
@@ -58,19 +67,26 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
     _indicadoresService = IndicadoresService(_db);
     _familiasService = FamiliasService(_db);
 
-    // Obter dados passados via arguments do fluxo de avaliação
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final familiaId = args?['familiaId'] as int?;
-    _categoriaAtual = args?['categoriaAtual'] as int?;
-    _totalCategorias = args?['totalCategorias'] as int?;
+    // Usar parâmetros do widget
+    final familiaId = widget.familiaId;
+    _categoriaAtual = widget.categoriaAtual ?? 1;
+    _totalCategorias = widget.totalCategorias ?? 1;
     _vemDoFluxo = familiaId != null;
+    _avaliacaoId = widget.avaliacaoExistente?.id;
 
     final categoria =
         await _indicadoresService.getCategoriaById(widget.categoriaId);
 
     final indicadores =
         await _indicadoresService.getIndicadoresByCategoria(widget.categoriaId);
+
+    final isSustentabilidade = categoria != null &&
+        categoria.nome ==
+            'Análise Multidimensional da Sustentabilidade das Práticas Agrícolas';
+
+    final indicadoresFiltrados = isSustentabilidade
+        ? indicadores.where((i) => i.dimensaoId != null).toList()
+        : indicadores;
 
     final familias = await _familiasService.getTodas();
     final familia = familiaId != null
@@ -90,18 +106,61 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
       }
     }
 
+    // Se há avaliação existente, carregar dados
+    if (widget.avaliacaoExistente != null) {
+      await _carregarAvaliacaoExistente(widget.avaliacaoExistente!);
+    }
+
     setState(() {
       _categoria = categoria;
-      _indicadores = indicadores;
+      _indicadores = indicadoresFiltrados;
       _familias = familias;
       _selectedFamilia = familia;
 
-      for (final ind in indicadores) {
-        _respostas[ind.id] = null;
+      for (final ind in indicadoresFiltrados) {
+        if (_respostas[ind.id] == null) {
+          _respostas[ind.id] = null;
+        }
       }
 
       _isLoading = false;
     });
+  }
+
+  /// Carrega dados de uma avaliação existente
+  Future<void> _carregarAvaliacaoExistente(Avaliacao avaliacao) async {
+    try {
+      final itens = await _db.select(_db.avaliacaoItens)
+        ..where((a) => a.avaliacaoId.equals(avaliacao.id));
+      final itensData = await itens.get();
+
+      // Carregar respostas baseado no tipo de categoria
+      if (_praticas.isNotEmpty) {
+        // Multidimensional: por prática
+        for (final item in itensData) {
+          if (item.praticaId != null) {
+            _respostasPraticas[item.praticaId!]?.add(item.indicadorId);
+          }
+        }
+      } else {
+        // Likert: por indicador
+        for (final item in itensData) {
+          _respostas[item.indicadorId] = item.valorLikert;
+        }
+      }
+
+      // Carregar dados da avaliação
+      _avaliadorController.text = avaliacao.avaliador;
+      _observacoesController.text = avaliacao.observacoes ?? '';
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao carregar avaliação: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   /// Valida se todos os indicadores foram preenchidos
@@ -115,7 +174,15 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
     }
   }
 
+  Future<void> _saveDraft() async {
+    await _persistAvaliacao(continueFlow: false);
+  }
+
   Future<void> _submit() async {
+    await _persistAvaliacao(continueFlow: true);
+  }
+
+  Future<void> _persistAvaliacao({required bool continueFlow}) async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedFamilia == null) {
@@ -127,7 +194,6 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
       return;
     }
 
-    // Validar que todos os indicadores foram preenchidos
     if (!_todoIndicadoresPreenchidos()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -141,27 +207,56 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
     setState(() => _isSaving = true);
 
     try {
-      final avaliacao = AvaliacoesCompanion.insert(
-        avaliador: _avaliadorController.text.trim().isEmpty
-            ? 'Anônimo'
-            : _avaliadorController.text.trim(),
-        familiaId: _selectedFamilia!.id,
-        observacoes: _observacoesController.text.trim().isEmpty
-            ? const drift.Value.absent()
-            : drift.Value(
-                _observacoesController.text.trim(),
-              ),
-      );
+      int avlId = _avaliacaoId ?? 0;
 
-      final avaliacaoId = await _db.into(_db.avaliacoes).insert(avaliacao);
+      if (_avaliacaoId == null) {
+        final avaliacao = AvaliacoesCompanion.insert(
+          avaliador: _avaliadorController.text.trim().isEmpty
+              ? 'Anônimo'
+              : _avaliadorController.text.trim(),
+          familiaId: _selectedFamilia!.id,
+          observacoes: _observacoesController.text.trim().isEmpty
+              ? const drift.Value.absent()
+              : drift.Value(_observacoesController.text.trim()),
+          status: const drift.Value('draft'),
+          categoriaAtual: drift.Value(_categoriaAtual ?? 0),
+        );
+
+        avlId = await _db.into(_db.avaliacoes).insert(avaliacao);
+        _avaliacaoId = avlId;
+      } else {
+        await _db.update(_db.avaliacoes).replace(
+              AvaliacoesCompanion(
+                id: drift.Value(_avaliacaoId!),
+                familiaId: drift.Value(_selectedFamilia!.id),
+                avaliador: drift.Value(
+                  _avaliadorController.text.trim().isEmpty
+                      ? 'Anônimo'
+                      : _avaliadorController.text.trim(),
+                ),
+                observacoes: drift.Value(
+                  _observacoesController.text.trim().isEmpty
+                      ? null
+                      : _observacoesController.text.trim(),
+                ),
+                data: drift.Value(DateTime.now()),
+                dataAlteracao: drift.Value(DateTime.now()),
+                status: drift.Value('draft'),
+                categoriaAtual: drift.Value(_categoriaAtual ?? 0),
+              ),
+            );
+
+        await (_db.delete(_db.avaliacaoItens)
+              ..where((a) => a.avaliacaoId.equals(avlId)))
+            .go();
+      }
 
       if (_praticas.isNotEmpty) {
-        // build itens a partir do mapa de respostas por prática
         for (final entry in _respostasPraticas.entries) {
           final praticaId = entry.key;
           for (final indicadorId in entry.value) {
             final item = AvaliacaoItensCompanion.insert(
-              avaliacaoId: avaliacaoId,
+              avaliacaoId: avlId,
               indicadorId: indicadorId,
               praticaId: drift.Value(praticaId),
               valorLikert: const drift.Value(1),
@@ -170,17 +265,14 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
           }
         }
       } else {
-        // padrão: notas Likert
         for (final entry in _respostas.entries) {
           final valor = entry.value;
-
           if (valor != null) {
             final item = AvaliacaoItensCompanion.insert(
-              avaliacaoId: avaliacaoId,
+              avaliacaoId: avlId,
               indicadorId: entry.key,
               valorLikert: drift.Value(valor),
             );
-
             await _db.into(_db.avaliacaoItens).insert(item);
           }
         }
@@ -188,23 +280,23 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
 
       if (!mounted) return;
 
+      final isUltima = _categoriaAtual == _totalCategorias;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✓ Avaliação salva com sucesso!'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(isUltima
+              ? '✓ Última categoria salva! Exibindo resultados...'
+              : continueFlow
+                  ? '✓ Categoria salva! Prosseguindo...'
+                  : '✓ Rascunho salvo! Você pode continuar depois.'),
+          duration: const Duration(seconds: 2),
         ),
       );
 
-      // Mostrar resumo da avaliação
-      await _mostrarResumoAvaliacao(avaliacaoId);
-
-      // Retornar true para indicar que a avaliação foi salva
-      if (mounted) {
-        Navigator.pop(context, true);
+      if (mounted && continueFlow) {
+        Navigator.pop(context, avlId);
       }
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erro ao salvar: $e'),
@@ -227,103 +319,150 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _categoria?.nome ?? 'Avaliação',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 16),
-            ),
-            if (_vemDoFluxo &&
-                _categoriaAtual != null &&
-                _totalCategorias != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  'Categoria $_categoriaAtual de $_totalCategorias',
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.normal),
-                ),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_vemDoFluxo) {
+          // Durante o fluxo, mostrar confirmação
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Cancelar avaliação?'),
+              content: const Text(
+                'Você está no meio de uma avaliação. Deseja realmente cancelar e voltar? Os dados da categoria atual serão perdidos.',
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Não'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Sim'),
+                ),
+              ],
+            ),
+          );
+          return confirm ?? false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F8F3),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: Colors.black87,
+          iconTheme: const IconThemeData(color: Colors.black87),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Avaliação',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              if (_vemDoFluxo &&
+                  _categoriaAtual != null &&
+                  _totalCategorias != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Categoria $_categoriaAtual de $_totalCategorias',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                  ),
+                ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.info_outline,
+                  color: Theme.of(context).colorScheme.primary),
+            ),
           ],
         ),
-        elevation: 2,
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Cabeçalho com instruções
-                      Card(
-                        color: Theme.of(context).primaryColor.withOpacity(0.05),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          padding: const EdgeInsets.all(18),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Informações da Avaliação',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.16),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  Icons.info_outline,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 28,
+                                ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Preencha os dados abaixo para registrar uma nova avaliação.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[700],
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Informações da Avaliação',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Preencha os dados abaixo para registrar uma nova avaliação.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Colors.grey[700],
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // Seção: Avaliador
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          'Dados do Avaliador',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
-                      TextFormField(
-                        controller: _avaliadorController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nome do Avaliador (opcional)',
-                          hintText: 'Ex: João Silva',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Seção: Família
-                      if (!_vemDoFluxo) ...[
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: Text(
-                            'Dados da Família',
+                            'Dados do Avaliador (opcional)',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -332,159 +471,260 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                                 ),
                           ),
                         ),
-                        DropdownButtonFormField<Familia>(
-                          value: _selectedFamilia,
-                          decoration: const InputDecoration(
-                            labelText: 'Selecione a Família *',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.home),
-                          ),
-                          items: _familias
-                              .map(
-                                (f) => DropdownMenuItem(
-                                  value: f,
-                                  child: Text(
-                                      'Família ${f.id} - ${f.nomeResponsavel}'),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (f) =>
-                              setState(() => _selectedFamilia = f),
-                          validator: (v) =>
-                              v == null ? 'Selecione uma família' : null,
-                        ),
-                        const SizedBox(height: 32),
-                      ] else if (_selectedFamilia != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(
-                            'Família:',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        TextFormField(
+                          controller: _avaliadorController,
+                          decoration: InputDecoration(
+                            hintText: 'Nome do Avaliador',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide:
+                                  const BorderSide(color: Colors.transparent),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: Colors.grey[200]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.8),
+                              ),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.person,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
-                            borderRadius: BorderRadius.circular(4),
-                            color: Colors.grey[50],
-                          ),
-                          child: Text(
-                            'Família ${_selectedFamilia!.id} - ${_selectedFamilia!.nomeResponsavel}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
 
-                      // Seção: Indicadores
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          _praticas.isEmpty
-                              ? 'Indicadores de Avaliação'
-                              : 'Matriz de Avaliação',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                        const SizedBox(height: 24),
+
+                        // Seção: Família
+                        if (!_vemDoFluxo) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              'Dados da Família',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
-                        ),
-                      ),
-
-                      if (_praticas.isEmpty) ...[
-                        Text(
-                          'Avalie cada indicador usando a escala de 1 a 5:',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        ..._indicadores.map(_buildIndicadorTile),
-                      ] else ...[
-                        _buildGridTable(),
-                      ],
-
-                      const SizedBox(height: 24),
-
-                      // Seção: Observações
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Text(
-                          'Observações Adicionais',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
-                      TextFormField(
-                        controller: _observacoesController,
-                        maxLines: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'Observações (opcional)',
-                          hintText:
-                              'Adicione comentários ou contextos relevantes...',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.note),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Botão de submissão
-                      SizedBox(
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: _isSaving ? null : _submit,
-                          icon: _isSaving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                          DropdownButtonFormField<Familia>(
+                            value: _selectedFamilia,
+                            decoration: const InputDecoration(
+                              labelText: 'Selecione a Família *',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.home),
+                            ),
+                            items: _familias
+                                .map(
+                                  (f) => DropdownMenuItem(
+                                    value: f,
+                                    child: Text(
+                                        'Família ${f.id} - ${f.nomeResponsavel}'),
                                   ),
                                 )
-                              : const Icon(Icons.check_circle),
-                          label: Text(
-                            _isSaving
-                                ? 'Salvando Avaliação...'
-                                : 'Salvar Avaliação',
-                            style: const TextStyle(fontSize: 16),
+                                .toList(),
+                            onChanged: (f) =>
+                                setState(() => _selectedFamilia = f),
+                            validator: (v) =>
+                                v == null ? 'Selecione uma família' : null,
+                          ),
+                          const SizedBox(height: 32),
+                        ] else if (_selectedFamilia != null) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              'Família:',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(4),
+                              color: Colors.grey[50],
+                            ),
+                            child: Text(
+                              'Família ${_selectedFamilia!.id} - ${_selectedFamilia!.nomeResponsavel}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+
+                        // Seção: Indicadores
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            _praticas.isEmpty
+                                ? 'Indicadores de Avaliação'
+                                : 'Matriz de Avaliação',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 16),
-                    ],
+                        if (_praticas.isEmpty) ...[
+                          Text(
+                            'Avalie cada indicador usando a escala abaixo.',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey[700],
+                                    ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildScaleLegend(context),
+                          const SizedBox(height: 16),
+                          ..._indicadores.map(_buildIndicadorTile),
+                        ] else ...[
+                          _buildGridTable(),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // Seção: Observações
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'Observações Adicionais',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        TextFormField(
+                          controller: _observacoesController,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            labelText: 'Observações (opcional)',
+                            hintText:
+                                'Adicione comentários ou contextos relevantes...',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.note),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _isSaving ? null : _saveDraft,
+                                icon: const Icon(Icons.save_outlined),
+                                label: Text(
+                                  _isSaving ? 'Salvando...' : 'Salvar rascunho',
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _isSaving ? null : _submit,
+                                icon: _isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(Icons.arrow_forward),
+                                label: Text(
+                                  _isSaving ? 'Salvando...' : 'Salvar',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
   Widget _buildIndicadorTile(Indicador indicador) {
     final valor = _respostas[indicador.id];
+    final steps = ['Muito baixo', 'Baixo', 'Regular', 'Alto', 'Muito alto'];
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    _getIndicadorIcon(indicador.nome),
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,7 +733,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                         indicador.nome,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 15,
                         ),
                       ),
                       if (indicador.descricao.isNotEmpty)
@@ -502,8 +742,8 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                           child: Text(
                             indicador.descricao,
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                              fontSize: 13,
+                              color: Colors.grey[700],
                             ),
                           ),
                         ),
@@ -512,73 +752,267 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (valor != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      'Avaliação: $valor',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    ),
-                  ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(5, (i) {
-                    final val = i + 1;
-                    final isSelected = valor == val;
-
-                    return InkWell(
-                      onTap: () {
-                        setState(() {
-                          _respostas[indicador.id] = val;
-                        });
-                      },
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isSelected
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey[300]!,
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$val',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  isSelected ? Colors.white : Colors.grey[700],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
+            const SizedBox(height: 18),
+            _buildLikertScale(indicador),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildLikertScale(Indicador indicador) {
+    final valor = _respostas[indicador.id] ?? 0;
+    final labels = ['Muito baixo', 'Baixo', 'Regular', 'Alto', 'Muito alto'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 58,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(5, (index) {
+                  final value = index + 1;
+                  final isSelected = valor == value;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _respostas[indicador.id] = value;
+                      });
+                    },
+                    child: Container(
+                      width: isSelected ? 32 : 22,
+                      height: isSelected ? 32 : 22,
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white,
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey[400]!,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.18),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$value',
+                          style: TextStyle(
+                            fontSize: isSelected ? 14 : 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: labels
+              .map(
+                (label) => Expanded(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[700],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  IconData _getIndicadorIcon(String nome) {
+    final lower = nome.toLowerCase();
+    if (lower.contains('energia')) return Icons.bolt;
+    if (lower.contains('insumos') || lower.contains('fertiliz'))
+      return Icons.grass;
+    if (lower.contains('solo') ||
+        lower.contains('água') ||
+        lower.contains('agua')) return Icons.water;
+    if (lower.contains('produção') || lower.contains('producao'))
+      return Icons.agriculture;
+    return Icons.leaderboard;
+  }
+
+  Widget _buildScaleLegend(BuildContext context) {
+    final labels = ['Muito baixo', 'Baixo', 'Regular', 'Alto', 'Muito alto'];
+    final colors = [
+      Colors.red.shade400,
+      Colors.orange.shade600,
+      Colors.amber.shade600,
+      Colors.green.shade400,
+      Colors.green.shade700,
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(labels.length, (index) {
+          return Expanded(
+            child: Column(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: colors[index],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  labels[index],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
   Widget _buildGridTable() {
     final columns = _indicadores;
+
+    if (_praticas.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              'Instruções: Marque os aspectos observados para cada prática',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: MaterialStateColor.resolveWith(
+                (states) => Theme.of(context).primaryColor.withOpacity(0.1),
+              ),
+              columns: [
+                const DataColumn(
+                  label: Text(
+                    'Prática Agrícola',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...columns.map((ind) => DataColumn(
+                      label: Expanded(
+                        child: Text(
+                          ind.nome,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )),
+              ],
+              rows: _praticas.map((p) {
+                final selected = _respostasPraticas[p.id]!;
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      SizedBox(
+                        width: 150,
+                        child: Text(
+                          p.nome,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    ...columns.map((ind) {
+                      final checked = selected.contains(ind.id);
+                      return DataCell(
+                        Center(
+                          child: Checkbox(
+                            value: checked,
+                            onChanged: (v) {
+                              setState(() {
+                                if (v == true) {
+                                  selected.add(ind.id);
+                                } else {
+                                  selected.remove(ind.id);
+                                }
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final maxCheckboxWidth =
+        MediaQuery.of(context).size.width > 760 ? 320.0 : double.infinity;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,52 +1028,40 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
             ),
           ),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowColor: MaterialStateColor.resolveWith(
-              (states) => Theme.of(context).primaryColor.withOpacity(0.1),
-            ),
-            columns: [
-              const DataColumn(
-                label: Text(
-                  'Prática Agrícola',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              ...columns.map((ind) => DataColumn(
-                    label: Expanded(
-                      child: Text(
-                        ind.nome,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  )),
-            ],
-            rows: _praticas.map((p) {
-              final selected = _respostasPraticas[p.id]!;
-              return DataRow(
-                cells: [
-                  DataCell(
-                    SizedBox(
-                      width: 150,
-                      child: Text(
-                        p.nome,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
+        ..._praticas.map((p) {
+          final selected = _respostasPraticas[p.id]!;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.nome,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  ...columns.map((ind) {
-                    final checked = selected.contains(ind.id);
-                    return DataCell(
-                      Center(
-                        child: Checkbox(
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: columns.map((ind) {
+                      final checked = selected.contains(ind.id);
+                      return SizedBox(
+                        width: maxCheckboxWidth,
+                        child: CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
                           value: checked,
+                          title: Text(
+                            ind.nome,
+                            style: const TextStyle(fontSize: 13),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          dense: true,
                           onChanged: (v) {
                             setState(() {
                               if (v == true) {
@@ -650,14 +1072,14 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                             });
                           },
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }).toList(),
+                  ),
                 ],
-              );
-            }).toList(),
-          ),
-        ),
+              ),
+            ),
+          );
+        }).toList(),
       ],
     );
   }

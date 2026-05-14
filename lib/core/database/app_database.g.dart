@@ -1520,6 +1520,14 @@ class $AvaliacoesTable extends Avaliacoes
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _dataAlteracaoMeta =
+      const VerificationMeta('dataAlteracao');
+  @override
+  late final GeneratedColumn<DateTime> dataAlteracao =
+      GeneratedColumn<DateTime>('data_alteracao', aliasedName, false,
+          type: DriftSqlType.dateTime,
+          requiredDuringInsert: false,
+          defaultValue: currentDateAndTime);
   static const VerificationMeta _avaliadorMeta =
       const VerificationMeta('avaliador');
   @override
@@ -1532,6 +1540,21 @@ class $AvaliacoesTable extends Avaliacoes
   late final GeneratedColumn<String> observacoes = GeneratedColumn<String>(
       'observacoes', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('draft'));
+  static const VerificationMeta _categoriaAtualMeta =
+      const VerificationMeta('categoriaAtual');
+  @override
+  late final GeneratedColumn<int> categoriaAtual = GeneratedColumn<int>(
+      'categoria_atual', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _familiaIdMeta =
       const VerificationMeta('familiaId');
   @override
@@ -1542,8 +1565,16 @@ class $AvaliacoesTable extends Avaliacoes
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES familias (id)'));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, data, avaliador, observacoes, familiaId];
+  List<GeneratedColumn> get $columns => [
+        id,
+        data,
+        dataAlteracao,
+        avaliador,
+        observacoes,
+        status,
+        categoriaAtual,
+        familiaId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1561,6 +1592,12 @@ class $AvaliacoesTable extends Avaliacoes
       context.handle(
           _dataMeta, this.data.isAcceptableOrUnknown(data['data']!, _dataMeta));
     }
+    if (data.containsKey('data_alteracao')) {
+      context.handle(
+          _dataAlteracaoMeta,
+          dataAlteracao.isAcceptableOrUnknown(
+              data['data_alteracao']!, _dataAlteracaoMeta));
+    }
     if (data.containsKey('avaliador')) {
       context.handle(_avaliadorMeta,
           avaliador.isAcceptableOrUnknown(data['avaliador']!, _avaliadorMeta));
@@ -1572,6 +1609,16 @@ class $AvaliacoesTable extends Avaliacoes
           _observacoesMeta,
           observacoes.isAcceptableOrUnknown(
               data['observacoes']!, _observacoesMeta));
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('categoria_atual')) {
+      context.handle(
+          _categoriaAtualMeta,
+          categoriaAtual.isAcceptableOrUnknown(
+              data['categoria_atual']!, _categoriaAtualMeta));
     }
     if (data.containsKey('familia_id')) {
       context.handle(_familiaIdMeta,
@@ -1592,10 +1639,16 @@ class $AvaliacoesTable extends Avaliacoes
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       data: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}data'])!,
+      dataAlteracao: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}data_alteracao'])!,
       avaliador: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}avaliador'])!,
       observacoes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}observacoes']),
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      categoriaAtual: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}categoria_atual'])!,
       familiaId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}familia_id'])!,
     );
@@ -1610,24 +1663,37 @@ class $AvaliacoesTable extends Avaliacoes
 class Avaliacao extends DataClass implements Insertable<Avaliacao> {
   final int id;
   final DateTime data;
+  final DateTime dataAlteracao;
   final String avaliador;
   final String? observacoes;
+
+  /// 'draft' = em progresso, 'completed' = finalizada
+  final String status;
+
+  /// Qual categoria o usuário está preenchendo (0-3)
+  final int categoriaAtual;
   final int familiaId;
   const Avaliacao(
       {required this.id,
       required this.data,
+      required this.dataAlteracao,
       required this.avaliador,
       this.observacoes,
+      required this.status,
+      required this.categoriaAtual,
       required this.familiaId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['data'] = Variable<DateTime>(data);
+    map['data_alteracao'] = Variable<DateTime>(dataAlteracao);
     map['avaliador'] = Variable<String>(avaliador);
     if (!nullToAbsent || observacoes != null) {
       map['observacoes'] = Variable<String>(observacoes);
     }
+    map['status'] = Variable<String>(status);
+    map['categoria_atual'] = Variable<int>(categoriaAtual);
     map['familia_id'] = Variable<int>(familiaId);
     return map;
   }
@@ -1636,10 +1702,13 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
     return AvaliacoesCompanion(
       id: Value(id),
       data: Value(data),
+      dataAlteracao: Value(dataAlteracao),
       avaliador: Value(avaliador),
       observacoes: observacoes == null && nullToAbsent
           ? const Value.absent()
           : Value(observacoes),
+      status: Value(status),
+      categoriaAtual: Value(categoriaAtual),
       familiaId: Value(familiaId),
     );
   }
@@ -1650,8 +1719,11 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
     return Avaliacao(
       id: serializer.fromJson<int>(json['id']),
       data: serializer.fromJson<DateTime>(json['data']),
+      dataAlteracao: serializer.fromJson<DateTime>(json['dataAlteracao']),
       avaliador: serializer.fromJson<String>(json['avaliador']),
       observacoes: serializer.fromJson<String?>(json['observacoes']),
+      status: serializer.fromJson<String>(json['status']),
+      categoriaAtual: serializer.fromJson<int>(json['categoriaAtual']),
       familiaId: serializer.fromJson<int>(json['familiaId']),
     );
   }
@@ -1661,8 +1733,11 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'data': serializer.toJson<DateTime>(data),
+      'dataAlteracao': serializer.toJson<DateTime>(dataAlteracao),
       'avaliador': serializer.toJson<String>(avaliador),
       'observacoes': serializer.toJson<String?>(observacoes),
+      'status': serializer.toJson<String>(status),
+      'categoriaAtual': serializer.toJson<int>(categoriaAtual),
       'familiaId': serializer.toJson<int>(familiaId),
     };
   }
@@ -1670,23 +1745,36 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
   Avaliacao copyWith(
           {int? id,
           DateTime? data,
+          DateTime? dataAlteracao,
           String? avaliador,
           Value<String?> observacoes = const Value.absent(),
+          String? status,
+          int? categoriaAtual,
           int? familiaId}) =>
       Avaliacao(
         id: id ?? this.id,
         data: data ?? this.data,
+        dataAlteracao: dataAlteracao ?? this.dataAlteracao,
         avaliador: avaliador ?? this.avaliador,
         observacoes: observacoes.present ? observacoes.value : this.observacoes,
+        status: status ?? this.status,
+        categoriaAtual: categoriaAtual ?? this.categoriaAtual,
         familiaId: familiaId ?? this.familiaId,
       );
   Avaliacao copyWithCompanion(AvaliacoesCompanion data) {
     return Avaliacao(
       id: data.id.present ? data.id.value : this.id,
       data: data.data.present ? data.data.value : this.data,
+      dataAlteracao: data.dataAlteracao.present
+          ? data.dataAlteracao.value
+          : this.dataAlteracao,
       avaliador: data.avaliador.present ? data.avaliador.value : this.avaliador,
       observacoes:
           data.observacoes.present ? data.observacoes.value : this.observacoes,
+      status: data.status.present ? data.status.value : this.status,
+      categoriaAtual: data.categoriaAtual.present
+          ? data.categoriaAtual.value
+          : this.categoriaAtual,
       familiaId: data.familiaId.present ? data.familiaId.value : this.familiaId,
     );
   }
@@ -1696,59 +1784,81 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
     return (StringBuffer('Avaliacao(')
           ..write('id: $id, ')
           ..write('data: $data, ')
+          ..write('dataAlteracao: $dataAlteracao, ')
           ..write('avaliador: $avaliador, ')
           ..write('observacoes: $observacoes, ')
+          ..write('status: $status, ')
+          ..write('categoriaAtual: $categoriaAtual, ')
           ..write('familiaId: $familiaId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, data, avaliador, observacoes, familiaId);
+  int get hashCode => Object.hash(id, data, dataAlteracao, avaliador,
+      observacoes, status, categoriaAtual, familiaId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Avaliacao &&
           other.id == this.id &&
           other.data == this.data &&
+          other.dataAlteracao == this.dataAlteracao &&
           other.avaliador == this.avaliador &&
           other.observacoes == this.observacoes &&
+          other.status == this.status &&
+          other.categoriaAtual == this.categoriaAtual &&
           other.familiaId == this.familiaId);
 }
 
 class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
   final Value<int> id;
   final Value<DateTime> data;
+  final Value<DateTime> dataAlteracao;
   final Value<String> avaliador;
   final Value<String?> observacoes;
+  final Value<String> status;
+  final Value<int> categoriaAtual;
   final Value<int> familiaId;
   const AvaliacoesCompanion({
     this.id = const Value.absent(),
     this.data = const Value.absent(),
+    this.dataAlteracao = const Value.absent(),
     this.avaliador = const Value.absent(),
     this.observacoes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.categoriaAtual = const Value.absent(),
     this.familiaId = const Value.absent(),
   });
   AvaliacoesCompanion.insert({
     this.id = const Value.absent(),
     this.data = const Value.absent(),
+    this.dataAlteracao = const Value.absent(),
     required String avaliador,
     this.observacoes = const Value.absent(),
+    this.status = const Value.absent(),
+    this.categoriaAtual = const Value.absent(),
     required int familiaId,
   })  : avaliador = Value(avaliador),
         familiaId = Value(familiaId);
   static Insertable<Avaliacao> custom({
     Expression<int>? id,
     Expression<DateTime>? data,
+    Expression<DateTime>? dataAlteracao,
     Expression<String>? avaliador,
     Expression<String>? observacoes,
+    Expression<String>? status,
+    Expression<int>? categoriaAtual,
     Expression<int>? familiaId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (data != null) 'data': data,
+      if (dataAlteracao != null) 'data_alteracao': dataAlteracao,
       if (avaliador != null) 'avaliador': avaliador,
       if (observacoes != null) 'observacoes': observacoes,
+      if (status != null) 'status': status,
+      if (categoriaAtual != null) 'categoria_atual': categoriaAtual,
       if (familiaId != null) 'familia_id': familiaId,
     });
   }
@@ -1756,14 +1866,20 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
   AvaliacoesCompanion copyWith(
       {Value<int>? id,
       Value<DateTime>? data,
+      Value<DateTime>? dataAlteracao,
       Value<String>? avaliador,
       Value<String?>? observacoes,
+      Value<String>? status,
+      Value<int>? categoriaAtual,
       Value<int>? familiaId}) {
     return AvaliacoesCompanion(
       id: id ?? this.id,
       data: data ?? this.data,
+      dataAlteracao: dataAlteracao ?? this.dataAlteracao,
       avaliador: avaliador ?? this.avaliador,
       observacoes: observacoes ?? this.observacoes,
+      status: status ?? this.status,
+      categoriaAtual: categoriaAtual ?? this.categoriaAtual,
       familiaId: familiaId ?? this.familiaId,
     );
   }
@@ -1777,11 +1893,20 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
     if (data.present) {
       map['data'] = Variable<DateTime>(data.value);
     }
+    if (dataAlteracao.present) {
+      map['data_alteracao'] = Variable<DateTime>(dataAlteracao.value);
+    }
     if (avaliador.present) {
       map['avaliador'] = Variable<String>(avaliador.value);
     }
     if (observacoes.present) {
       map['observacoes'] = Variable<String>(observacoes.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (categoriaAtual.present) {
+      map['categoria_atual'] = Variable<int>(categoriaAtual.value);
     }
     if (familiaId.present) {
       map['familia_id'] = Variable<int>(familiaId.value);
@@ -1794,8 +1919,11 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
     return (StringBuffer('AvaliacoesCompanion(')
           ..write('id: $id, ')
           ..write('data: $data, ')
+          ..write('dataAlteracao: $dataAlteracao, ')
           ..write('avaliador: $avaliador, ')
           ..write('observacoes: $observacoes, ')
+          ..write('status: $status, ')
+          ..write('categoriaAtual: $categoriaAtual, ')
           ..write('familiaId: $familiaId')
           ..write(')'))
         .toString();
@@ -2967,15 +3095,21 @@ class $$IndicadoresTableOrderingComposer
 typedef $$AvaliacoesTableCreateCompanionBuilder = AvaliacoesCompanion Function({
   Value<int> id,
   Value<DateTime> data,
+  Value<DateTime> dataAlteracao,
   required String avaliador,
   Value<String?> observacoes,
+  Value<String> status,
+  Value<int> categoriaAtual,
   required int familiaId,
 });
 typedef $$AvaliacoesTableUpdateCompanionBuilder = AvaliacoesCompanion Function({
   Value<int> id,
   Value<DateTime> data,
+  Value<DateTime> dataAlteracao,
   Value<String> avaliador,
   Value<String?> observacoes,
+  Value<String> status,
+  Value<int> categoriaAtual,
   Value<int> familiaId,
 });
 
@@ -2998,29 +3132,41 @@ class $$AvaliacoesTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> data = const Value.absent(),
+            Value<DateTime> dataAlteracao = const Value.absent(),
             Value<String> avaliador = const Value.absent(),
             Value<String?> observacoes = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int> categoriaAtual = const Value.absent(),
             Value<int> familiaId = const Value.absent(),
           }) =>
               AvaliacoesCompanion(
             id: id,
             data: data,
+            dataAlteracao: dataAlteracao,
             avaliador: avaliador,
             observacoes: observacoes,
+            status: status,
+            categoriaAtual: categoriaAtual,
             familiaId: familiaId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> data = const Value.absent(),
+            Value<DateTime> dataAlteracao = const Value.absent(),
             required String avaliador,
             Value<String?> observacoes = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<int> categoriaAtual = const Value.absent(),
             required int familiaId,
           }) =>
               AvaliacoesCompanion.insert(
             id: id,
             data: data,
+            dataAlteracao: dataAlteracao,
             avaliador: avaliador,
             observacoes: observacoes,
+            status: status,
+            categoriaAtual: categoriaAtual,
             familiaId: familiaId,
           ),
         ));
@@ -3039,6 +3185,11 @@ class $$AvaliacoesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
+  ColumnFilters<DateTime> get dataAlteracao => $state.composableBuilder(
+      column: $state.table.dataAlteracao,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
   ColumnFilters<String> get avaliador => $state.composableBuilder(
       column: $state.table.avaliador,
       builder: (column, joinBuilders) =>
@@ -3046,6 +3197,16 @@ class $$AvaliacoesTableFilterComposer
 
   ColumnFilters<String> get observacoes => $state.composableBuilder(
       column: $state.table.observacoes,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get status => $state.composableBuilder(
+      column: $state.table.status,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get categoriaAtual => $state.composableBuilder(
+      column: $state.table.categoriaAtual,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -3088,6 +3249,11 @@ class $$AvaliacoesTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
+  ColumnOrderings<DateTime> get dataAlteracao => $state.composableBuilder(
+      column: $state.table.dataAlteracao,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
   ColumnOrderings<String> get avaliador => $state.composableBuilder(
       column: $state.table.avaliador,
       builder: (column, joinBuilders) =>
@@ -3095,6 +3261,16 @@ class $$AvaliacoesTableOrderingComposer
 
   ColumnOrderings<String> get observacoes => $state.composableBuilder(
       column: $state.table.observacoes,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get status => $state.composableBuilder(
+      column: $state.table.status,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get categoriaAtual => $state.composableBuilder(
+      column: $state.table.categoriaAtual,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

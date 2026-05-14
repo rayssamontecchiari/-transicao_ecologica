@@ -109,6 +109,15 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
     );
   }
 
+  Future<void> _editarFamilia(Familia familia) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CadastroFamiliaPage(familia: familia),
+      ),
+    );
+    _carregarFamilias();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,11 +195,24 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
                             ),
                             trailing: PopupMenuButton<String>(
                               onSelected: (value) {
-                                if (value == 'delete') {
+                                if (value == 'edit') {
+                                  _editarFamilia(familia);
+                                } else if (value == 'delete') {
                                   _confirmarDelecao(familia);
                                 }
                               },
                               itemBuilder: (context) => const [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit,
+                                          color: Colors.blue, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Editar'),
+                                    ],
+                                  ),
+                                ),
                                 PopupMenuItem(
                                   value: 'delete',
                                   child: Row(

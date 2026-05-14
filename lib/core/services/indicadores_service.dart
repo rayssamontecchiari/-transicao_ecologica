@@ -3,13 +3,10 @@ import '../database/daos/categorias_dao.dart';
 import '../database/app_database.dart';
 
 class IndicadoresService {
-  final AppDatabase _db;
   final IndicadoresDao _indicadoresDao;
   late final CategoriasDao _categoriasDao;
 
-  IndicadoresService(AppDatabase db)
-      : _db = db,
-        _indicadoresDao = IndicadoresDao(db) {
+  IndicadoresService(AppDatabase db) : _indicadoresDao = IndicadoresDao(db) {
     _categoriasDao = CategoriasDao(db);
   }
 

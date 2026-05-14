@@ -8,7 +8,7 @@ part 'avaliacoes_dao.g.dart';
 @DriftAccessor(tables: [Avaliacoes, AvaliacaoItens])
 class AvaliacoesDao extends DatabaseAccessor<AppDatabase>
     with _$AvaliacoesDaoMixin {
-  AvaliacoesDao(AppDatabase db) : super(db);
+  AvaliacoesDao(super.db);
 
   Future<int> inserirAvaliacao(AvaliacoesCompanion avaliacao) {
     return into(avaliacoes).insert(avaliacao);
@@ -41,6 +41,29 @@ class AvaliacoesDao extends DatabaseAccessor<AppDatabase>
           .go();
       // Deletar avaliação
       await (delete(avaliacoes)..where((a) => a.id.equals(avaliacaoId))).go();
+    });
+  }
+
+  /// Atualiza uma avaliação
+  Future<bool> atualizarAvaliacao(int id, AvaliacoesCompanion avaliacao) {
+    return (update(avaliacoes)..where((a) => a.id.equals(id)))
+        .replace(avaliacao);
+  }
+
+  /// Atualiza itens de uma avaliação
+  Future<void> atualizarItensAvaliacao(
+      int avaliacaoId, List<AvaliacaoItensCompanion> itens) async {
+    await transaction(() async {
+      // Deletar itens existentes
+      await (delete(avaliacaoItens)
+            ..where((a) => a.avaliacaoId.equals(avaliacaoId)))
+          .go();
+      // Inserir novos itens
+      if (itens.isNotEmpty) {
+        await batch((batch) {
+          batch.insertAll(avaliacaoItens, itens);
+        });
+      }
     });
   }
 }

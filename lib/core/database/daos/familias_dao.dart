@@ -7,7 +7,7 @@ part 'familias_dao.g.dart';
 @DriftAccessor(tables: [Familias])
 class FamiliasDao extends DatabaseAccessor<AppDatabase>
     with _$FamiliasDaoMixin {
-  FamiliasDao(AppDatabase db) : super(db);
+  FamiliasDao(super.db);
 
   Future<List<Familia>> getTodas() {
     return select(familias).get();
@@ -20,5 +20,12 @@ class FamiliasDao extends DatabaseAccessor<AppDatabase>
   /// Deleta uma família pelo ID
   Future<int> deletar(int id) {
     return (delete(familias)..where((f) => f.id.equals(id))).go();
+  }
+
+  /// Atualiza uma família
+  Future<bool> atualizar(int id, FamiliasCompanion familia) async {
+    final rowsUpdated =
+        await (update(familias)..where((f) => f.id.equals(id))).write(familia);
+    return rowsUpdated > 0;
   }
 }

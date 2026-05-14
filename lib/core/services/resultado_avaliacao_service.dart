@@ -32,6 +32,12 @@ class ResultadoAvaliacaoService {
 
       if (itensDaCategoria.isEmpty) return null;
 
+      print('[DEBUG] Categoria $categoriaId - Itens recuperados:');
+      for (final item in itensDaCategoria) {
+        print(
+            '  - Indicador ${item.indicadorId}: valorLikert=${item.valorLikert}');
+      }
+
       final notas = <int>[];
       final pesos = <double>[];
 
@@ -41,13 +47,17 @@ class ResultadoAvaliacaoService {
               indicadores.firstWhere((i) => i.id == item.indicadorId);
 
           notas.add(item.valorLikert!);
-          pesos.add(indicador.peso ?? 1.0); // 🔧 proteção extra
+          pesos.add(indicador.peso);
         }
       }
 
       if (notas.isEmpty) return null;
 
+      print('[DEBUG] Categoria $categoriaId - Notas: $notas, Pesos: $pesos');
+
       final fuzzyResult = FuzzyCalculator.calcularPorNotas(notas, pesos);
+
+      print('[DEBUG] Resultado Fuzzy: $fuzzyResult');
 
       final valor = fuzzyResult['resultado'] ?? 0.0;
 
@@ -57,7 +67,7 @@ class ResultadoAvaliacaoService {
         fuzzyResult: fuzzyResult,
       );
     } catch (e) {
-      print('Erro ao calcular resultado: $e');
+      // Erro ao calcular resultado
       return null;
     }
   }
@@ -83,7 +93,7 @@ class ResultadoAvaliacaoService {
 
       return resultados;
     } catch (e) {
-      print('Erro ao calcular resultados completos: $e');
+      // Erro ao calcular resultados completos
       return [];
     }
   }

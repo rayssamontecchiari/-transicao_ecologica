@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:drift/drift.dart' hide Column, Table;
+import 'package:drift/drift.dart' as drift hide Column, Table;
 
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
 import '../../core/services/categorias_service.dart';
 import 'avaliacao_form.dart';
+import 'resultado_avaliacao_page.dart';
 
 /// Página inicial do fluxo de avaliação.
 /// Permite selecionar uma família e iniciar o fluxo de 4 categorias de avaliação.
@@ -27,6 +28,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   int _categoriaAtual = 0;
   bool _isProcessing = false;
   List<Avaliacao> _avaliacoesFamilia = [];
+  int? _avaliacaoIdEmProgresso; // ID da avaliação em draft
 
   @override
   void initState() {
@@ -52,7 +54,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     });
   }
 
-  Future<void> _iniciarAvaliacao() async {
+  Future<void> _iniciarAvaliacao({int? avaliacaoIdExistente}) async {
     if (_selectedFamilia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione uma família')),
@@ -61,42 +63,95 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     }
 
     setState(() => _isProcessing = true);
+    _avaliacaoIdEmProgresso = avaliacaoIdExistente;
 
     try {
-      for (int i = 0; i < _categorias.length; i++) {
+      // Determinar de qual categoria começar
+      int inicioCategoria = 0;
+      if (avaliacaoIdExistente != null) {
+        // Buscar em qual categoria a avaliação parou
+        final avaliacao = _db.select(_db.avaliacoes)
+          ..where((a) => a.id.equals(avaliacaoIdExistente));
+        final avaliacaoData = await avaliacao.getSingleOrNull();
+        if (avaliacaoData != null) {
+          // Se estava incompleta, começar da próxima categoria
+          inicioCategoria = avaliacaoData.categoriaAtual + 1;
+          if (inicioCategoria >= _categorias.length) {
+            // Já estava completa, começar do 0
+            inicioCategoria = 0;
+          }
+        }
+      }
+
+      for (int i = inicioCategoria; i < _categorias.length; i++) {
         if (!mounted) break;
 
         setState(() => _categoriaAtual = i);
 
         final categoria = _categorias[i];
 
-        final result = await Navigator.of(context).push<bool>(
+        Avaliacao? avaliacaoExistente;
+        if (_avaliacaoIdEmProgresso != null) {
+          avaliacaoExistente = await (_db.select(_db.avaliacoes)
+                ..where((a) => a.id.equals(_avaliacaoIdEmProgresso!)))
+              .getSingleOrNull();
+        }
+
+        final result = await Navigator.of(context).push<int>(
           MaterialPageRoute(
-            builder: (_) => CategoriaFormPage(categoriaId: categoria.id),
-            settings: RouteSettings(
-              arguments: {
-                'familiaId': _selectedFamilia!.id,
-                'categoriaAtual': i + 1,
-                'totalCategorias': _categorias.length,
-              },
+            builder: (_) => CategoriaFormPage(
+              categoriaId: categoria.id,
+              familiaId: _selectedFamilia!.id,
+              avaliacaoExistente: avaliacaoExistente,
+              categoriaAtual: i + 1,
+              totalCategorias: _categorias.length,
             ),
           ),
         );
 
-        if (result != true) {
-          // User cancelled
+        if (result == null || result <= 0) {
+          // User cancelled - a avaliação fica em draft
           break;
+        }
+
+        // Atualizar o ID da avaliação com o retorno do formulário
+        _avaliacaoIdEmProgresso = result;
+
+        // Atualizar no banco para rastrear em qual categoria parou
+        if (_avaliacaoIdEmProgresso != null) {
+          await (_db.update(_db.avaliacoes)
+                ..where((a) => a.id.equals(_avaliacaoIdEmProgresso!)))
+              .write(
+            AvaliacoesCompanion(
+              categoriaAtual: drift.Value(i),
+              dataAlteracao: drift.Value(DateTime.now()),
+            ),
+          );
         }
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Avaliação completa!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-        Navigator.pop(context);
+        // Verificar se completou todas as categorias
+        if (_categoriaAtual == _categorias.length - 1) {
+          // Avaliação foi completada - ir para página de resultados
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => ResultadoAvaliacaoPage(
+                avaliacaoId: _avaliacaoIdEmProgresso!,
+                familia: _selectedFamilia!,
+              ),
+            ),
+          );
+        } else {
+          // Avaliação foi cancelada - voltar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Avaliação cancelada. Dados salvos em rascunho.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.pop(context);
+        }
       }
     } finally {
       if (mounted) {
@@ -111,11 +166,10 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     if (_selectedFamilia == null) return;
 
     try {
-      final avaliacoes = _db.select(_db.avaliacoes)
-        ..where((a) => a.familiaId.equals(_selectedFamilia!.id))
-        ..orderBy([(a) => OrderingTerm.desc(a.data)]);
-
-      final avaliacoesData = await avaliacoes.get();
+      final avaliacoesData = await (_db.select(_db.avaliacoes)
+            ..where((a) => a.familiaId.equals(_selectedFamilia!.id))
+            ..orderBy([(a) => drift.OrderingTerm.desc(a.data)]))
+          .get();
 
       if (mounted) {
         setState(() {
@@ -136,10 +190,11 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
 
   Future<void> _deletarAvaliacao(int avaliacaoId) async {
     try {
-      await _db.delete(_db.avaliacaoItens)
-        ..where((a) => a.avaliacaoId.equals(avaliacaoId));
-      await _db.delete(_db.avaliacoes)
-        ..where((a) => a.id.equals(avaliacaoId));
+      await (_db.delete(_db.avaliacaoItens)
+            ..where((a) => a.avaliacaoId.equals(avaliacaoId)))
+          .go();
+      await (_db.delete(_db.avaliacoes)..where((a) => a.id.equals(avaliacaoId)))
+          .go();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,56 +217,164 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     }
   }
 
+  Widget _buildCategoryCard(
+      BuildContext context, Categoria categoria, int index) {
+    final theme = Theme.of(context);
+    final colors = [
+      Colors.green.shade50,
+      Colors.teal.shade50,
+      Colors.amber.shade50,
+      Colors.purple.shade50,
+    ];
+    final iconColors = [
+      Colors.green.shade700,
+      Colors.teal.shade700,
+      Colors.amber.shade700,
+      Colors.purple.shade700,
+    ];
+    final icons = [
+      Icons.terrain,
+      Icons.public,
+      Icons.handshake,
+      Icons.bar_chart,
+    ];
+
+    final bgColor = colors[index % colors.length];
+    final iconColor = iconColors[index % iconColors.length];
+    final iconData = icons[index % icons.length];
+
+    return Container(
+      width: (MediaQuery.of(context).size.width - 56) / 2,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(iconData, color: iconColor, size: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '${index + 1}. ${categoria.nome}',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            categoria.descricao ?? '',
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.grey[700],
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F8F3),
       appBar: AppBar(
-        title: const Text('Iniciar Avaliação'),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        foregroundColor: primary,
+        iconTheme: IconThemeData(color: primary),
+        title: Text(
+          'Nova Avaliação',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: primary,
+          ),
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Cabeçalho informativo
-                    Card(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
+          : Stack(
+              children: [
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: primary.withOpacity(0.16),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                  ),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                      left: 16, right: 16, top: 20, bottom: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: Theme.of(context).primaryColor,
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: primary.withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Icon(
+                                    Icons.task_alt,
+                                    color: primary,
+                                    size: 28,
+                                  ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Como funciona',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
+                                        'Nova Avaliação',
+                                        style: theme.textTheme.titleMedium
                                             ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 6),
                                       Text(
-                                        'Você fará uma avaliação em 4 categorias. '
-                                        'Para cada categoria, preencha os indicadores conforme necessário.',
-                                        style: TextStyle(
-                                          fontSize: 12,
+                                        'Siga os passos para avaliar sua família',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
                                           color: Colors.grey[700],
                                         ),
                                       ),
@@ -223,298 +386,415 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                           ],
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
-                    // Seleção de família
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        'Passo 1: Selecione a Família',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      Text(
+                        '1. Selecione a Família',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-
-                    DropdownButtonFormField<Familia>(
-                      value: _selectedFamilia,
-                      decoration: const InputDecoration(
-                        labelText: 'Família *',
-                        hintText: 'Escolha uma família',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.home),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Escolha a família que será avaliada.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[700],
+                        ),
                       ),
-                      items: _familias
-                          .map((f) => DropdownMenuItem(
-                                value: f,
-                                child: Text(
-                                  '${f.nomeResponsavel} (Família #${f.id})',
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: _isProcessing
-                          ? null
-                          : (f) {
-                              setState(() => _selectedFamilia = f);
-                              if (f != null) {
-                                _carregarAvaliacoesFamilia();
-                              }
-                            },
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Categorias a serem avaliadas
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        'Passo 2: Preencha as 4 Categorias',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                      ),
-                    ),
-
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _categorias.length,
-                      itemBuilder: (context, index) {
-                        final categoria = _categorias[index];
-                        final isCompleted = index < _categoriaAtual;
-                        final isCurrent = index == _categoriaAtual;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Card(
-                            color: isCompleted
-                                ? Colors.green.withOpacity(0.1)
-                                : isCurrent
-                                    ? Theme.of(context)
-                                        .primaryColor
-                                        .withOpacity(0.05)
-                                    : null,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: isCompleted
-                                          ? Colors.green
-                                          : isCurrent
-                                              ? Theme.of(context).primaryColor
-                                              : Colors.grey[300],
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        isCompleted ? '✓' : '${index + 1}',
-                                        style: TextStyle(
-                                          color: isCompleted || isCurrent
-                                              ? Colors.white
-                                              : Colors.grey[700],
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        elevation: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          child: DropdownButtonFormField<Familia>(
+                            value: _selectedFamilia,
+                            decoration: InputDecoration(
+                              hintText: 'Selecionar família',
+                              border: InputBorder.none,
+                              prefixIcon: Icon(
+                                Icons.people,
+                                color: primary,
+                              ),
+                              suffixIcon: const Icon(Icons.keyboard_arrow_down),
+                            ),
+                            items: _familias
+                                .map(
+                                  (f) => DropdownMenuItem(
+                                    value: f,
+                                    child: Text(
+                                      '${f.nomeResponsavel} (Família #${f.id})',
+                                      style: theme.textTheme.bodyMedium,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
+                                )
+                                .toList(),
+                            onChanged: _isProcessing
+                                ? null
+                                : (f) {
+                                    setState(() => _selectedFamilia = f);
+                                    if (f != null) {
+                                      _carregarAvaliacoesFamilia();
+                                    }
+                                  },
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      Text(
+                        '2. Categorias da Avaliação',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Serão avaliadas 4 dimensões principais.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (_categorias.isEmpty)
+                        const Center(child: CircularProgressIndicator())
+                      else
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: List.generate(
+                            _categorias.length,
+                            (index) => _buildCategoryCard(
+                              context,
+                              _categorias[index],
+                              index,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 28),
+
+                      ElevatedButton.icon(
+                        onPressed: _isProcessing ? null : _iniciarAvaliacao,
+                        icon: const Icon(Icons.play_arrow),
+                        label: Text(
+                          _isProcessing ? 'Iniciando...' : 'Iniciar Avaliação',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+                      Text(
+                        'Você poderá salvar e continuar depois',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        color: Colors.green.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: primary.withOpacity(0.18),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  Icons.shield,
+                                  color: primary,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Seus dados estão seguros',
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Todas as informações são confidenciais e protegidas.',
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      if (_selectedFamilia != null) ...[
+                        if (_avaliacoesFamilia
+                            .where((a) => a.status == 'draft')
+                            .isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Avaliações em Progresso',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+
+                      // Mantém as seções de avaliações existentes
+                      if (_selectedFamilia != null) ...[
+                        Builder(
+                          builder: (context) {
+                            final draftAvaliacoes = _avaliacoesFamilia
+                                .where((a) => a.status == 'draft')
+                                .toList();
+
+                            if (draftAvaliacoes.isNotEmpty) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: draftAvaliacoes.length,
+                                    itemBuilder: (context, index) {
+                                      final avaliacao = draftAvaliacoes[index];
+                                      final data = avaliacao.data;
+                                      final progresso =
+                                          avaliacao.categoriaAtual;
+
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 10),
+                                        child: Card(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                          child: ListTile(
+                                            leading: Icon(
+                                              Icons.schedule,
+                                              color: Colors.orange.shade700,
+                                            ),
+                                            title: Text(avaliacao.avaliador),
+                                            subtitle: Text(
+                                              'Categoria ${progresso + 1}/4 • ${data.day}/${data.month}/${data.year}',
+                                            ),
+                                            trailing: ElevatedButton(
+                                              onPressed: _isProcessing
+                                                  ? null
+                                                  : () => _iniciarAvaliacao(
+                                                        avaliacaoIdExistente:
+                                                            avaliacao.id,
+                                                      ),
+                                              style: ElevatedButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 14,
+                                                  vertical: 10,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                ),
+                                              ),
+                                              child: const Text('Retomar'),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 24),
+                                ],
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'Avaliações Finalizadas (${_avaliacoesFamilia.where((a) => a.status == 'completed').length})',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (_avaliacoesFamilia
+                            .where((a) => a.status == 'completed')
+                            .isEmpty)
+                          Card(
+                            color: Colors.grey[100],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'Nenhuma avaliação finalizada para esta família',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _avaliacoesFamilia
+                                .where((a) => a.status == 'completed')
+                                .length,
+                            itemBuilder: (context, index) {
+                              final avaliacao = _avaliacoesFamilia
+                                  .where((a) => a.status == 'completed')
+                                  .toList()[index];
+                              final data = avaliacao.data;
+                              final dataAlteracao = avaliacao.dataAlteracao;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: ListTile(
+                                    leading: const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                    ),
+                                    title: Text(avaliacao.avaliador),
+                                    subtitle: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          categoria.nome,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                          'Criada: ${data.day}/${data.month}/${data.year} às ${data.hour}:${data.minute.toString().padLeft(2, '0')}',
                                         ),
-                                        if (categoria.descricao != null &&
-                                            categoria.descricao!.isNotEmpty)
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 4),
-                                            child: Text(
-                                              categoria.descricao!,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
+                                        if (dataAlteracao
+                                                .difference(data)
+                                                .inSeconds >
+                                            60)
+                                          Text(
+                                            'Alterada: ${dataAlteracao.day}/${dataAlteracao.month}/${dataAlteracao.year} às ${dataAlteracao.hour}:${dataAlteracao.minute.toString().padLeft(2, '0')}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey,
                                             ),
                                           ),
                                       ],
                                     ),
-                                  ),
-                                  if (isCompleted)
-                                    const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Avaliações Existentes
-                    if (_selectedFamilia != null) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          'Avaliações Existentes (${_avaliacoesFamilia.length})',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
-                      if (_avaliacoesFamilia.isEmpty)
-                        Card(
-                          color: Colors.grey[100],
-                          child: const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text(
-                              'Nenhuma avaliação registrada para esta família',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _avaliacoesFamilia.length,
-                          itemBuilder: (context, index) {
-                            final avaliacao = _avaliacoesFamilia[index];
-                            final data = avaliacao.data;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Card(
-                                child: ListTile(
-                                  trailing: PopupMenuButton(
-                                    itemBuilder: (context) => [
-                                      PopupMenuItem(
-                                        child: const Row(
-                                          children: [
-                                            Icon(Icons.delete,
-                                                color: Colors.red, size: 20),
-                                            SizedBox(width: 8),
-                                            Text('Deletar',
-                                                style: TextStyle(
-                                                    color: Colors.red)),
-                                          ],
+                                    trailing: PopupMenuButton(
+                                      itemBuilder: (context) => [
+                                        PopupMenuItem(
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.edit,
+                                                  color: Colors.blue, size: 20),
+                                              SizedBox(width: 8),
+                                              Text('Editar',
+                                                  style: TextStyle(
+                                                      color: Colors.blue)),
+                                            ],
+                                          ),
+                                          onTap: () => _iniciarAvaliacao(
+                                            avaliacaoIdExistente: avaliacao.id,
+                                          ),
                                         ),
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: const Text(
-                                                  'Confirmar Deleção'),
-                                              content: const Text(
-                                                'Tem certeza que deseja deletar esta avaliação? Esta ação não pode ser desfeita.',
+                                        PopupMenuItem(
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.delete,
+                                                  color: Colors.red, size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Deletar',
+                                                style: TextStyle(
+                                                    color: Colors.red),
                                               ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: const Text('Cancelar'),
+                                            ],
+                                          ),
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text(
+                                                    'Confirmar Deleção'),
+                                                content: const Text(
+                                                  'Tem certeza que deseja deletar esta avaliação? Esta ação não pode ser desfeita.',
                                                 ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _deletarAvaliacao(
-                                                        avaliacao.id);
-                                                  },
-                                                  child: const Text('Deletar',
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child:
+                                                        const Text('Cancelar'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                      _deletarAvaliacao(
+                                                          avaliacao.id);
+                                                    },
+                                                    child: const Text(
+                                                      'Deletar',
                                                       style: TextStyle(
-                                                          color: Colors.red)),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  title: Text(avaliacao.avaliador),
-                                  subtitle: Text(
-                                    '${data.day}/${data.month}/${data.year} às ${data.hour}:${data.minute.toString().padLeft(2, '0')}',
+                                                          color: Colors.red),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      const SizedBox(height: 32),
+                              );
+                            },
+                          ),
+                      ],
                     ],
-
-                    // Botão de ação
-                    SizedBox(
-                      height: 48,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isProcessing ? null : _iniciarAvaliacao,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (_isProcessing)
-                              const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
-                              )
-                            else
-                              const Icon(Icons.play_arrow),
-                            const SizedBox(width: 8),
-                            Text(
-                              _isProcessing
-                                  ? 'Processando Avaliação...'
-                                  : 'Iniciar Avaliação',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Botão de cancelamento
-                    SizedBox(
-                      height: 48,
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            _isProcessing ? null : () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                        label: const Text('Cancelar'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
     );
   }
