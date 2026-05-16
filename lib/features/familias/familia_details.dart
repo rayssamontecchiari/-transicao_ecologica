@@ -119,7 +119,7 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
         builder: (_) => CategoriaFormPage(
           categoriaId: 1, // Você pode precisar determinar a categoria correta
           familiaId: widget.familiaId,
-          avaliacaoExistente: avaliacao,
+          avaliacaoId: avaliacao.id,
         ),
       ),
     );

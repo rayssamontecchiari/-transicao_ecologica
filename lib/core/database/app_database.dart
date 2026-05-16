@@ -386,5 +386,6 @@ class AppDatabase extends _$AppDatabase {
 Future<QueryExecutor> _openConnection() async {
   final dbFolder = await getApplicationDocumentsDirectory();
   final file = File(p.join(dbFolder.path, 'db.sqlite'));
+  print(file.path);
   return NativeDatabase(file);
 }
