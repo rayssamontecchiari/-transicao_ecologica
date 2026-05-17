@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/services/regioes_service.dart';
+import '../../core/services/regiao_service.dart';
 
 /// Página para cadastro de uma nova região.
 class CadastroRegiaoPage extends StatefulWidget {
@@ -16,7 +16,7 @@ class _CadastroRegiaoPageState extends State<CadastroRegiaoPage> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   bool _isSaving = false;
-  late RegioesService _regioesService;
+  late RegiaoService _regioesService;
 
   @override
   void initState() {
@@ -26,14 +26,14 @@ class _CadastroRegiaoPageState extends State<CadastroRegiaoPage> {
 
   Future<void> _initService() async {
     final db = await AppDatabase.instance();
-    _regioesService = RegioesService(db);
+    _regioesService = RegiaoService(db);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
     try {
-      final regiao = RegioesCompanion(
+      final regiao = RegiaoCompanion(
         nome: Value(_nomeController.text),
       );
       await _regioesService.inserir(regiao);

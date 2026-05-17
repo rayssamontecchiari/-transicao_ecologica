@@ -1,16 +1,16 @@
 import '../database/app_database.dart';
-import '../database/daos/familias_dao.dart';
+import '../database/daos/familia_dao.dart';
 
 class FamiliasService {
-  final FamiliasDao _familiasDao;
+  final FamiliaDao _familiasDao;
 
-  FamiliasService(AppDatabase db) : _familiasDao = FamiliasDao(db);
+  FamiliasService(AppDatabase db) : _familiasDao = FamiliaDao(db);
 
-  Future<List<Familia>> getTodas() {
+  Future<List<FamiliaData>> getTodas() {
     return _familiasDao.getTodas();
   }
 
-  Future<int> cadastrarFamilia(FamiliasCompanion familia) {
+  Future<int> cadastrarFamilia(FamiliaCompanion familia) {
     return _familiasDao.inserir(familia);
   }
 
@@ -20,7 +20,7 @@ class FamiliasService {
   }
 
   /// Atualiza uma família
-  Future<bool> atualizarFamilia(int familiaId, FamiliasCompanion familia) {
+  Future<bool> atualizarFamilia(int familiaId, FamiliaCompanion familia) {
     return _familiasDao.atualizar(familiaId, familia);
   }
 }

@@ -21,7 +21,7 @@ class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
 
   bool _isLoading = true;
   int? _categoriaSelecionada;
-  List<Categoria> _categorias = [];
+  List<CategoriaData> _categorias = [];
   List<_IndicadorComPeso> _indicadores = [];
 
   @override
@@ -33,7 +33,7 @@ class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
   Future<void> _init() async {
     _db = await AppDatabase.instance();
 
-    final categorias = await _db.select(_db.categorias).get();
+    final categorias = await _db.select(_db.categoria).get();
 
     setState(() {
       _categorias = categorias;
@@ -48,7 +48,7 @@ class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
   }
 
   Future<void> _carregarIndicadores(int categoriaId) async {
-    final indicadores = await (_db.select(_db.indicadores)
+    final indicadores = await (_db.select(_db.indicador)
           ..where((i) => i.categoriaId.equals(categoriaId))
           ..orderBy(
               [(i) => OrderingTerm(expression: i.id, mode: OrderingMode.asc)]))
@@ -82,8 +82,8 @@ class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
         }
 
         // Atualizar no banco
-        await _db.update(_db.indicadores).replace(
-              IndicadoresCompanion(
+        await _db.update(_db.indicador).replace(
+              IndicadorCompanion(
                 id: Value(item.indicador.id),
                 nome: Value(item.indicador.nome),
                 descricao: Value(item.indicador.descricao),
@@ -288,7 +288,7 @@ class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
 }
 
 class _IndicadorComPeso {
-  final Indicador indicador;
+  final IndicadorData indicador;
   final TextEditingController pesoController;
 
   _IndicadorComPeso({

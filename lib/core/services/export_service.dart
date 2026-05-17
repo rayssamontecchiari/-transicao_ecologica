@@ -43,16 +43,16 @@ class ExportService {
     // Cria pasta de exports se não existir
     await Directory('${directory.path}/exports').create(recursive: true);
 
-    // Coleta dados de todas as tabelas
+    // Coleta dados de todas as tabelas (usando nomes no singular)
     final data = {
-      'regioes': await database.select(database.regioes).get(),
-      'familias': await database.select(database.familias).get(),
-      'categorias': await database.select(database.categorias).get(),
-      'dimensoes': await database.select(database.dimensoes).get(),
-      'praticas': await database.select(database.praticas).get(),
-      'indicadores': await database.select(database.indicadores).get(),
-      'avaliacoes': await database.select(database.avaliacoes).get(),
-      'avaliacao_itens': await database.select(database.avaliacaoItens).get(),
+      'regiao': await database.select(database.regiao).get(),
+      'familia': await database.select(database.familia).get(),
+      'categoria': await database.select(database.categoria).get(),
+      'dimensao': await database.select(database.dimensao).get(),
+      'pratica': await database.select(database.pratica).get(),
+      'indicador': await database.select(database.indicador).get(),
+      'avaliacao': await database.select(database.avaliacao).get(),
+      'avaliacao_item': await database.select(database.avaliacaoItem).get(),
       'timestamp': DateTime.now().toIso8601String(),
     };
 
@@ -76,9 +76,11 @@ class ExportService {
 
     List<List<dynamic>> data = [];
 
-    switch (tableName.toLowerCase()) {
+    final t = tableName.toLowerCase();
+    switch (t) {
       case 'regioes':
-        final rows = await database.select(database.regioes).get();
+      case 'regiao':
+        final rows = await database.select(database.regiao).get();
         if (rows.isNotEmpty) {
           data.add(['ID', 'Nome']);
           for (var row in rows) {
@@ -88,7 +90,8 @@ class ExportService {
         break;
 
       case 'familias':
-        final rows = await database.select(database.familias).get();
+      case 'familia':
+        final rows = await database.select(database.familia).get();
         if (rows.isNotEmpty) {
           data.add(['ID', 'Nome Responsável', 'Região ID']);
           for (var row in rows) {
@@ -98,7 +101,8 @@ class ExportService {
         break;
 
       case 'categorias':
-        final rows = await database.select(database.categorias).get();
+      case 'categoria':
+        final rows = await database.select(database.categoria).get();
         if (rows.isNotEmpty) {
           data.add(['ID', 'Nome', 'Descrição']);
           for (var row in rows) {
@@ -108,7 +112,8 @@ class ExportService {
         break;
 
       case 'indicadores':
-        final rows = await database.select(database.indicadores).get();
+      case 'indicador':
+        final rows = await database.select(database.indicador).get();
         if (rows.isNotEmpty) {
           data.add(['ID', 'Nome', 'Descrição', 'Peso', 'Categoria ID']);
           for (var row in rows) {
@@ -124,14 +129,14 @@ class ExportService {
         break;
 
       case 'avaliacoes':
-        final rows = await database.select(database.avaliacoes).get();
+      case 'avaliacao':
+        final rows = await database.select(database.avaliacao).get();
         if (rows.isNotEmpty) {
-          data.add(['ID', 'Família ID', 'Categoria Atual', 'Data']);
+          data.add(['ID', 'Família ID', 'Data']);
           for (var row in rows) {
             data.add([
               row.id,
               row.familiaId,
-              row.categoriaAtual,
               row.data.toIso8601String(),
             ]);
           }
@@ -167,7 +172,7 @@ class ExportService {
 
     // Regiões
     csvBuffer.writeln('=== REGIÕES ===');
-    final regioes = await database.select(database.regioes).get();
+    final regioes = await database.select(database.regiao).get();
     csvBuffer.writeln('ID,Nome');
     for (var row in regioes) {
       csvBuffer.writeln('${row.id},${_escapeCsv(row.nome)}');
@@ -176,7 +181,7 @@ class ExportService {
 
     // Famílias
     csvBuffer.writeln('=== FAMÍLIAS ===');
-    final familias = await database.select(database.familias).get();
+    final familias = await database.select(database.familia).get();
     csvBuffer.writeln('ID,Nome Responsável,Telefone,Endereço,Região ID');
     for (var row in familias) {
       csvBuffer.writeln(
@@ -186,7 +191,7 @@ class ExportService {
 
     // Categorias
     csvBuffer.writeln('=== CATEGORIAS ===');
-    final categorias = await database.select(database.categorias).get();
+    final categorias = await database.select(database.categoria).get();
     csvBuffer.writeln('ID,Nome,Descrição');
     for (var row in categorias) {
       csvBuffer.writeln(
@@ -197,7 +202,7 @@ class ExportService {
 
     // Indicadores
     csvBuffer.writeln('=== INDICADORES ===');
-    final indicadores = await database.select(database.indicadores).get();
+    final indicadores = await database.select(database.indicador).get();
     csvBuffer.writeln('ID,Nome,Descrição,Peso,Categoria ID');
     for (var row in indicadores) {
       csvBuffer.writeln(
@@ -208,11 +213,11 @@ class ExportService {
 
     // Avaliações
     csvBuffer.writeln('=== AVALIAÇÕES ===');
-    final avaliacoes = await database.select(database.avaliacoes).get();
-    csvBuffer.writeln('ID,Família ID,Categoria Atual,Data');
+    final avaliacoes = await database.select(database.avaliacao).get();
+    csvBuffer.writeln('ID,Família ID,Data');
     for (var row in avaliacoes) {
       csvBuffer.writeln(
-        '${row.id},${row.familiaId},${row.categoriaAtual},${row.data.toIso8601String()}',
+        '${row.id},${row.familiaId},${row.data.toIso8601String()}',
       );
     }
 

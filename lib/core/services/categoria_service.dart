@@ -1,18 +1,18 @@
 import '../database/app_database.dart';
-import '../database/daos/categorias_dao.dart';
+import '../database/daos/categoria_dao.dart';
 
-class CategoriasService {
-  final CategoriasDao _categoriasDao;
+class CategoriaService {
+  final CategoriaDao _categoriasDao;
 
-  CategoriasService(AppDatabase db) : _categoriasDao = CategoriasDao(db);
+  CategoriaService(AppDatabase db) : _categoriasDao = CategoriaDao(db);
 
   /// Retorna uma categoria específica pelo ID
-  Future<Categoria?> getCategoriaById(int id) {
+  Future<CategoriaData?> getCategoriaById(int id) {
     return _categoriasDao.getById(id);
   }
 
   /// Retorna todas as categorias
-  Future<List<Categoria>> getTodas() {
+  Future<List<CategoriaData>> getTodas() {
     return _categoriasDao.getTodas();
   }
 
@@ -27,7 +27,7 @@ class CategoriasService {
   }
 
   /// Insere uma nova categoria
-  Future<int> inserir(CategoriasCompanion categoria) {
-    return _categoriasDao.into(_categoriasDao.categorias).insert(categoria);
+  Future<int> inserir(CategoriaCompanion categoria) {
+    return _categoriasDao.into(_categoriasDao.categoria).insert(categoria);
   }
 }

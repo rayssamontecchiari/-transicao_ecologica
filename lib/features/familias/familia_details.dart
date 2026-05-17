@@ -22,8 +22,8 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
   late FamiliasService _familiasService;
   late AvaliacaoService _avaliacaoService;
 
-  Familia? _familia;
-  List<Avaliacao> _avaliacoes = [];
+  FamiliaData? _familia;
+  List<AvaliacaoData> _avaliacoes = [];
   bool _isLoading = true;
 
   @override
@@ -45,7 +45,7 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
 
     try {
       // Buscar família
-      final familia = await (_db.select(_db.familias)
+      final familia = await (_db.select(_db.familia)
             ..where((f) => f.id.equals(widget.familiaId)))
           .getSingleOrNull();
 
@@ -112,7 +112,7 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
     );
   }
 
-  Future<void> _editarAvaliacao(Avaliacao avaliacao) async {
+  Future<void> _editarAvaliacao(AvaliacaoData avaliacao) async {
     // Navegar para o formulário de avaliação com os dados da avaliação existente
     await Navigator.of(context).push(
       MaterialPageRoute(

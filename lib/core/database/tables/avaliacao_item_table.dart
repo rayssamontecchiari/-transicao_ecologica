@@ -1,20 +1,22 @@
 import 'package:drift/drift.dart';
-import 'avaliacoes_table.dart';
-import 'indicadores_table.dart';
-import 'praticas_table.dart';
+import 'avaliacao_table.dart';
+import 'indicador_table.dart';
+import 'pratica_table.dart';
 
-@DataClassName('AvaliacaoItem')
-class AvaliacaoItens extends Table {
+@DataClassName('AvaliacaoItemData')
+class AvaliacaoItem extends Table {
+  @override
+  String get tableName => 'avaliacao_item';
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get avaliacaoId => integer().references(Avaliacoes, #id)();
+  IntColumn get avaliacaoId => integer().references(Avaliacao, #id)();
 
-  IntColumn get indicadorId => integer().references(Indicadores, #id)();
+  IntColumn get indicadorId => integer().references(Indicador, #id)();
 
   /// When evaluating the special "Multidimensional" category, an item is
   /// tied to a particular agricultural practice. For other categories this
   /// column remains null.
-  IntColumn get praticaId => integer().nullable().references(Praticas, #id)();
+  IntColumn get praticaId => integer().nullable().references(Pratica, #id)();
 
   IntColumn get valorLikert => integer()
       .nullable()

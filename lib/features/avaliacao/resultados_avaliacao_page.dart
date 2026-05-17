@@ -24,7 +24,7 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
 
   bool _isLoading = true;
   Map<String, dynamic> _estatisticas = {};
-  Avaliacao? _avaliacao;
+  AvaliacaoData? _avaliacao;
 
   @override
   void initState() {
@@ -37,7 +37,7 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     // Recuperar dados da avaliação
-    final avaliacao = await (_db.select(_db.avaliacoes)
+    final avaliacao = await (_db.select(_db.avaliacao)
           ..where((a) => a.id.equals(widget.avaliacaoId)))
         .getSingleOrNull();
 

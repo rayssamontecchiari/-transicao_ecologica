@@ -1,22 +1,13 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
-import '../database/daos/avaliacoes_dao.dart';
+import '../database/daos/avaliacao_dao.dart';
 
 class AvaliacaoService {
-  final AvaliacoesDao _avaliacoesDao;
+  final AvaliacaoDao _avaliacaoDao;
 
-  AvaliacaoService(AppDatabase db) : _avaliacoesDao = AvaliacoesDao(db);
+  AvaliacaoService(AppDatabase db) : _avaliacaoDao = AvaliacaoDao(db);
 
-  /// Cria uma nova avaliação com itens tradicionais, onde cada indicador
-  /// recebe uma nota Likert (1–5).
-  ///
-  /// Use [respostasLikert] para a maioria das categorias. Para a categoria de
-  /// "Análise Multidimensional" você pode fornecer [itensPorPratica] em vez
-  /// de [respostasLikert]; nesse caso o parâmetro [respostasLikert] é
-  /// ignorado. O mapa em [itensPorPratica] tem chave `praticaId` e valor com um
-  /// conjunto de IDs de indicadores observados — cada item recebe automaticamente
-  /// `valorLikert = 1`.
   Future<void> criarAvaliacao({
     required int familiaId,
     required String avaliador,
@@ -24,62 +15,66 @@ class AvaliacaoService {
     Map<int, int>? respostasLikert,
     Map<int, Set<int>>? itensPorPratica,
   }) async {
-    await _avaliacoesDao.transaction(() async {
-      final avaliacaoId = await _avaliacoesDao.inserirAvaliacao(
-        AvaliacoesCompanion.insert(
+    await _avaliacaoDao.transaction(() async {
+      final avaliacaoId = await _avaliacaoDao.inserirAvaliacao(
+        AvaliacaoCompanion.insert(
           familiaId: familiaId,
           avaliador: avaliador,
           observacoes: Value(observacoes),
         ),
       );
 
-      final itens = <AvaliacaoItensCompanion>[];
+      final itens = <AvaliacaoItemCompanion>[];
 
       if (itensPorPratica != null) {
-        // for each practice, create an item per indicador with valorLikert = 1
         for (final entry in itensPorPratica.entries) {
           final praticaId = entry.key;
+
           for (final indicadorId in entry.value) {
-            itens.add(AvaliacaoItensCompanion.insert(
-              avaliacaoId: avaliacaoId,
-              indicadorId: indicadorId,
-              praticaId: Value(praticaId),
-              valorLikert: const Value(1),
-            ));
+            itens.add(
+              AvaliacaoItemCompanion.insert(
+                avaliacaoId: avaliacaoId,
+                indicadorId: indicadorId,
+                praticaId: Value(praticaId),
+                valorLikert: const Value(1),
+              ),
+            );
           }
         }
       } else if (respostasLikert != null) {
-        itens.addAll(respostasLikert.entries.map((entry) {
-          return AvaliacaoItensCompanion.insert(
-            avaliacaoId: avaliacaoId,
-            indicadorId: entry.key,
-            valorLikert: Value(entry.value),
-          );
-        }));
+        itens.addAll(
+          respostasLikert.entries.map((entry) {
+            return AvaliacaoItemCompanion.insert(
+              avaliacaoId: avaliacaoId,
+              indicadorId: entry.key,
+              valorLikert: Value(entry.value),
+            );
+          }),
+        );
       }
 
       if (itens.isNotEmpty) {
-        await _avaliacoesDao.inserirItens(itens);
+        await _avaliacaoDao.inserirItens(itens);
       }
     });
   }
 
-  /// Obtém todas as avaliações de uma família
-  Future<List<Avaliacao>> getAvaliacoesPorFamilia(int familiaId) {
-    return _avaliacoesDao.getPorFamilia(familiaId);
+  Future<List<AvaliacaoData>> getAvaliacoesPorFamilia(
+    int familiaId,
+  ) {
+    return _avaliacaoDao.getPorFamilia(familiaId);
   }
 
-  /// Obtém itens de uma avaliação específica
-  Future<List<AvaliacaoItem>> getItensPorAvaliacao(int avaliacaoId) {
-    return _avaliacoesDao.getItensPorAvaliacao(avaliacaoId);
+  Future<List<AvaliacaoItemData>> getItensPorAvaliacao(
+    int avaliacaoId,
+  ) {
+    return _avaliacaoDao.getItensPorAvaliacao(avaliacaoId);
   }
 
-  /// Deleta uma avaliação e seus itens associados
   Future<void> deletarAvaliacao(int avaliacaoId) {
-    return _avaliacoesDao.deletarAvaliacao(avaliacaoId);
+    return _avaliacaoDao.deletarAvaliacao(avaliacaoId);
   }
 
-  /// Atualiza uma avaliação existente
   Future<void> atualizarAvaliacao({
     required int avaliacaoId,
     required int familiaId,
@@ -88,43 +83,49 @@ class AvaliacaoService {
     Map<int, int>? respostasLikert,
     Map<int, Set<int>>? itensPorPratica,
   }) async {
-    await _avaliacoesDao.transaction(() async {
-      // Atualizar avaliação
-      await _avaliacoesDao.atualizarAvaliacao(
+    await _avaliacaoDao.transaction(() async {
+      await _avaliacaoDao.atualizarAvaliacao(
         avaliacaoId,
-        AvaliacoesCompanion(
+        AvaliacaoCompanion(
           familiaId: Value(familiaId),
           avaliador: Value(avaliador),
           observacoes: Value(observacoes),
         ),
       );
 
-      // Atualizar itens
-      final itens = <AvaliacaoItensCompanion>[];
+      final itens = <AvaliacaoItemCompanion>[];
 
       if (itensPorPratica != null) {
         for (final entry in itensPorPratica.entries) {
           final praticaId = entry.key;
+
           for (final indicadorId in entry.value) {
-            itens.add(AvaliacaoItensCompanion.insert(
-              avaliacaoId: avaliacaoId,
-              indicadorId: indicadorId,
-              praticaId: Value(praticaId),
-              valorLikert: const Value(1),
-            ));
+            itens.add(
+              AvaliacaoItemCompanion.insert(
+                avaliacaoId: avaliacaoId,
+                indicadorId: indicadorId,
+                praticaId: Value(praticaId),
+                valorLikert: const Value(1),
+              ),
+            );
           }
         }
       } else if (respostasLikert != null) {
-        itens.addAll(respostasLikert.entries.map((entry) {
-          return AvaliacaoItensCompanion.insert(
-            avaliacaoId: avaliacaoId,
-            indicadorId: entry.key,
-            valorLikert: Value(entry.value),
-          );
-        }));
+        itens.addAll(
+          respostasLikert.entries.map((entry) {
+            return AvaliacaoItemCompanion.insert(
+              avaliacaoId: avaliacaoId,
+              indicadorId: entry.key,
+              valorLikert: Value(entry.value),
+            );
+          }),
+        );
       }
 
-      await _avaliacoesDao.atualizarItensAvaliacao(avaliacaoId, itens);
+      await _avaliacaoDao.atualizarItensAvaliacao(
+        avaliacaoId,
+        itens,
+      );
     });
   }
 }

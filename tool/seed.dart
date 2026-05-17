@@ -9,29 +9,29 @@ Future<void> main() async {
   final db = await AppDatabase.instance();
 
   // Check existing regions and categories first so we don't duplicate entries.
-  final regioes = await db.select(db.regioes).get();
+  final regioes = await db.select(db.regiao).get();
   if (regioes.isEmpty) {
-    await db.into(db.regioes).insert(RegioesCompanion.insert(nome: 'Norte'));
-    await db.into(db.regioes).insert(RegioesCompanion.insert(nome: 'Sul'));
-    await db.into(db.regioes).insert(RegioesCompanion.insert(nome: 'Leste'));
-    await db.into(db.regioes).insert(RegioesCompanion.insert(nome: 'Oeste'));
+    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Norte'));
+    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Sul'));
+    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Leste'));
+    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Oeste'));
     print('Regiões seed inseridas.');
   } else {
     print('Regiões já existem, pulando.');
   }
 
-  final categorias = await db.select(db.categorias).get();
+  final categorias = await db.select(db.categoria).get();
   if (categorias.isEmpty) {
-    await db.into(db.categorias).insert(CategoriasCompanion.insert(
+    await db.into(db.categoria).insert(CategoriaCompanion.insert(
         nome: 'Campesinidade',
         descricao: Value('modo de vida, valores e práticas camponesas')));
-    await db.into(db.categorias).insert(CategoriasCompanion.insert(
+    await db.into(db.categoria).insert(CategoriaCompanion.insert(
         nome: 'Sustentabilidade',
         descricao: Value('ambiental, social e econômica')));
-    await db.into(db.categorias).insert(CategoriasCompanion.insert(
+    await db.into(db.categoria).insert(CategoriaCompanion.insert(
         nome: 'Organização social',
         descricao: Value('associações, cooperativas, ação coletiva')));
-    await db.into(db.categorias).insert(CategoriasCompanion.insert(
+    await db.into(db.categoria).insert(CategoriaCompanion.insert(
         nome: 'Agenciamento do desenvolvimento rural',
         descricao: Value(
             'capacidade dos atores locais de conduzir seu próprio desenvolvimento')));

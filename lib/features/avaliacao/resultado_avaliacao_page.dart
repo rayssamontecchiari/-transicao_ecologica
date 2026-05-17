@@ -7,7 +7,7 @@ import '../../core/services/resultado_avaliacao_service.dart';
 /// Página para exibir os resultados da avaliação completa
 class ResultadoAvaliacaoPage extends StatefulWidget {
   final int avaliacaoId;
-  final Familia familia;
+  final FamiliaData familia;
 
   const ResultadoAvaliacaoPage({
     super.key,
@@ -24,7 +24,7 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
   late ResultadoAvaliacaoService _resultadoService;
 
   List<ResultadoAvaliacao> _resultados = [];
-  Map<int, Categoria> _categoriaMap = {};
+  Map<int, CategoriaData> _categoriaMap = {};
   bool _isLoading = true;
 
   @override
@@ -38,9 +38,9 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     try {
-      final resultados =
-          await _resultadoService.calcularResultadosCompletos(widget.avaliacaoId);
-      final categorias = await _db.select(_db.categorias).get();
+      final resultados = await _resultadoService
+          .calcularResultadosCompletos(widget.avaliacaoId);
+      final categorias = await _db.select(_db.categoria).get();
 
       // Mapear categorias por ID
       final mapa = {for (var cat in categorias) cat.id: cat};
@@ -183,7 +183,8 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
     );
   }
 
-  Widget _buildResultadoCard(ResultadoAvaliacao resultado, Categoria? categoria) {
+  Widget _buildResultadoCard(
+      ResultadoAvaliacao resultado, CategoriaData? categoria) {
     final nomeCate = categoria?.nome ?? 'Categoria ${resultado.categoriaId}';
 
     return Card(
@@ -247,8 +248,12 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
                       columns: const [
-                        DataColumn(label: Text('Parâmetro', style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text('Valor', style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataColumn(
+                            label: Text('Parâmetro',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
+                        DataColumn(
+                            label: Text('Valor',
+                                style: TextStyle(fontWeight: FontWeight.bold))),
                       ],
                       rows: [
                         DataRow(cells: [

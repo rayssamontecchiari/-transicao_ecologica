@@ -29,12 +29,12 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     _db = await AppDatabase.instance();
     _resultadoService = ResultadoAvaliacaoService(_db);
 
-    final familias = await _db.select(_db.familias).get();
+    final familias = await _db.select(_db.familia).get();
     final familiaNomes = {
       for (final familia in familias) familia.id: familia.nomeResponsavel,
     };
 
-    final avaliacoes = await (_db.select(_db.avaliacoes)
+    final avaliacoes = await (_db.select(_db.avaliacao)
           ..orderBy([
             (a) => OrderingTerm(expression: a.data, mode: OrderingMode.desc)
           ]))
@@ -182,7 +182,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
 }
 
 class _AvaliacaoComResultados {
-  final Avaliacao item;
+  final AvaliacaoData item;
   final String familiaNome;
   final double? media;
   final double? minValor;

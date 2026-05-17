@@ -38,7 +38,7 @@ class _FamiliasResultadosPageState extends State<FamiliasResultadosPage> {
 
     for (final familia in familias) {
       // Obter todas as avaliações dessa família
-      final avaliacoes = await (_db.select(_db.avaliacoes)
+      final avaliacoes = await (_db.select(_db.avaliacao)
             ..where((a) => a.familiaId.equals(familia.id)))
           .get();
 
@@ -197,9 +197,9 @@ class _FamiliasResultadosPageState extends State<FamiliasResultadosPage> {
 }
 
 class _FamiliaComResultados {
-  final Familia familia;
+  final FamiliaData familia;
   final int totalAvaliacoes;
-  final Avaliacao? ultimaAvaliacao;
+  final AvaliacaoData? ultimaAvaliacao;
   final double? mediaUltima;
 
   _FamiliaComResultados({

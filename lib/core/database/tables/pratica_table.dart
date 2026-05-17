@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'categorias_table.dart';
+import 'categoria_table.dart';
 
 /// As práticas agrícolas avaliadas na segunda categoria.
 ///
@@ -7,12 +7,14 @@ import 'categorias_table.dart';
 /// mas sim à categoria como um todo. Elas são utilizadas na avaliação da
 /// categoria "Análise Multidimensional da Sustentabilidade das Práticas
 /// Agrícolas".
-@DataClassName('Pratica')
-class Praticas extends Table {
+@DataClassName('PraticaData')
+class Pratica extends Table {
+  @override
+  String get tableName => 'pratica';
   IntColumn get id => integer().autoIncrement()();
 
   TextColumn get nome => text()();
 
   /// Referência para a categoria à qual esta prática pertence.
-  IntColumn get categoriaId => integer().references(Categorias, #id)();
+  IntColumn get categoriaId => integer().references(Categoria, #id)();
 }

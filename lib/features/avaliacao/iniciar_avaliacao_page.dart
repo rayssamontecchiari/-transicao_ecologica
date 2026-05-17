@@ -3,7 +3,7 @@ import 'package:drift/drift.dart' as drift hide Column, Table;
 
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
-import '../../core/services/categorias_service.dart';
+import '../../core/services/categoria_service.dart';
 import 'avaliacao_form.dart';
 import 'resultado_avaliacao_page.dart';
 
@@ -18,12 +18,12 @@ class IniciarAvaliacaoPage extends StatefulWidget {
 
 class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   late FamiliasService _familiasService;
-  late CategoriasService _categoriasService;
+  late CategoriaService _categoriaService;
   late AppDatabase _db;
 
-  List<Familia> _familias = [];
-  List<Categoria> _categorias = [];
-  Familia? _selectedFamilia;
+  List<FamiliaData> _familias = [];
+  List<CategoriaData> _categorias = [];
+  FamiliaData? _selectedFamilia;
   bool _isLoading = true;
   int _categoriaAtual = 0;
   bool _isProcessing = false;
@@ -45,10 +45,10 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   Future<void> _init() async {
     _db = await AppDatabase.instance();
     _familiasService = FamiliasService(_db);
-    _categoriasService = CategoriasService(_db);
+    _categoriaService = CategoriaService(_db);
 
     final familias = await _familiasService.getTodas();
-    final categorias = await _categoriasService.getTodas();
+    final categorias = await _categoriaService.getTodas();
 
     setState(() {
       _familias = familias;
@@ -60,7 +60,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     });
   }
 
-  Future<void> _iniciarAvaliacao({int? avaliacaoIdExistente}) async {
+  Future<void> _iniciarAvaliacao() async {
     if (_selectedFamilia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione uma família')),
@@ -69,25 +69,34 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     }
 
     setState(() => _isProcessing = true);
-    _avaliacaoIdEmProgresso = avaliacaoIdExistente;
 
     try {
-      // Determinar de qual categoria começar
-      int inicioCategoria = 0;
-      if (avaliacaoIdExistente != null) {
-        // Buscar em qual categoria a avaliação parou
-        final avaliacao = _db.select(_db.avaliacoes)
-          ..where((a) => a.id.equals(avaliacaoIdExistente));
-        final avaliacaoData = await avaliacao.getSingleOrNull();
-        if (avaliacaoData != null) {
-          // Se estava incompleta, começar da próxima categoria
-          inicioCategoria = avaliacaoData.categoriaAtual + 1;
-          if (inicioCategoria >= _categorias.length) {
-            // Já estava completa, começar do 0
-            inicioCategoria = 0;
-          }
-        }
+      int avaliacaoIdExistente;
+
+      // Buscar avaliações pendentes (draft) da família
+      final avaliacoesPendentes = await (_db.select(_db.avaliacao)
+            ..where((a) =>
+                a.familiaId.equals(_selectedFamilia!.id) &
+                a.status.equals('draft')))
+          .get();
+
+      if (avaliacoesPendentes.isNotEmpty) {
+        avaliacaoIdExistente = avaliacoesPendentes.first.id;
+      } else {
+        // Criar uma nova avaliação
+        avaliacaoIdExistente = await _db.avaliacao.insertOne(
+          AvaliacaoCompanion.insert(
+            familiaId: _selectedFamilia!.id,
+            avaliador: _avaliadorController.text,
+            status: const drift.Value('draft'),
+          ),
+        );
       }
+
+      _avaliacaoIdEmProgresso = avaliacaoIdExistente;
+
+      // Sempre começar da primeira categoria
+      int inicioCategoria = 0;
 
       for (int i = inicioCategoria; i < _categorias.length; i++) {
         if (!mounted) break;
@@ -96,19 +105,12 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
 
         final categoria = _categorias[i];
 
-        Avaliacao? avaliacaoExistente;
-        if (_avaliacaoIdEmProgresso != null) {
-          avaliacaoExistente = await (_db.select(_db.avaliacoes)
-                ..where((a) => a.id.equals(_avaliacaoIdEmProgresso!)))
-              .getSingleOrNull();
-        }
-
         final result = await Navigator.of(context).push<int>(
           MaterialPageRoute(
             builder: (_) => CategoriaFormPage(
               categoriaId: categoria.id,
               familiaId: _selectedFamilia!.id,
-              avaliacaoId: 1,
+              avaliacaoId: _avaliacaoIdEmProgresso!,
               categoriaAtual: i + 1,
               totalCategorias: _categorias.length,
             ),
@@ -123,13 +125,13 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
         // Atualizar o ID da avaliação com o retorno do formulário
         _avaliacaoIdEmProgresso = result;
 
-        // Atualizar no banco para rastrear em qual categoria parou
+        // Não atualizamos mais `categoriaAtual` no banco; apenas registramos
+        // a data de alteração para referência.
         if (_avaliacaoIdEmProgresso != null) {
-          await (_db.update(_db.avaliacoes)
+          await (_db.update(_db.avaliacao)
                 ..where((a) => a.id.equals(_avaliacaoIdEmProgresso!)))
               .write(
-            AvaliacoesCompanion(
-              categoriaAtual: drift.Value(i),
+            AvaliacaoCompanion(
               dataAlteracao: drift.Value(DateTime.now()),
             ),
           );
@@ -322,7 +324,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                               elevation: 1,
                               child: SizedBox(
                                 height: 58,
-                                child: DropdownButtonFormField<Familia>(
+                                child: DropdownButtonFormField<FamiliaData>(
                                   value: _selectedFamilia,
                                   decoration: InputDecoration(
                                     hintText: 'Selecionar família',

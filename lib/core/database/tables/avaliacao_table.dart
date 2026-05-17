@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
-import 'familias_table.dart';
+import 'familia_table.dart';
 
-@DataClassName('Avaliacao')
-class Avaliacoes extends Table {
+@DataClassName('AvaliacaoData')
+class Avaliacao extends Table {
+  @override
+  String get tableName => 'avaliacao';
   IntColumn get id => integer().autoIncrement()();
 
   DateTimeColumn get data => dateTime().withDefault(currentDateAndTime)();
@@ -17,7 +19,5 @@ class Avaliacoes extends Table {
   TextColumn get status => text().withDefault(const Constant('draft'))();
 
   /// Qual categoria o usuário está preenchendo (0-3)
-  IntColumn get categoriaAtual => integer().withDefault(const Constant(0))();
-
-  IntColumn get familiaId => integer().references(Familias, #id)();
+  IntColumn get familiaId => integer().references(Familia, #id)();
 }

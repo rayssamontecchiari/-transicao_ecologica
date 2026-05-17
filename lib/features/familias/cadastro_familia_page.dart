@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
-import '../../core/services/regioes_service.dart';
+import '../../core/services/regiao_service.dart';
 
 /// Página para cadastro de novas famílias.
 class CadastroFamiliaPage extends StatefulWidget {
-  final Familia? familia;
+  final FamiliaData? familia;
 
   const CadastroFamiliaPage({super.key, this.familia});
 
@@ -22,10 +22,10 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   final _enderecoController = TextEditingController();
 
   late FamiliasService _familiasService;
-  late RegioesService _regioesService;
+  late RegiaoService _regioesService;
 
-  List<Regiao> _regioes = [];
-  Regiao? _selectedRegiao;
+  List<RegiaoData> _regioes = [];
+  RegiaoData? _selectedRegiao;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -40,7 +40,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   Future<void> _initializeServices() async {
     final db = await AppDatabase.instance();
     _familiasService = FamiliasService(db);
-    _regioesService = RegioesService(db);
+    _regioesService = RegiaoService(db);
     await _loadRegioes();
 
     // Se estiver editando, preencher os campos
@@ -90,7 +90,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
     setState(() => _isSaving = true);
 
     try {
-      final familia = FamiliasCompanion(
+      final familia = FamiliaCompanion(
         nomeResponsavel: Value(_nomeResponsavelController.text),
         telefone: Value(_telefoneController.text),
         endereco: Value(_enderecoController.text),
@@ -195,7 +195,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<Regiao>(
+                    DropdownButtonFormField<RegiaoData>(
                       value: _selectedRegiao,
                       decoration: const InputDecoration(
                         labelText: 'Região',

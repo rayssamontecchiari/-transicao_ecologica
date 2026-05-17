@@ -2,8 +2,8 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/services/indicadores_service.dart';
-import '../../core/services/categorias_service.dart';
+import '../../core/services/indicador_service.dart';
+import '../../core/services/categoria_service.dart';
 
 /// Página para cadastro de indicadores.
 class CadastroIndicadorPage extends StatefulWidget {
@@ -19,11 +19,11 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
   final _descricaoController = TextEditingController();
   final _pesoController = TextEditingController(text: '1.0');
 
-  late IndicadoresService _indicadoresService;
-  late CategoriasService _categoriasService;
+  late IndicadorService _indicadorService;
+  late CategoriaService _categoriaService;
 
-  List<Categoria> _categorias = [];
-  Categoria? _selectedCategoria;
+  List<CategoriaData> _categorias = [];
+  CategoriaData? _selectedCategoria;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -35,14 +35,14 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
 
   Future<void> _init() async {
     final db = await AppDatabase.instance();
-    _indicadoresService = IndicadoresService(db);
-    _categoriasService = CategoriasService(db);
+    _indicadorService = IndicadorService(db);
+    _categoriaService = CategoriaService(db);
     await _loadCategorias();
   }
 
   Future<void> _loadCategorias() async {
     try {
-      final cats = await _categoriasService.getTodas();
+      final cats = await _categoriaService.getTodas();
       setState(() {
         _categorias = cats;
         _isLoading = false;
@@ -69,13 +69,13 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
     setState(() => _isSaving = true);
     try {
       final peso = double.tryParse(_pesoController.text) ?? 1.0;
-      final indicador = IndicadoresCompanion(
+      final indicador = IndicadorCompanion(
         nome: Value(_nomeController.text),
         descricao: Value(_descricaoController.text),
         peso: Value(peso),
         categoriaId: Value(_selectedCategoria!.id),
       );
-      await _indicadoresService.inserirIndicador(indicador);
+      await _indicadorService.inserirIndicador(indicador);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Indicador cadastrado com sucesso!')),
@@ -148,7 +148,7 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<Categoria>(
+                    DropdownButtonFormField<CategoriaData>(
                       value: _selectedCategoria,
                       decoration: const InputDecoration(
                         labelText: 'Categoria',

@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
-import 'categorias_service.dart';
-import 'indicadores_service.dart';
+import 'categoria_service.dart';
+import 'indicador_service.dart';
 
 /// Serviço de diagnóstico do banco de dados
 class DatabaseDiagnostico {
-  final CategoriasService categoriasService;
-  final IndicadoresService indicadoresService;
+  final CategoriaService categoriaService;
+  final IndicadorService indicadorService;
 
   DatabaseDiagnostico({
-    required this.categoriasService,
-    required this.indicadoresService,
+    required this.categoriaService,
+    required this.indicadorService,
   });
 
   /// Verifica o estado dos dados no banco
   Future<Map<String, dynamic>> diagnosticar() async {
     try {
-      final totalCategorias = await categoriasService.contarTotal();
-      final totalIndicadores = await indicadoresService.contarTotal();
-      final existeCategorias = await categoriasService.existeCategorias();
-      final existeIndicadores = await indicadoresService.existeIndicadores();
+      final totalCategorias = await categoriaService.contarTotal();
+      final totalIndicadores = await indicadorService.contarTotal();
+      final existeCategorias = await categoriaService.existeCategorias();
+      final existeIndicadores = await indicadorService.existeIndicadores();
 
-      final categorias = await categoriasService.getTodas();
-      final indicadoresMap = await indicadoresService.getPorCategoria();
+      final categorias = await categoriaService.getTodas();
+      final indicadoresMap = await indicadorService.getPorCategoria();
 
       return {
         'sucesso': true,

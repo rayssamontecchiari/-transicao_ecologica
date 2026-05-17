@@ -14,13 +14,13 @@ class ResultadoAvaliacaoService {
     required int categoriaId,
   }) async {
     try {
-      final indicadores = await (_db.select(_db.indicadores)
+      final indicadores = await (_db.select(_db.indicador)
             ..where((i) => i.categoriaId.equals(categoriaId)))
           .get();
 
       if (indicadores.isEmpty) return null;
 
-      final itens = await (_db.select(_db.avaliacaoItens)
+      final itens = await (_db.select(_db.avaliacaoItem)
             ..where((ai) => ai.avaliacaoId.equals(avaliacaoId)))
           .get();
 
@@ -77,7 +77,7 @@ class ResultadoAvaliacaoService {
     int avaliacaoId,
   ) async {
     try {
-      final categorias = await _db.select(_db.categorias).get();
+      final categorias = await _db.select(_db.categoria).get();
       final resultados = <ResultadoAvaliacao>[];
 
       for (final categoria in categorias) {

@@ -1,22 +1,22 @@
-import '../database/daos/indicadores_dao.dart';
-import '../database/daos/categorias_dao.dart';
+import '../database/daos/indicador_dao.dart';
+import '../database/daos/categoria_dao.dart';
 import '../database/app_database.dart';
 
-class IndicadoresService {
-  final IndicadoresDao _indicadoresDao;
-  late final CategoriasDao _categoriasDao;
+class IndicadorService {
+  final IndicadorDao _indicadoresDao;
+  late final CategoriaDao _categoriasDao;
 
-  IndicadoresService(AppDatabase db) : _indicadoresDao = IndicadoresDao(db) {
-    _categoriasDao = CategoriasDao(db);
+  IndicadorService(AppDatabase db) : _indicadoresDao = IndicadorDao(db) {
+    _categoriasDao = CategoriaDao(db);
   }
 
   /// Retorna uma categoria específica pelo ID
-  Future<Categoria?> getCategoriaById(int id) {
+  Future<CategoriaData?> getCategoriaById(int id) {
     return _categoriasDao.getById(id);
   }
 
   /// Retorna todos os indicadores de uma categoria específica
-  Future<List<Indicador>> getIndicadoresByCategoria(int categoriaId) {
+  Future<List<IndicadorData>> getIndicadoresByCategoria(int categoriaId) {
     return _indicadoresDao.getPorCategoria(categoriaId);
   }
 
@@ -31,10 +31,10 @@ class IndicadoresService {
   }
 
   /// Retorna indicadores agrupados por categoria
-  Future<Map<Categoria, List<Indicador>>> getPorCategoria() async {
+  Future<Map<CategoriaData, List<IndicadorData>>> getPorCategoria() async {
     final registros = await _indicadoresDao.getComCategoria();
 
-    final Map<Categoria, List<Indicador>> mapa = {};
+    final Map<CategoriaData, List<IndicadorData>> mapa = {};
 
     for (final (indicador, categoria) in registros) {
       mapa.putIfAbsent(categoria, () => []);
@@ -50,7 +50,7 @@ class IndicadoresService {
   }
 
   /// Insere um novo indicador no banco
-  Future<int> inserirIndicador(IndicadoresCompanion indicador) {
-    return _indicadoresDao.into(_indicadoresDao.indicadores).insert(indicador);
+  Future<int> inserirIndicador(IndicadorCompanion indicador) {
+    return _indicadoresDao.into(_indicadoresDao.indicador).insert(indicador);
   }
 }

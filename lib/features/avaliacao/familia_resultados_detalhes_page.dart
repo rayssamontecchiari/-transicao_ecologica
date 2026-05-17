@@ -8,7 +8,7 @@ import 'resultados_avaliacao_page.dart';
 
 /// Página que exibe os detalhes de resultados de uma família específica
 class FamiliaResultadosDetalhesPage extends StatefulWidget {
-  final Familia familia;
+  final FamiliaData familia;
 
   const FamiliaResultadosDetalhesPage({
     super.key,
@@ -39,7 +39,7 @@ class _FamiliaResultadosDetalhesPageState
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     // Obter todas as avaliações dessa família
-    final avaliacoes = await (_db.select(_db.avaliacoes)
+    final avaliacoes = await (_db.select(_db.avaliacao)
           ..where((a) => a.familiaId.equals(widget.familia.id))
           ..orderBy([
             (a) => OrderingTerm(expression: a.data, mode: OrderingMode.desc)
@@ -346,7 +346,7 @@ class _FamiliaResultadosDetalhesPageState
 }
 
 class _AvaliacaoComResultados {
-  final Avaliacao avaliacao;
+  final AvaliacaoData avaliacao;
   final double? media;
   final double? minValor;
   final double? maxValor;

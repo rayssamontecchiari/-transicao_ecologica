@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'categorias_table.dart';
-import 'dimensoes_table.dart';
+import 'categoria_table.dart';
+import 'dimensao_table.dart';
 
 /// Indicadores ou aspectos norteadores usados para avaliar cada categoria.
 ///
@@ -8,8 +8,10 @@ import 'dimensoes_table.dart';
 /// categoria necessita de uma hierarquia adicional (dimensões → indicadores).
 /// Ele referencia a tabela [Dimensoes] e pode ser nulo para categorias que não
 /// utilizam dimensões.
-@DataClassName('Indicador')
-class Indicadores extends Table {
+@DataClassName('IndicadorData')
+class Indicador extends Table {
+  @override
+  String get tableName => 'indicador';
   IntColumn get id => integer().autoIncrement()();
 
   TextColumn get nome => text()();
@@ -17,7 +19,7 @@ class Indicadores extends Table {
 
   RealColumn get peso => real().withDefault(const Constant(1.0))();
 
-  IntColumn get categoriaId => integer().references(Categorias, #id)();
+  IntColumn get categoriaId => integer().references(Categoria, #id)();
 
-  IntColumn get dimensaoId => integer().nullable().references(Dimensoes, #id)();
+  IntColumn get dimensaoId => integer().nullable().references(Dimensao, #id)();
 }

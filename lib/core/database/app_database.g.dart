@@ -3,11 +3,11 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regiao> {
+class $RegiaoTable extends Regiao with TableInfo<$RegiaoTable, RegiaoData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $RegioesTable(this.attachedDatabase, [this._alias]);
+  $RegiaoTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -28,9 +28,9 @@ class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regiao> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'regioes';
+  static const String $name = 'regiao';
   @override
-  VerificationContext validateIntegrity(Insertable<Regiao> instance,
+  VerificationContext validateIntegrity(Insertable<RegiaoData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -49,9 +49,9 @@ class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regiao> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Regiao map(Map<String, dynamic> data, {String? tablePrefix}) {
+  RegiaoData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Regiao(
+    return RegiaoData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -60,15 +60,15 @@ class $RegioesTable extends Regioes with TableInfo<$RegioesTable, Regiao> {
   }
 
   @override
-  $RegioesTable createAlias(String alias) {
-    return $RegioesTable(attachedDatabase, alias);
+  $RegiaoTable createAlias(String alias) {
+    return $RegiaoTable(attachedDatabase, alias);
   }
 }
 
-class Regiao extends DataClass implements Insertable<Regiao> {
+class RegiaoData extends DataClass implements Insertable<RegiaoData> {
   final int id;
   final String nome;
-  const Regiao({required this.id, required this.nome});
+  const RegiaoData({required this.id, required this.nome});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -77,17 +77,17 @@ class Regiao extends DataClass implements Insertable<Regiao> {
     return map;
   }
 
-  RegioesCompanion toCompanion(bool nullToAbsent) {
-    return RegioesCompanion(
+  RegiaoCompanion toCompanion(bool nullToAbsent) {
+    return RegiaoCompanion(
       id: Value(id),
       nome: Value(nome),
     );
   }
 
-  factory Regiao.fromJson(Map<String, dynamic> json,
+  factory RegiaoData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Regiao(
+    return RegiaoData(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
     );
@@ -101,12 +101,12 @@ class Regiao extends DataClass implements Insertable<Regiao> {
     };
   }
 
-  Regiao copyWith({int? id, String? nome}) => Regiao(
+  RegiaoData copyWith({int? id, String? nome}) => RegiaoData(
         id: id ?? this.id,
         nome: nome ?? this.nome,
       );
-  Regiao copyWithCompanion(RegioesCompanion data) {
-    return Regiao(
+  RegiaoData copyWithCompanion(RegiaoCompanion data) {
+    return RegiaoData(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
     );
@@ -114,7 +114,7 @@ class Regiao extends DataClass implements Insertable<Regiao> {
 
   @override
   String toString() {
-    return (StringBuffer('Regiao(')
+    return (StringBuffer('RegiaoData(')
           ..write('id: $id, ')
           ..write('nome: $nome')
           ..write(')'))
@@ -126,21 +126,21 @@ class Regiao extends DataClass implements Insertable<Regiao> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Regiao && other.id == this.id && other.nome == this.nome);
+      (other is RegiaoData && other.id == this.id && other.nome == this.nome);
 }
 
-class RegioesCompanion extends UpdateCompanion<Regiao> {
+class RegiaoCompanion extends UpdateCompanion<RegiaoData> {
   final Value<int> id;
   final Value<String> nome;
-  const RegioesCompanion({
+  const RegiaoCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
   });
-  RegioesCompanion.insert({
+  RegiaoCompanion.insert({
     this.id = const Value.absent(),
     required String nome,
   }) : nome = Value(nome);
-  static Insertable<Regiao> custom({
+  static Insertable<RegiaoData> custom({
     Expression<int>? id,
     Expression<String>? nome,
   }) {
@@ -150,8 +150,8 @@ class RegioesCompanion extends UpdateCompanion<Regiao> {
     });
   }
 
-  RegioesCompanion copyWith({Value<int>? id, Value<String>? nome}) {
-    return RegioesCompanion(
+  RegiaoCompanion copyWith({Value<int>? id, Value<String>? nome}) {
+    return RegiaoCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
     );
@@ -171,7 +171,7 @@ class RegioesCompanion extends UpdateCompanion<Regiao> {
 
   @override
   String toString() {
-    return (StringBuffer('RegioesCompanion(')
+    return (StringBuffer('RegiaoCompanion(')
           ..write('id: $id, ')
           ..write('nome: $nome')
           ..write(')'))
@@ -179,11 +179,11 @@ class RegioesCompanion extends UpdateCompanion<Regiao> {
   }
 }
 
-class $FamiliasTable extends Familias with TableInfo<$FamiliasTable, Familia> {
+class $FamiliaTable extends Familia with TableInfo<$FamiliaTable, FamiliaData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $FamiliasTable(this.attachedDatabase, [this._alias]);
+  $FamiliaTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -219,7 +219,7 @@ class $FamiliasTable extends Familias with TableInfo<$FamiliasTable, Familia> {
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES regioes (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES regiao (id)'));
   @override
   List<GeneratedColumn> get $columns =>
       [id, nomeResponsavel, telefone, endereco, regiaoId];
@@ -227,9 +227,9 @@ class $FamiliasTable extends Familias with TableInfo<$FamiliasTable, Familia> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'familias';
+  static const String $name = 'familia';
   @override
-  VerificationContext validateIntegrity(Insertable<Familia> instance,
+  VerificationContext validateIntegrity(Insertable<FamiliaData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -268,9 +268,9 @@ class $FamiliasTable extends Familias with TableInfo<$FamiliasTable, Familia> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Familia map(Map<String, dynamic> data, {String? tablePrefix}) {
+  FamiliaData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Familia(
+    return FamiliaData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nomeResponsavel: attachedDatabase.typeMapping.read(
@@ -285,18 +285,18 @@ class $FamiliasTable extends Familias with TableInfo<$FamiliasTable, Familia> {
   }
 
   @override
-  $FamiliasTable createAlias(String alias) {
-    return $FamiliasTable(attachedDatabase, alias);
+  $FamiliaTable createAlias(String alias) {
+    return $FamiliaTable(attachedDatabase, alias);
   }
 }
 
-class Familia extends DataClass implements Insertable<Familia> {
+class FamiliaData extends DataClass implements Insertable<FamiliaData> {
   final int id;
   final String nomeResponsavel;
   final String telefone;
   final String endereco;
   final int regiaoId;
-  const Familia(
+  const FamiliaData(
       {required this.id,
       required this.nomeResponsavel,
       required this.telefone,
@@ -313,8 +313,8 @@ class Familia extends DataClass implements Insertable<Familia> {
     return map;
   }
 
-  FamiliasCompanion toCompanion(bool nullToAbsent) {
-    return FamiliasCompanion(
+  FamiliaCompanion toCompanion(bool nullToAbsent) {
+    return FamiliaCompanion(
       id: Value(id),
       nomeResponsavel: Value(nomeResponsavel),
       telefone: Value(telefone),
@@ -323,10 +323,10 @@ class Familia extends DataClass implements Insertable<Familia> {
     );
   }
 
-  factory Familia.fromJson(Map<String, dynamic> json,
+  factory FamiliaData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Familia(
+    return FamiliaData(
       id: serializer.fromJson<int>(json['id']),
       nomeResponsavel: serializer.fromJson<String>(json['nomeResponsavel']),
       telefone: serializer.fromJson<String>(json['telefone']),
@@ -346,21 +346,21 @@ class Familia extends DataClass implements Insertable<Familia> {
     };
   }
 
-  Familia copyWith(
+  FamiliaData copyWith(
           {int? id,
           String? nomeResponsavel,
           String? telefone,
           String? endereco,
           int? regiaoId}) =>
-      Familia(
+      FamiliaData(
         id: id ?? this.id,
         nomeResponsavel: nomeResponsavel ?? this.nomeResponsavel,
         telefone: telefone ?? this.telefone,
         endereco: endereco ?? this.endereco,
         regiaoId: regiaoId ?? this.regiaoId,
       );
-  Familia copyWithCompanion(FamiliasCompanion data) {
-    return Familia(
+  FamiliaData copyWithCompanion(FamiliaCompanion data) {
+    return FamiliaData(
       id: data.id.present ? data.id.value : this.id,
       nomeResponsavel: data.nomeResponsavel.present
           ? data.nomeResponsavel.value
@@ -373,7 +373,7 @@ class Familia extends DataClass implements Insertable<Familia> {
 
   @override
   String toString() {
-    return (StringBuffer('Familia(')
+    return (StringBuffer('FamiliaData(')
           ..write('id: $id, ')
           ..write('nomeResponsavel: $nomeResponsavel, ')
           ..write('telefone: $telefone, ')
@@ -389,7 +389,7 @@ class Familia extends DataClass implements Insertable<Familia> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Familia &&
+      (other is FamiliaData &&
           other.id == this.id &&
           other.nomeResponsavel == this.nomeResponsavel &&
           other.telefone == this.telefone &&
@@ -397,20 +397,20 @@ class Familia extends DataClass implements Insertable<Familia> {
           other.regiaoId == this.regiaoId);
 }
 
-class FamiliasCompanion extends UpdateCompanion<Familia> {
+class FamiliaCompanion extends UpdateCompanion<FamiliaData> {
   final Value<int> id;
   final Value<String> nomeResponsavel;
   final Value<String> telefone;
   final Value<String> endereco;
   final Value<int> regiaoId;
-  const FamiliasCompanion({
+  const FamiliaCompanion({
     this.id = const Value.absent(),
     this.nomeResponsavel = const Value.absent(),
     this.telefone = const Value.absent(),
     this.endereco = const Value.absent(),
     this.regiaoId = const Value.absent(),
   });
-  FamiliasCompanion.insert({
+  FamiliaCompanion.insert({
     this.id = const Value.absent(),
     required String nomeResponsavel,
     required String telefone,
@@ -420,7 +420,7 @@ class FamiliasCompanion extends UpdateCompanion<Familia> {
         telefone = Value(telefone),
         endereco = Value(endereco),
         regiaoId = Value(regiaoId);
-  static Insertable<Familia> custom({
+  static Insertable<FamiliaData> custom({
     Expression<int>? id,
     Expression<String>? nomeResponsavel,
     Expression<String>? telefone,
@@ -436,13 +436,13 @@ class FamiliasCompanion extends UpdateCompanion<Familia> {
     });
   }
 
-  FamiliasCompanion copyWith(
+  FamiliaCompanion copyWith(
       {Value<int>? id,
       Value<String>? nomeResponsavel,
       Value<String>? telefone,
       Value<String>? endereco,
       Value<int>? regiaoId}) {
-    return FamiliasCompanion(
+    return FamiliaCompanion(
       id: id ?? this.id,
       nomeResponsavel: nomeResponsavel ?? this.nomeResponsavel,
       telefone: telefone ?? this.telefone,
@@ -474,7 +474,7 @@ class FamiliasCompanion extends UpdateCompanion<Familia> {
 
   @override
   String toString() {
-    return (StringBuffer('FamiliasCompanion(')
+    return (StringBuffer('FamiliaCompanion(')
           ..write('id: $id, ')
           ..write('nomeResponsavel: $nomeResponsavel, ')
           ..write('telefone: $telefone, ')
@@ -485,12 +485,12 @@ class FamiliasCompanion extends UpdateCompanion<Familia> {
   }
 }
 
-class $CategoriasTable extends Categorias
-    with TableInfo<$CategoriasTable, Categoria> {
+class $CategoriaTable extends Categoria
+    with TableInfo<$CategoriaTable, CategoriaData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CategoriasTable(this.attachedDatabase, [this._alias]);
+  $CategoriaTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -517,9 +517,9 @@ class $CategoriasTable extends Categorias
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'categorias';
+  static const String $name = 'categoria';
   @override
-  VerificationContext validateIntegrity(Insertable<Categoria> instance,
+  VerificationContext validateIntegrity(Insertable<CategoriaData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -542,9 +542,9 @@ class $CategoriasTable extends Categorias
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Categoria map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CategoriaData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Categoria(
+    return CategoriaData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -555,16 +555,16 @@ class $CategoriasTable extends Categorias
   }
 
   @override
-  $CategoriasTable createAlias(String alias) {
-    return $CategoriasTable(attachedDatabase, alias);
+  $CategoriaTable createAlias(String alias) {
+    return $CategoriaTable(attachedDatabase, alias);
   }
 }
 
-class Categoria extends DataClass implements Insertable<Categoria> {
+class CategoriaData extends DataClass implements Insertable<CategoriaData> {
   final int id;
   final String nome;
   final String? descricao;
-  const Categoria({required this.id, required this.nome, this.descricao});
+  const CategoriaData({required this.id, required this.nome, this.descricao});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -576,8 +576,8 @@ class Categoria extends DataClass implements Insertable<Categoria> {
     return map;
   }
 
-  CategoriasCompanion toCompanion(bool nullToAbsent) {
-    return CategoriasCompanion(
+  CategoriaCompanion toCompanion(bool nullToAbsent) {
+    return CategoriaCompanion(
       id: Value(id),
       nome: Value(nome),
       descricao: descricao == null && nullToAbsent
@@ -586,10 +586,10 @@ class Categoria extends DataClass implements Insertable<Categoria> {
     );
   }
 
-  factory Categoria.fromJson(Map<String, dynamic> json,
+  factory CategoriaData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Categoria(
+    return CategoriaData(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       descricao: serializer.fromJson<String?>(json['descricao']),
@@ -605,17 +605,17 @@ class Categoria extends DataClass implements Insertable<Categoria> {
     };
   }
 
-  Categoria copyWith(
+  CategoriaData copyWith(
           {int? id,
           String? nome,
           Value<String?> descricao = const Value.absent()}) =>
-      Categoria(
+      CategoriaData(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         descricao: descricao.present ? descricao.value : this.descricao,
       );
-  Categoria copyWithCompanion(CategoriasCompanion data) {
-    return Categoria(
+  CategoriaData copyWithCompanion(CategoriaCompanion data) {
+    return CategoriaData(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       descricao: data.descricao.present ? data.descricao.value : this.descricao,
@@ -624,7 +624,7 @@ class Categoria extends DataClass implements Insertable<Categoria> {
 
   @override
   String toString() {
-    return (StringBuffer('Categoria(')
+    return (StringBuffer('CategoriaData(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao')
@@ -637,27 +637,27 @@ class Categoria extends DataClass implements Insertable<Categoria> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Categoria &&
+      (other is CategoriaData &&
           other.id == this.id &&
           other.nome == this.nome &&
           other.descricao == this.descricao);
 }
 
-class CategoriasCompanion extends UpdateCompanion<Categoria> {
+class CategoriaCompanion extends UpdateCompanion<CategoriaData> {
   final Value<int> id;
   final Value<String> nome;
   final Value<String?> descricao;
-  const CategoriasCompanion({
+  const CategoriaCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
     this.descricao = const Value.absent(),
   });
-  CategoriasCompanion.insert({
+  CategoriaCompanion.insert({
     this.id = const Value.absent(),
     required String nome,
     this.descricao = const Value.absent(),
   }) : nome = Value(nome);
-  static Insertable<Categoria> custom({
+  static Insertable<CategoriaData> custom({
     Expression<int>? id,
     Expression<String>? nome,
     Expression<String>? descricao,
@@ -669,9 +669,9 @@ class CategoriasCompanion extends UpdateCompanion<Categoria> {
     });
   }
 
-  CategoriasCompanion copyWith(
+  CategoriaCompanion copyWith(
       {Value<int>? id, Value<String>? nome, Value<String?>? descricao}) {
-    return CategoriasCompanion(
+    return CategoriaCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
@@ -695,7 +695,7 @@ class CategoriasCompanion extends UpdateCompanion<Categoria> {
 
   @override
   String toString() {
-    return (StringBuffer('CategoriasCompanion(')
+    return (StringBuffer('CategoriaCompanion(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao')
@@ -704,12 +704,12 @@ class CategoriasCompanion extends UpdateCompanion<Categoria> {
   }
 }
 
-class $DimensoesTable extends Dimensoes
-    with TableInfo<$DimensoesTable, Dimensao> {
+class $DimensaoTable extends Dimensao
+    with TableInfo<$DimensaoTable, DimensaoData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $DimensoesTable(this.attachedDatabase, [this._alias]);
+  $DimensaoTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -732,16 +732,16 @@ class $DimensoesTable extends Dimensoes
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES categorias (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES categoria (id)'));
   @override
   List<GeneratedColumn> get $columns => [id, nome, categoriaId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'dimensoes';
+  static const String $name = 'dimensao';
   @override
-  VerificationContext validateIntegrity(Insertable<Dimensao> instance,
+  VerificationContext validateIntegrity(Insertable<DimensaoData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -768,9 +768,9 @@ class $DimensoesTable extends Dimensoes
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Dimensao map(Map<String, dynamic> data, {String? tablePrefix}) {
+  DimensaoData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Dimensao(
+    return DimensaoData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -781,12 +781,12 @@ class $DimensoesTable extends Dimensoes
   }
 
   @override
-  $DimensoesTable createAlias(String alias) {
-    return $DimensoesTable(attachedDatabase, alias);
+  $DimensaoTable createAlias(String alias) {
+    return $DimensaoTable(attachedDatabase, alias);
   }
 }
 
-class Dimensao extends DataClass implements Insertable<Dimensao> {
+class DimensaoData extends DataClass implements Insertable<DimensaoData> {
   final int id;
   final String nome;
 
@@ -794,7 +794,7 @@ class Dimensao extends DataClass implements Insertable<Dimensao> {
   /// vínculo à categoria para consultas mais simples e para manter coerência
   /// quando vários níveis de hierarquia forem necessários.
   final int categoriaId;
-  const Dimensao(
+  const DimensaoData(
       {required this.id, required this.nome, required this.categoriaId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -805,18 +805,18 @@ class Dimensao extends DataClass implements Insertable<Dimensao> {
     return map;
   }
 
-  DimensoesCompanion toCompanion(bool nullToAbsent) {
-    return DimensoesCompanion(
+  DimensaoCompanion toCompanion(bool nullToAbsent) {
+    return DimensaoCompanion(
       id: Value(id),
       nome: Value(nome),
       categoriaId: Value(categoriaId),
     );
   }
 
-  factory Dimensao.fromJson(Map<String, dynamic> json,
+  factory DimensaoData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Dimensao(
+    return DimensaoData(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       categoriaId: serializer.fromJson<int>(json['categoriaId']),
@@ -832,13 +832,14 @@ class Dimensao extends DataClass implements Insertable<Dimensao> {
     };
   }
 
-  Dimensao copyWith({int? id, String? nome, int? categoriaId}) => Dimensao(
+  DimensaoData copyWith({int? id, String? nome, int? categoriaId}) =>
+      DimensaoData(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         categoriaId: categoriaId ?? this.categoriaId,
       );
-  Dimensao copyWithCompanion(DimensoesCompanion data) {
-    return Dimensao(
+  DimensaoData copyWithCompanion(DimensaoCompanion data) {
+    return DimensaoData(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       categoriaId:
@@ -848,7 +849,7 @@ class Dimensao extends DataClass implements Insertable<Dimensao> {
 
   @override
   String toString() {
-    return (StringBuffer('Dimensao(')
+    return (StringBuffer('DimensaoData(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('categoriaId: $categoriaId')
@@ -861,28 +862,28 @@ class Dimensao extends DataClass implements Insertable<Dimensao> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Dimensao &&
+      (other is DimensaoData &&
           other.id == this.id &&
           other.nome == this.nome &&
           other.categoriaId == this.categoriaId);
 }
 
-class DimensoesCompanion extends UpdateCompanion<Dimensao> {
+class DimensaoCompanion extends UpdateCompanion<DimensaoData> {
   final Value<int> id;
   final Value<String> nome;
   final Value<int> categoriaId;
-  const DimensoesCompanion({
+  const DimensaoCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
     this.categoriaId = const Value.absent(),
   });
-  DimensoesCompanion.insert({
+  DimensaoCompanion.insert({
     this.id = const Value.absent(),
     required String nome,
     required int categoriaId,
   })  : nome = Value(nome),
         categoriaId = Value(categoriaId);
-  static Insertable<Dimensao> custom({
+  static Insertable<DimensaoData> custom({
     Expression<int>? id,
     Expression<String>? nome,
     Expression<int>? categoriaId,
@@ -894,9 +895,9 @@ class DimensoesCompanion extends UpdateCompanion<Dimensao> {
     });
   }
 
-  DimensoesCompanion copyWith(
+  DimensaoCompanion copyWith(
       {Value<int>? id, Value<String>? nome, Value<int>? categoriaId}) {
-    return DimensoesCompanion(
+    return DimensaoCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
       categoriaId: categoriaId ?? this.categoriaId,
@@ -920,7 +921,7 @@ class DimensoesCompanion extends UpdateCompanion<Dimensao> {
 
   @override
   String toString() {
-    return (StringBuffer('DimensoesCompanion(')
+    return (StringBuffer('DimensaoCompanion(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('categoriaId: $categoriaId')
@@ -929,11 +930,11 @@ class DimensoesCompanion extends UpdateCompanion<Dimensao> {
   }
 }
 
-class $PraticasTable extends Praticas with TableInfo<$PraticasTable, Pratica> {
+class $PraticaTable extends Pratica with TableInfo<$PraticaTable, PraticaData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $PraticasTable(this.attachedDatabase, [this._alias]);
+  $PraticaTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -956,16 +957,16 @@ class $PraticasTable extends Praticas with TableInfo<$PraticasTable, Pratica> {
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES categorias (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES categoria (id)'));
   @override
   List<GeneratedColumn> get $columns => [id, nome, categoriaId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'praticas';
+  static const String $name = 'pratica';
   @override
-  VerificationContext validateIntegrity(Insertable<Pratica> instance,
+  VerificationContext validateIntegrity(Insertable<PraticaData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -992,9 +993,9 @@ class $PraticasTable extends Praticas with TableInfo<$PraticasTable, Pratica> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Pratica map(Map<String, dynamic> data, {String? tablePrefix}) {
+  PraticaData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Pratica(
+    return PraticaData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -1005,18 +1006,18 @@ class $PraticasTable extends Praticas with TableInfo<$PraticasTable, Pratica> {
   }
 
   @override
-  $PraticasTable createAlias(String alias) {
-    return $PraticasTable(attachedDatabase, alias);
+  $PraticaTable createAlias(String alias) {
+    return $PraticaTable(attachedDatabase, alias);
   }
 }
 
-class Pratica extends DataClass implements Insertable<Pratica> {
+class PraticaData extends DataClass implements Insertable<PraticaData> {
   final int id;
   final String nome;
 
   /// Referência para a categoria à qual esta prática pertence.
   final int categoriaId;
-  const Pratica(
+  const PraticaData(
       {required this.id, required this.nome, required this.categoriaId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1027,18 +1028,18 @@ class Pratica extends DataClass implements Insertable<Pratica> {
     return map;
   }
 
-  PraticasCompanion toCompanion(bool nullToAbsent) {
-    return PraticasCompanion(
+  PraticaCompanion toCompanion(bool nullToAbsent) {
+    return PraticaCompanion(
       id: Value(id),
       nome: Value(nome),
       categoriaId: Value(categoriaId),
     );
   }
 
-  factory Pratica.fromJson(Map<String, dynamic> json,
+  factory PraticaData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Pratica(
+    return PraticaData(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       categoriaId: serializer.fromJson<int>(json['categoriaId']),
@@ -1054,13 +1055,14 @@ class Pratica extends DataClass implements Insertable<Pratica> {
     };
   }
 
-  Pratica copyWith({int? id, String? nome, int? categoriaId}) => Pratica(
+  PraticaData copyWith({int? id, String? nome, int? categoriaId}) =>
+      PraticaData(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         categoriaId: categoriaId ?? this.categoriaId,
       );
-  Pratica copyWithCompanion(PraticasCompanion data) {
-    return Pratica(
+  PraticaData copyWithCompanion(PraticaCompanion data) {
+    return PraticaData(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       categoriaId:
@@ -1070,7 +1072,7 @@ class Pratica extends DataClass implements Insertable<Pratica> {
 
   @override
   String toString() {
-    return (StringBuffer('Pratica(')
+    return (StringBuffer('PraticaData(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('categoriaId: $categoriaId')
@@ -1083,28 +1085,28 @@ class Pratica extends DataClass implements Insertable<Pratica> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Pratica &&
+      (other is PraticaData &&
           other.id == this.id &&
           other.nome == this.nome &&
           other.categoriaId == this.categoriaId);
 }
 
-class PraticasCompanion extends UpdateCompanion<Pratica> {
+class PraticaCompanion extends UpdateCompanion<PraticaData> {
   final Value<int> id;
   final Value<String> nome;
   final Value<int> categoriaId;
-  const PraticasCompanion({
+  const PraticaCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
     this.categoriaId = const Value.absent(),
   });
-  PraticasCompanion.insert({
+  PraticaCompanion.insert({
     this.id = const Value.absent(),
     required String nome,
     required int categoriaId,
   })  : nome = Value(nome),
         categoriaId = Value(categoriaId);
-  static Insertable<Pratica> custom({
+  static Insertable<PraticaData> custom({
     Expression<int>? id,
     Expression<String>? nome,
     Expression<int>? categoriaId,
@@ -1116,9 +1118,9 @@ class PraticasCompanion extends UpdateCompanion<Pratica> {
     });
   }
 
-  PraticasCompanion copyWith(
+  PraticaCompanion copyWith(
       {Value<int>? id, Value<String>? nome, Value<int>? categoriaId}) {
-    return PraticasCompanion(
+    return PraticaCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
       categoriaId: categoriaId ?? this.categoriaId,
@@ -1142,7 +1144,7 @@ class PraticasCompanion extends UpdateCompanion<Pratica> {
 
   @override
   String toString() {
-    return (StringBuffer('PraticasCompanion(')
+    return (StringBuffer('PraticaCompanion(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('categoriaId: $categoriaId')
@@ -1151,12 +1153,12 @@ class PraticasCompanion extends UpdateCompanion<Pratica> {
   }
 }
 
-class $IndicadoresTable extends Indicadores
-    with TableInfo<$IndicadoresTable, Indicador> {
+class $IndicadorTable extends Indicador
+    with TableInfo<$IndicadorTable, IndicadorData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $IndicadoresTable(this.attachedDatabase, [this._alias]);
+  $IndicadorTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1192,7 +1194,7 @@ class $IndicadoresTable extends Indicadores
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES categorias (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES categoria (id)'));
   static const VerificationMeta _dimensaoIdMeta =
       const VerificationMeta('dimensaoId');
   @override
@@ -1201,7 +1203,7 @@ class $IndicadoresTable extends Indicadores
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES dimensoes (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES dimensao (id)'));
   @override
   List<GeneratedColumn> get $columns =>
       [id, nome, descricao, peso, categoriaId, dimensaoId];
@@ -1209,9 +1211,9 @@ class $IndicadoresTable extends Indicadores
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'indicadores';
+  static const String $name = 'indicador';
   @override
-  VerificationContext validateIntegrity(Insertable<Indicador> instance,
+  VerificationContext validateIntegrity(Insertable<IndicadorData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1254,9 +1256,9 @@ class $IndicadoresTable extends Indicadores
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Indicador map(Map<String, dynamic> data, {String? tablePrefix}) {
+  IndicadorData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Indicador(
+    return IndicadorData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -1273,19 +1275,19 @@ class $IndicadoresTable extends Indicadores
   }
 
   @override
-  $IndicadoresTable createAlias(String alias) {
-    return $IndicadoresTable(attachedDatabase, alias);
+  $IndicadorTable createAlias(String alias) {
+    return $IndicadorTable(attachedDatabase, alias);
   }
 }
 
-class Indicador extends DataClass implements Insertable<Indicador> {
+class IndicadorData extends DataClass implements Insertable<IndicadorData> {
   final int id;
   final String nome;
   final String descricao;
   final double peso;
   final int categoriaId;
   final int? dimensaoId;
-  const Indicador(
+  const IndicadorData(
       {required this.id,
       required this.nome,
       required this.descricao,
@@ -1306,8 +1308,8 @@ class Indicador extends DataClass implements Insertable<Indicador> {
     return map;
   }
 
-  IndicadoresCompanion toCompanion(bool nullToAbsent) {
-    return IndicadoresCompanion(
+  IndicadorCompanion toCompanion(bool nullToAbsent) {
+    return IndicadorCompanion(
       id: Value(id),
       nome: Value(nome),
       descricao: Value(descricao),
@@ -1319,10 +1321,10 @@ class Indicador extends DataClass implements Insertable<Indicador> {
     );
   }
 
-  factory Indicador.fromJson(Map<String, dynamic> json,
+  factory IndicadorData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Indicador(
+    return IndicadorData(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       descricao: serializer.fromJson<String>(json['descricao']),
@@ -1344,14 +1346,14 @@ class Indicador extends DataClass implements Insertable<Indicador> {
     };
   }
 
-  Indicador copyWith(
+  IndicadorData copyWith(
           {int? id,
           String? nome,
           String? descricao,
           double? peso,
           int? categoriaId,
           Value<int?> dimensaoId = const Value.absent()}) =>
-      Indicador(
+      IndicadorData(
         id: id ?? this.id,
         nome: nome ?? this.nome,
         descricao: descricao ?? this.descricao,
@@ -1359,8 +1361,8 @@ class Indicador extends DataClass implements Insertable<Indicador> {
         categoriaId: categoriaId ?? this.categoriaId,
         dimensaoId: dimensaoId.present ? dimensaoId.value : this.dimensaoId,
       );
-  Indicador copyWithCompanion(IndicadoresCompanion data) {
-    return Indicador(
+  IndicadorData copyWithCompanion(IndicadorCompanion data) {
+    return IndicadorData(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       descricao: data.descricao.present ? data.descricao.value : this.descricao,
@@ -1374,7 +1376,7 @@ class Indicador extends DataClass implements Insertable<Indicador> {
 
   @override
   String toString() {
-    return (StringBuffer('Indicador(')
+    return (StringBuffer('IndicadorData(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
@@ -1391,7 +1393,7 @@ class Indicador extends DataClass implements Insertable<Indicador> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Indicador &&
+      (other is IndicadorData &&
           other.id == this.id &&
           other.nome == this.nome &&
           other.descricao == this.descricao &&
@@ -1400,14 +1402,14 @@ class Indicador extends DataClass implements Insertable<Indicador> {
           other.dimensaoId == this.dimensaoId);
 }
 
-class IndicadoresCompanion extends UpdateCompanion<Indicador> {
+class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
   final Value<int> id;
   final Value<String> nome;
   final Value<String> descricao;
   final Value<double> peso;
   final Value<int> categoriaId;
   final Value<int?> dimensaoId;
-  const IndicadoresCompanion({
+  const IndicadorCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
     this.descricao = const Value.absent(),
@@ -1415,7 +1417,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicador> {
     this.categoriaId = const Value.absent(),
     this.dimensaoId = const Value.absent(),
   });
-  IndicadoresCompanion.insert({
+  IndicadorCompanion.insert({
     this.id = const Value.absent(),
     required String nome,
     required String descricao,
@@ -1425,7 +1427,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicador> {
   })  : nome = Value(nome),
         descricao = Value(descricao),
         categoriaId = Value(categoriaId);
-  static Insertable<Indicador> custom({
+  static Insertable<IndicadorData> custom({
     Expression<int>? id,
     Expression<String>? nome,
     Expression<String>? descricao,
@@ -1443,14 +1445,14 @@ class IndicadoresCompanion extends UpdateCompanion<Indicador> {
     });
   }
 
-  IndicadoresCompanion copyWith(
+  IndicadorCompanion copyWith(
       {Value<int>? id,
       Value<String>? nome,
       Value<String>? descricao,
       Value<double>? peso,
       Value<int>? categoriaId,
       Value<int?>? dimensaoId}) {
-    return IndicadoresCompanion(
+    return IndicadorCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
@@ -1486,7 +1488,7 @@ class IndicadoresCompanion extends UpdateCompanion<Indicador> {
 
   @override
   String toString() {
-    return (StringBuffer('IndicadoresCompanion(')
+    return (StringBuffer('IndicadorCompanion(')
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
@@ -1498,12 +1500,12 @@ class IndicadoresCompanion extends UpdateCompanion<Indicador> {
   }
 }
 
-class $AvaliacoesTable extends Avaliacoes
-    with TableInfo<$AvaliacoesTable, Avaliacao> {
+class $AvaliacaoTable extends Avaliacao
+    with TableInfo<$AvaliacaoTable, AvaliacaoData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $AvaliacoesTable(this.attachedDatabase, [this._alias]);
+  $AvaliacaoTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1547,14 +1549,6 @@ class $AvaliacoesTable extends Avaliacoes
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('draft'));
-  static const VerificationMeta _categoriaAtualMeta =
-      const VerificationMeta('categoriaAtual');
-  @override
-  late final GeneratedColumn<int> categoriaAtual = GeneratedColumn<int>(
-      'categoria_atual', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0));
   static const VerificationMeta _familiaIdMeta =
       const VerificationMeta('familiaId');
   @override
@@ -1563,25 +1557,17 @@ class $AvaliacoesTable extends Avaliacoes
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES familias (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES familia (id)'));
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        data,
-        dataAlteracao,
-        avaliador,
-        observacoes,
-        status,
-        categoriaAtual,
-        familiaId
-      ];
+  List<GeneratedColumn> get $columns =>
+      [id, data, dataAlteracao, avaliador, observacoes, status, familiaId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'avaliacoes';
+  static const String $name = 'avaliacao';
   @override
-  VerificationContext validateIntegrity(Insertable<Avaliacao> instance,
+  VerificationContext validateIntegrity(Insertable<AvaliacaoData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1614,12 +1600,6 @@ class $AvaliacoesTable extends Avaliacoes
       context.handle(_statusMeta,
           status.isAcceptableOrUnknown(data['status']!, _statusMeta));
     }
-    if (data.containsKey('categoria_atual')) {
-      context.handle(
-          _categoriaAtualMeta,
-          categoriaAtual.isAcceptableOrUnknown(
-              data['categoria_atual']!, _categoriaAtualMeta));
-    }
     if (data.containsKey('familia_id')) {
       context.handle(_familiaIdMeta,
           familiaId.isAcceptableOrUnknown(data['familia_id']!, _familiaIdMeta));
@@ -1632,9 +1612,9 @@ class $AvaliacoesTable extends Avaliacoes
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Avaliacao map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AvaliacaoData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Avaliacao(
+    return AvaliacaoData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       data: attachedDatabase.typeMapping
@@ -1647,20 +1627,18 @@ class $AvaliacoesTable extends Avaliacoes
           .read(DriftSqlType.string, data['${effectivePrefix}observacoes']),
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      categoriaAtual: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}categoria_atual'])!,
       familiaId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}familia_id'])!,
     );
   }
 
   @override
-  $AvaliacoesTable createAlias(String alias) {
-    return $AvaliacoesTable(attachedDatabase, alias);
+  $AvaliacaoTable createAlias(String alias) {
+    return $AvaliacaoTable(attachedDatabase, alias);
   }
 }
 
-class Avaliacao extends DataClass implements Insertable<Avaliacao> {
+class AvaliacaoData extends DataClass implements Insertable<AvaliacaoData> {
   final int id;
   final DateTime data;
   final DateTime dataAlteracao;
@@ -1671,16 +1649,14 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
   final String status;
 
   /// Qual categoria o usuário está preenchendo (0-3)
-  final int categoriaAtual;
   final int familiaId;
-  const Avaliacao(
+  const AvaliacaoData(
       {required this.id,
       required this.data,
       required this.dataAlteracao,
       required this.avaliador,
       this.observacoes,
       required this.status,
-      required this.categoriaAtual,
       required this.familiaId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1693,13 +1669,12 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
       map['observacoes'] = Variable<String>(observacoes);
     }
     map['status'] = Variable<String>(status);
-    map['categoria_atual'] = Variable<int>(categoriaAtual);
     map['familia_id'] = Variable<int>(familiaId);
     return map;
   }
 
-  AvaliacoesCompanion toCompanion(bool nullToAbsent) {
-    return AvaliacoesCompanion(
+  AvaliacaoCompanion toCompanion(bool nullToAbsent) {
+    return AvaliacaoCompanion(
       id: Value(id),
       data: Value(data),
       dataAlteracao: Value(dataAlteracao),
@@ -1708,22 +1683,20 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
           ? const Value.absent()
           : Value(observacoes),
       status: Value(status),
-      categoriaAtual: Value(categoriaAtual),
       familiaId: Value(familiaId),
     );
   }
 
-  factory Avaliacao.fromJson(Map<String, dynamic> json,
+  factory AvaliacaoData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Avaliacao(
+    return AvaliacaoData(
       id: serializer.fromJson<int>(json['id']),
       data: serializer.fromJson<DateTime>(json['data']),
       dataAlteracao: serializer.fromJson<DateTime>(json['dataAlteracao']),
       avaliador: serializer.fromJson<String>(json['avaliador']),
       observacoes: serializer.fromJson<String?>(json['observacoes']),
       status: serializer.fromJson<String>(json['status']),
-      categoriaAtual: serializer.fromJson<int>(json['categoriaAtual']),
       familiaId: serializer.fromJson<int>(json['familiaId']),
     );
   }
@@ -1737,32 +1710,29 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
       'avaliador': serializer.toJson<String>(avaliador),
       'observacoes': serializer.toJson<String?>(observacoes),
       'status': serializer.toJson<String>(status),
-      'categoriaAtual': serializer.toJson<int>(categoriaAtual),
       'familiaId': serializer.toJson<int>(familiaId),
     };
   }
 
-  Avaliacao copyWith(
+  AvaliacaoData copyWith(
           {int? id,
           DateTime? data,
           DateTime? dataAlteracao,
           String? avaliador,
           Value<String?> observacoes = const Value.absent(),
           String? status,
-          int? categoriaAtual,
           int? familiaId}) =>
-      Avaliacao(
+      AvaliacaoData(
         id: id ?? this.id,
         data: data ?? this.data,
         dataAlteracao: dataAlteracao ?? this.dataAlteracao,
         avaliador: avaliador ?? this.avaliador,
         observacoes: observacoes.present ? observacoes.value : this.observacoes,
         status: status ?? this.status,
-        categoriaAtual: categoriaAtual ?? this.categoriaAtual,
         familiaId: familiaId ?? this.familiaId,
       );
-  Avaliacao copyWithCompanion(AvaliacoesCompanion data) {
-    return Avaliacao(
+  AvaliacaoData copyWithCompanion(AvaliacaoCompanion data) {
+    return AvaliacaoData(
       id: data.id.present ? data.id.value : this.id,
       data: data.data.present ? data.data.value : this.data,
       dataAlteracao: data.dataAlteracao.present
@@ -1772,83 +1742,74 @@ class Avaliacao extends DataClass implements Insertable<Avaliacao> {
       observacoes:
           data.observacoes.present ? data.observacoes.value : this.observacoes,
       status: data.status.present ? data.status.value : this.status,
-      categoriaAtual: data.categoriaAtual.present
-          ? data.categoriaAtual.value
-          : this.categoriaAtual,
       familiaId: data.familiaId.present ? data.familiaId.value : this.familiaId,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('Avaliacao(')
+    return (StringBuffer('AvaliacaoData(')
           ..write('id: $id, ')
           ..write('data: $data, ')
           ..write('dataAlteracao: $dataAlteracao, ')
           ..write('avaliador: $avaliador, ')
           ..write('observacoes: $observacoes, ')
           ..write('status: $status, ')
-          ..write('categoriaAtual: $categoriaAtual, ')
           ..write('familiaId: $familiaId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, data, dataAlteracao, avaliador,
-      observacoes, status, categoriaAtual, familiaId);
+  int get hashCode => Object.hash(
+      id, data, dataAlteracao, avaliador, observacoes, status, familiaId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Avaliacao &&
+      (other is AvaliacaoData &&
           other.id == this.id &&
           other.data == this.data &&
           other.dataAlteracao == this.dataAlteracao &&
           other.avaliador == this.avaliador &&
           other.observacoes == this.observacoes &&
           other.status == this.status &&
-          other.categoriaAtual == this.categoriaAtual &&
           other.familiaId == this.familiaId);
 }
 
-class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
+class AvaliacaoCompanion extends UpdateCompanion<AvaliacaoData> {
   final Value<int> id;
   final Value<DateTime> data;
   final Value<DateTime> dataAlteracao;
   final Value<String> avaliador;
   final Value<String?> observacoes;
   final Value<String> status;
-  final Value<int> categoriaAtual;
   final Value<int> familiaId;
-  const AvaliacoesCompanion({
+  const AvaliacaoCompanion({
     this.id = const Value.absent(),
     this.data = const Value.absent(),
     this.dataAlteracao = const Value.absent(),
     this.avaliador = const Value.absent(),
     this.observacoes = const Value.absent(),
     this.status = const Value.absent(),
-    this.categoriaAtual = const Value.absent(),
     this.familiaId = const Value.absent(),
   });
-  AvaliacoesCompanion.insert({
+  AvaliacaoCompanion.insert({
     this.id = const Value.absent(),
     this.data = const Value.absent(),
     this.dataAlteracao = const Value.absent(),
     required String avaliador,
     this.observacoes = const Value.absent(),
     this.status = const Value.absent(),
-    this.categoriaAtual = const Value.absent(),
     required int familiaId,
   })  : avaliador = Value(avaliador),
         familiaId = Value(familiaId);
-  static Insertable<Avaliacao> custom({
+  static Insertable<AvaliacaoData> custom({
     Expression<int>? id,
     Expression<DateTime>? data,
     Expression<DateTime>? dataAlteracao,
     Expression<String>? avaliador,
     Expression<String>? observacoes,
     Expression<String>? status,
-    Expression<int>? categoriaAtual,
     Expression<int>? familiaId,
   }) {
     return RawValuesInsertable({
@@ -1858,28 +1819,25 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
       if (avaliador != null) 'avaliador': avaliador,
       if (observacoes != null) 'observacoes': observacoes,
       if (status != null) 'status': status,
-      if (categoriaAtual != null) 'categoria_atual': categoriaAtual,
       if (familiaId != null) 'familia_id': familiaId,
     });
   }
 
-  AvaliacoesCompanion copyWith(
+  AvaliacaoCompanion copyWith(
       {Value<int>? id,
       Value<DateTime>? data,
       Value<DateTime>? dataAlteracao,
       Value<String>? avaliador,
       Value<String?>? observacoes,
       Value<String>? status,
-      Value<int>? categoriaAtual,
       Value<int>? familiaId}) {
-    return AvaliacoesCompanion(
+    return AvaliacaoCompanion(
       id: id ?? this.id,
       data: data ?? this.data,
       dataAlteracao: dataAlteracao ?? this.dataAlteracao,
       avaliador: avaliador ?? this.avaliador,
       observacoes: observacoes ?? this.observacoes,
       status: status ?? this.status,
-      categoriaAtual: categoriaAtual ?? this.categoriaAtual,
       familiaId: familiaId ?? this.familiaId,
     );
   }
@@ -1905,9 +1863,6 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
-    if (categoriaAtual.present) {
-      map['categoria_atual'] = Variable<int>(categoriaAtual.value);
-    }
     if (familiaId.present) {
       map['familia_id'] = Variable<int>(familiaId.value);
     }
@@ -1916,26 +1871,25 @@ class AvaliacoesCompanion extends UpdateCompanion<Avaliacao> {
 
   @override
   String toString() {
-    return (StringBuffer('AvaliacoesCompanion(')
+    return (StringBuffer('AvaliacaoCompanion(')
           ..write('id: $id, ')
           ..write('data: $data, ')
           ..write('dataAlteracao: $dataAlteracao, ')
           ..write('avaliador: $avaliador, ')
           ..write('observacoes: $observacoes, ')
           ..write('status: $status, ')
-          ..write('categoriaAtual: $categoriaAtual, ')
           ..write('familiaId: $familiaId')
           ..write(')'))
         .toString();
   }
 }
 
-class $AvaliacaoItensTable extends AvaliacaoItens
-    with TableInfo<$AvaliacaoItensTable, AvaliacaoItem> {
+class $AvaliacaoItemTable extends AvaliacaoItem
+    with TableInfo<$AvaliacaoItemTable, AvaliacaoItemData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $AvaliacaoItensTable(this.attachedDatabase, [this._alias]);
+  $AvaliacaoItemTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1953,7 +1907,7 @@ class $AvaliacaoItensTable extends AvaliacaoItens
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES avaliacoes (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES avaliacao (id)'));
   static const VerificationMeta _indicadorIdMeta =
       const VerificationMeta('indicadorId');
   @override
@@ -1962,7 +1916,7 @@ class $AvaliacaoItensTable extends AvaliacaoItens
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES indicadores (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES indicador (id)'));
   static const VerificationMeta _praticaIdMeta =
       const VerificationMeta('praticaId');
   @override
@@ -1971,7 +1925,7 @@ class $AvaliacaoItensTable extends AvaliacaoItens
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES praticas (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES pratica (id)'));
   static const VerificationMeta _valorLikertMeta =
       const VerificationMeta('valorLikert');
   @override
@@ -1993,9 +1947,9 @@ class $AvaliacaoItensTable extends AvaliacaoItens
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'avaliacao_itens';
+  static const String $name = 'avaliacao_item';
   @override
-  VerificationContext validateIntegrity(Insertable<AvaliacaoItem> instance,
+  VerificationContext validateIntegrity(Insertable<AvaliacaoItemData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -2040,9 +1994,9 @@ class $AvaliacaoItensTable extends AvaliacaoItens
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  AvaliacaoItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+  AvaliacaoItemData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AvaliacaoItem(
+    return AvaliacaoItemData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       avaliacaoId: attachedDatabase.typeMapping
@@ -2059,12 +2013,13 @@ class $AvaliacaoItensTable extends AvaliacaoItens
   }
 
   @override
-  $AvaliacaoItensTable createAlias(String alias) {
-    return $AvaliacaoItensTable(attachedDatabase, alias);
+  $AvaliacaoItemTable createAlias(String alias) {
+    return $AvaliacaoItemTable(attachedDatabase, alias);
   }
 }
 
-class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
+class AvaliacaoItemData extends DataClass
+    implements Insertable<AvaliacaoItemData> {
   final int id;
   final int avaliacaoId;
   final int indicadorId;
@@ -2075,7 +2030,7 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
   final int? praticaId;
   final int? valorLikert;
   final double? valorFuzzy;
-  const AvaliacaoItem(
+  const AvaliacaoItemData(
       {required this.id,
       required this.avaliacaoId,
       required this.indicadorId,
@@ -2100,8 +2055,8 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
     return map;
   }
 
-  AvaliacaoItensCompanion toCompanion(bool nullToAbsent) {
-    return AvaliacaoItensCompanion(
+  AvaliacaoItemCompanion toCompanion(bool nullToAbsent) {
+    return AvaliacaoItemCompanion(
       id: Value(id),
       avaliacaoId: Value(avaliacaoId),
       indicadorId: Value(indicadorId),
@@ -2117,10 +2072,10 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
     );
   }
 
-  factory AvaliacaoItem.fromJson(Map<String, dynamic> json,
+  factory AvaliacaoItemData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AvaliacaoItem(
+    return AvaliacaoItemData(
       id: serializer.fromJson<int>(json['id']),
       avaliacaoId: serializer.fromJson<int>(json['avaliacaoId']),
       indicadorId: serializer.fromJson<int>(json['indicadorId']),
@@ -2142,14 +2097,14 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
     };
   }
 
-  AvaliacaoItem copyWith(
+  AvaliacaoItemData copyWith(
           {int? id,
           int? avaliacaoId,
           int? indicadorId,
           Value<int?> praticaId = const Value.absent(),
           Value<int?> valorLikert = const Value.absent(),
           Value<double?> valorFuzzy = const Value.absent()}) =>
-      AvaliacaoItem(
+      AvaliacaoItemData(
         id: id ?? this.id,
         avaliacaoId: avaliacaoId ?? this.avaliacaoId,
         indicadorId: indicadorId ?? this.indicadorId,
@@ -2157,8 +2112,8 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
         valorLikert: valorLikert.present ? valorLikert.value : this.valorLikert,
         valorFuzzy: valorFuzzy.present ? valorFuzzy.value : this.valorFuzzy,
       );
-  AvaliacaoItem copyWithCompanion(AvaliacaoItensCompanion data) {
-    return AvaliacaoItem(
+  AvaliacaoItemData copyWithCompanion(AvaliacaoItemCompanion data) {
+    return AvaliacaoItemData(
       id: data.id.present ? data.id.value : this.id,
       avaliacaoId:
           data.avaliacaoId.present ? data.avaliacaoId.value : this.avaliacaoId,
@@ -2174,7 +2129,7 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
 
   @override
   String toString() {
-    return (StringBuffer('AvaliacaoItem(')
+    return (StringBuffer('AvaliacaoItemData(')
           ..write('id: $id, ')
           ..write('avaliacaoId: $avaliacaoId, ')
           ..write('indicadorId: $indicadorId, ')
@@ -2191,7 +2146,7 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is AvaliacaoItem &&
+      (other is AvaliacaoItemData &&
           other.id == this.id &&
           other.avaliacaoId == this.avaliacaoId &&
           other.indicadorId == this.indicadorId &&
@@ -2200,14 +2155,14 @@ class AvaliacaoItem extends DataClass implements Insertable<AvaliacaoItem> {
           other.valorFuzzy == this.valorFuzzy);
 }
 
-class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
+class AvaliacaoItemCompanion extends UpdateCompanion<AvaliacaoItemData> {
   final Value<int> id;
   final Value<int> avaliacaoId;
   final Value<int> indicadorId;
   final Value<int?> praticaId;
   final Value<int?> valorLikert;
   final Value<double?> valorFuzzy;
-  const AvaliacaoItensCompanion({
+  const AvaliacaoItemCompanion({
     this.id = const Value.absent(),
     this.avaliacaoId = const Value.absent(),
     this.indicadorId = const Value.absent(),
@@ -2215,7 +2170,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
     this.valorLikert = const Value.absent(),
     this.valorFuzzy = const Value.absent(),
   });
-  AvaliacaoItensCompanion.insert({
+  AvaliacaoItemCompanion.insert({
     this.id = const Value.absent(),
     required int avaliacaoId,
     required int indicadorId,
@@ -2224,7 +2179,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
     this.valorFuzzy = const Value.absent(),
   })  : avaliacaoId = Value(avaliacaoId),
         indicadorId = Value(indicadorId);
-  static Insertable<AvaliacaoItem> custom({
+  static Insertable<AvaliacaoItemData> custom({
     Expression<int>? id,
     Expression<int>? avaliacaoId,
     Expression<int>? indicadorId,
@@ -2242,14 +2197,14 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
     });
   }
 
-  AvaliacaoItensCompanion copyWith(
+  AvaliacaoItemCompanion copyWith(
       {Value<int>? id,
       Value<int>? avaliacaoId,
       Value<int>? indicadorId,
       Value<int?>? praticaId,
       Value<int?>? valorLikert,
       Value<double?>? valorFuzzy}) {
-    return AvaliacaoItensCompanion(
+    return AvaliacaoItemCompanion(
       id: id ?? this.id,
       avaliacaoId: avaliacaoId ?? this.avaliacaoId,
       indicadorId: indicadorId ?? this.indicadorId,
@@ -2285,7 +2240,7 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
 
   @override
   String toString() {
-    return (StringBuffer('AvaliacaoItensCompanion(')
+    return (StringBuffer('AvaliacaoItemCompanion(')
           ..write('id: $id, ')
           ..write('avaliacaoId: $avaliacaoId, ')
           ..write('indicadorId: $indicadorId, ')
@@ -2300,60 +2255,60 @@ class AvaliacaoItensCompanion extends UpdateCompanion<AvaliacaoItem> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $RegioesTable regioes = $RegioesTable(this);
-  late final $FamiliasTable familias = $FamiliasTable(this);
-  late final $CategoriasTable categorias = $CategoriasTable(this);
-  late final $DimensoesTable dimensoes = $DimensoesTable(this);
-  late final $PraticasTable praticas = $PraticasTable(this);
-  late final $IndicadoresTable indicadores = $IndicadoresTable(this);
-  late final $AvaliacoesTable avaliacoes = $AvaliacoesTable(this);
-  late final $AvaliacaoItensTable avaliacaoItens = $AvaliacaoItensTable(this);
+  late final $RegiaoTable regiao = $RegiaoTable(this);
+  late final $FamiliaTable familia = $FamiliaTable(this);
+  late final $CategoriaTable categoria = $CategoriaTable(this);
+  late final $DimensaoTable dimensao = $DimensaoTable(this);
+  late final $PraticaTable pratica = $PraticaTable(this);
+  late final $IndicadorTable indicador = $IndicadorTable(this);
+  late final $AvaliacaoTable avaliacao = $AvaliacaoTable(this);
+  late final $AvaliacaoItemTable avaliacaoItem = $AvaliacaoItemTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-        regioes,
-        familias,
-        categorias,
-        dimensoes,
-        praticas,
-        indicadores,
-        avaliacoes,
-        avaliacaoItens
+        regiao,
+        familia,
+        categoria,
+        dimensao,
+        pratica,
+        indicador,
+        avaliacao,
+        avaliacaoItem
       ];
 }
 
-typedef $$RegioesTableCreateCompanionBuilder = RegioesCompanion Function({
+typedef $$RegiaoTableCreateCompanionBuilder = RegiaoCompanion Function({
   Value<int> id,
   required String nome,
 });
-typedef $$RegioesTableUpdateCompanionBuilder = RegioesCompanion Function({
+typedef $$RegiaoTableUpdateCompanionBuilder = RegiaoCompanion Function({
   Value<int> id,
   Value<String> nome,
 });
 
-class $$RegioesTableTableManager extends RootTableManager<
+class $$RegiaoTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $RegioesTable,
-    Regiao,
-    $$RegioesTableFilterComposer,
-    $$RegioesTableOrderingComposer,
-    $$RegioesTableCreateCompanionBuilder,
-    $$RegioesTableUpdateCompanionBuilder> {
-  $$RegioesTableTableManager(_$AppDatabase db, $RegioesTable table)
+    $RegiaoTable,
+    RegiaoData,
+    $$RegiaoTableFilterComposer,
+    $$RegiaoTableOrderingComposer,
+    $$RegiaoTableCreateCompanionBuilder,
+    $$RegiaoTableUpdateCompanionBuilder> {
+  $$RegiaoTableTableManager(_$AppDatabase db, $RegiaoTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$RegioesTableFilterComposer(ComposerState(db, table)),
+              $$RegiaoTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$RegioesTableOrderingComposer(ComposerState(db, table)),
+              $$RegiaoTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
           }) =>
-              RegioesCompanion(
+              RegiaoCompanion(
             id: id,
             nome: nome,
           ),
@@ -2361,16 +2316,16 @@ class $$RegioesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required String nome,
           }) =>
-              RegioesCompanion.insert(
+              RegiaoCompanion.insert(
             id: id,
             nome: nome,
           ),
         ));
 }
 
-class $$RegioesTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $RegioesTable> {
-  $$RegioesTableFilterComposer(super.$state);
+class $$RegiaoTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $RegiaoTable> {
+  $$RegiaoTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2381,23 +2336,23 @@ class $$RegioesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ComposableFilter familiasRefs(
-      ComposableFilter Function($$FamiliasTableFilterComposer f) f) {
-    final $$FamiliasTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter familiaRefs(
+      ComposableFilter Function($$FamiliaTableFilterComposer f) f) {
+    final $$FamiliaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.familias,
+        referencedTable: $state.db.familia,
         getReferencedColumn: (t) => t.regiaoId,
-        builder: (joinBuilder, parentComposers) =>
-            $$FamiliasTableFilterComposer(ComposerState(
-                $state.db, $state.db.familias, joinBuilder, parentComposers)));
+        builder: (joinBuilder, parentComposers) => $$FamiliaTableFilterComposer(
+            ComposerState(
+                $state.db, $state.db.familia, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$RegioesTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $RegioesTable> {
-  $$RegioesTableOrderingComposer(super.$state);
+class $$RegiaoTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $RegiaoTable> {
+  $$RegiaoTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2409,14 +2364,14 @@ class $$RegioesTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
-typedef $$FamiliasTableCreateCompanionBuilder = FamiliasCompanion Function({
+typedef $$FamiliaTableCreateCompanionBuilder = FamiliaCompanion Function({
   Value<int> id,
   required String nomeResponsavel,
   required String telefone,
   required String endereco,
   required int regiaoId,
 });
-typedef $$FamiliasTableUpdateCompanionBuilder = FamiliasCompanion Function({
+typedef $$FamiliaTableUpdateCompanionBuilder = FamiliaCompanion Function({
   Value<int> id,
   Value<String> nomeResponsavel,
   Value<String> telefone,
@@ -2424,22 +2379,22 @@ typedef $$FamiliasTableUpdateCompanionBuilder = FamiliasCompanion Function({
   Value<int> regiaoId,
 });
 
-class $$FamiliasTableTableManager extends RootTableManager<
+class $$FamiliaTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $FamiliasTable,
-    Familia,
-    $$FamiliasTableFilterComposer,
-    $$FamiliasTableOrderingComposer,
-    $$FamiliasTableCreateCompanionBuilder,
-    $$FamiliasTableUpdateCompanionBuilder> {
-  $$FamiliasTableTableManager(_$AppDatabase db, $FamiliasTable table)
+    $FamiliaTable,
+    FamiliaData,
+    $$FamiliaTableFilterComposer,
+    $$FamiliaTableOrderingComposer,
+    $$FamiliaTableCreateCompanionBuilder,
+    $$FamiliaTableUpdateCompanionBuilder> {
+  $$FamiliaTableTableManager(_$AppDatabase db, $FamiliaTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$FamiliasTableFilterComposer(ComposerState(db, table)),
+              $$FamiliaTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$FamiliasTableOrderingComposer(ComposerState(db, table)),
+              $$FamiliaTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nomeResponsavel = const Value.absent(),
@@ -2447,7 +2402,7 @@ class $$FamiliasTableTableManager extends RootTableManager<
             Value<String> endereco = const Value.absent(),
             Value<int> regiaoId = const Value.absent(),
           }) =>
-              FamiliasCompanion(
+              FamiliaCompanion(
             id: id,
             nomeResponsavel: nomeResponsavel,
             telefone: telefone,
@@ -2461,7 +2416,7 @@ class $$FamiliasTableTableManager extends RootTableManager<
             required String endereco,
             required int regiaoId,
           }) =>
-              FamiliasCompanion.insert(
+              FamiliaCompanion.insert(
             id: id,
             nomeResponsavel: nomeResponsavel,
             telefone: telefone,
@@ -2471,9 +2426,9 @@ class $$FamiliasTableTableManager extends RootTableManager<
         ));
 }
 
-class $$FamiliasTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $FamiliasTable> {
-  $$FamiliasTableFilterComposer(super.$state);
+class $$FamiliaTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $FamiliaTable> {
+  $$FamiliaTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2494,35 +2449,35 @@ class $$FamiliasTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  $$RegioesTableFilterComposer get regiaoId {
-    final $$RegioesTableFilterComposer composer = $state.composerBuilder(
+  $$RegiaoTableFilterComposer get regiaoId {
+    final $$RegiaoTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.regiaoId,
-        referencedTable: $state.db.regioes,
+        referencedTable: $state.db.regiao,
         getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) => $$RegioesTableFilterComposer(
+        builder: (joinBuilder, parentComposers) => $$RegiaoTableFilterComposer(
             ComposerState(
-                $state.db, $state.db.regioes, joinBuilder, parentComposers)));
+                $state.db, $state.db.regiao, joinBuilder, parentComposers)));
     return composer;
   }
 
-  ComposableFilter avaliacoesRefs(
-      ComposableFilter Function($$AvaliacoesTableFilterComposer f) f) {
-    final $$AvaliacoesTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter avaliacaoRefs(
+      ComposableFilter Function($$AvaliacaoTableFilterComposer f) f) {
+    final $$AvaliacaoTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.avaliacoes,
+        referencedTable: $state.db.avaliacao,
         getReferencedColumn: (t) => t.familiaId,
         builder: (joinBuilder, parentComposers) =>
-            $$AvaliacoesTableFilterComposer(ComposerState($state.db,
-                $state.db.avaliacoes, joinBuilder, parentComposers)));
+            $$AvaliacaoTableFilterComposer(ComposerState(
+                $state.db, $state.db.avaliacao, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$FamiliasTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $FamiliasTable> {
-  $$FamiliasTableOrderingComposer(super.$state);
+class $$FamiliaTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $FamiliaTable> {
+  $$FamiliaTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2543,52 +2498,52 @@ class $$FamiliasTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  $$RegioesTableOrderingComposer get regiaoId {
-    final $$RegioesTableOrderingComposer composer = $state.composerBuilder(
+  $$RegiaoTableOrderingComposer get regiaoId {
+    final $$RegiaoTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.regiaoId,
-        referencedTable: $state.db.regioes,
+        referencedTable: $state.db.regiao,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$RegioesTableOrderingComposer(ComposerState(
-                $state.db, $state.db.regioes, joinBuilder, parentComposers)));
+            $$RegiaoTableOrderingComposer(ComposerState(
+                $state.db, $state.db.regiao, joinBuilder, parentComposers)));
     return composer;
   }
 }
 
-typedef $$CategoriasTableCreateCompanionBuilder = CategoriasCompanion Function({
+typedef $$CategoriaTableCreateCompanionBuilder = CategoriaCompanion Function({
   Value<int> id,
   required String nome,
   Value<String?> descricao,
 });
-typedef $$CategoriasTableUpdateCompanionBuilder = CategoriasCompanion Function({
+typedef $$CategoriaTableUpdateCompanionBuilder = CategoriaCompanion Function({
   Value<int> id,
   Value<String> nome,
   Value<String?> descricao,
 });
 
-class $$CategoriasTableTableManager extends RootTableManager<
+class $$CategoriaTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CategoriasTable,
-    Categoria,
-    $$CategoriasTableFilterComposer,
-    $$CategoriasTableOrderingComposer,
-    $$CategoriasTableCreateCompanionBuilder,
-    $$CategoriasTableUpdateCompanionBuilder> {
-  $$CategoriasTableTableManager(_$AppDatabase db, $CategoriasTable table)
+    $CategoriaTable,
+    CategoriaData,
+    $$CategoriaTableFilterComposer,
+    $$CategoriaTableOrderingComposer,
+    $$CategoriaTableCreateCompanionBuilder,
+    $$CategoriaTableUpdateCompanionBuilder> {
+  $$CategoriaTableTableManager(_$AppDatabase db, $CategoriaTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$CategoriasTableFilterComposer(ComposerState(db, table)),
+              $$CategoriaTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$CategoriasTableOrderingComposer(ComposerState(db, table)),
+              $$CategoriaTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
             Value<String?> descricao = const Value.absent(),
           }) =>
-              CategoriasCompanion(
+              CategoriaCompanion(
             id: id,
             nome: nome,
             descricao: descricao,
@@ -2598,7 +2553,7 @@ class $$CategoriasTableTableManager extends RootTableManager<
             required String nome,
             Value<String?> descricao = const Value.absent(),
           }) =>
-              CategoriasCompanion.insert(
+              CategoriaCompanion.insert(
             id: id,
             nome: nome,
             descricao: descricao,
@@ -2606,9 +2561,9 @@ class $$CategoriasTableTableManager extends RootTableManager<
         ));
 }
 
-class $$CategoriasTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $CategoriasTable> {
-  $$CategoriasTableFilterComposer(super.$state);
+class $$CategoriaTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $CategoriaTable> {
+  $$CategoriaTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2624,49 +2579,49 @@ class $$CategoriasTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ComposableFilter dimensoesRefs(
-      ComposableFilter Function($$DimensoesTableFilterComposer f) f) {
-    final $$DimensoesTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter dimensaoRefs(
+      ComposableFilter Function($$DimensaoTableFilterComposer f) f) {
+    final $$DimensaoTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.dimensoes,
+        referencedTable: $state.db.dimensao,
         getReferencedColumn: (t) => t.categoriaId,
         builder: (joinBuilder, parentComposers) =>
-            $$DimensoesTableFilterComposer(ComposerState(
-                $state.db, $state.db.dimensoes, joinBuilder, parentComposers)));
+            $$DimensaoTableFilterComposer(ComposerState(
+                $state.db, $state.db.dimensao, joinBuilder, parentComposers)));
     return f(composer);
   }
 
-  ComposableFilter praticasRefs(
-      ComposableFilter Function($$PraticasTableFilterComposer f) f) {
-    final $$PraticasTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter praticaRefs(
+      ComposableFilter Function($$PraticaTableFilterComposer f) f) {
+    final $$PraticaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.praticas,
+        referencedTable: $state.db.pratica,
         getReferencedColumn: (t) => t.categoriaId,
-        builder: (joinBuilder, parentComposers) =>
-            $$PraticasTableFilterComposer(ComposerState(
-                $state.db, $state.db.praticas, joinBuilder, parentComposers)));
+        builder: (joinBuilder, parentComposers) => $$PraticaTableFilterComposer(
+            ComposerState(
+                $state.db, $state.db.pratica, joinBuilder, parentComposers)));
     return f(composer);
   }
 
-  ComposableFilter indicadoresRefs(
-      ComposableFilter Function($$IndicadoresTableFilterComposer f) f) {
-    final $$IndicadoresTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter indicadorRefs(
+      ComposableFilter Function($$IndicadorTableFilterComposer f) f) {
+    final $$IndicadorTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.indicadores,
+        referencedTable: $state.db.indicador,
         getReferencedColumn: (t) => t.categoriaId,
         builder: (joinBuilder, parentComposers) =>
-            $$IndicadoresTableFilterComposer(ComposerState($state.db,
-                $state.db.indicadores, joinBuilder, parentComposers)));
+            $$IndicadorTableFilterComposer(ComposerState(
+                $state.db, $state.db.indicador, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$CategoriasTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $CategoriasTable> {
-  $$CategoriasTableOrderingComposer(super.$state);
+class $$CategoriaTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $CategoriaTable> {
+  $$CategoriaTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2683,39 +2638,39 @@ class $$CategoriasTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
-typedef $$DimensoesTableCreateCompanionBuilder = DimensoesCompanion Function({
+typedef $$DimensaoTableCreateCompanionBuilder = DimensaoCompanion Function({
   Value<int> id,
   required String nome,
   required int categoriaId,
 });
-typedef $$DimensoesTableUpdateCompanionBuilder = DimensoesCompanion Function({
+typedef $$DimensaoTableUpdateCompanionBuilder = DimensaoCompanion Function({
   Value<int> id,
   Value<String> nome,
   Value<int> categoriaId,
 });
 
-class $$DimensoesTableTableManager extends RootTableManager<
+class $$DimensaoTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $DimensoesTable,
-    Dimensao,
-    $$DimensoesTableFilterComposer,
-    $$DimensoesTableOrderingComposer,
-    $$DimensoesTableCreateCompanionBuilder,
-    $$DimensoesTableUpdateCompanionBuilder> {
-  $$DimensoesTableTableManager(_$AppDatabase db, $DimensoesTable table)
+    $DimensaoTable,
+    DimensaoData,
+    $$DimensaoTableFilterComposer,
+    $$DimensaoTableOrderingComposer,
+    $$DimensaoTableCreateCompanionBuilder,
+    $$DimensaoTableUpdateCompanionBuilder> {
+  $$DimensaoTableTableManager(_$AppDatabase db, $DimensaoTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$DimensoesTableFilterComposer(ComposerState(db, table)),
+              $$DimensaoTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$DimensoesTableOrderingComposer(ComposerState(db, table)),
+              $$DimensaoTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
             Value<int> categoriaId = const Value.absent(),
           }) =>
-              DimensoesCompanion(
+              DimensaoCompanion(
             id: id,
             nome: nome,
             categoriaId: categoriaId,
@@ -2725,7 +2680,7 @@ class $$DimensoesTableTableManager extends RootTableManager<
             required String nome,
             required int categoriaId,
           }) =>
-              DimensoesCompanion.insert(
+              DimensaoCompanion.insert(
             id: id,
             nome: nome,
             categoriaId: categoriaId,
@@ -2733,9 +2688,9 @@ class $$DimensoesTableTableManager extends RootTableManager<
         ));
 }
 
-class $$DimensoesTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $DimensoesTable> {
-  $$DimensoesTableFilterComposer(super.$state);
+class $$DimensaoTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $DimensaoTable> {
+  $$DimensaoTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2746,35 +2701,35 @@ class $$DimensoesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  $$CategoriasTableFilterComposer get categoriaId {
-    final $$CategoriasTableFilterComposer composer = $state.composerBuilder(
+  $$CategoriaTableFilterComposer get categoriaId {
+    final $$CategoriaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.categoriaId,
-        referencedTable: $state.db.categorias,
+        referencedTable: $state.db.categoria,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$CategoriasTableFilterComposer(ComposerState($state.db,
-                $state.db.categorias, joinBuilder, parentComposers)));
+            $$CategoriaTableFilterComposer(ComposerState(
+                $state.db, $state.db.categoria, joinBuilder, parentComposers)));
     return composer;
   }
 
-  ComposableFilter indicadoresRefs(
-      ComposableFilter Function($$IndicadoresTableFilterComposer f) f) {
-    final $$IndicadoresTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter indicadorRefs(
+      ComposableFilter Function($$IndicadorTableFilterComposer f) f) {
+    final $$IndicadorTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.indicadores,
+        referencedTable: $state.db.indicador,
         getReferencedColumn: (t) => t.dimensaoId,
         builder: (joinBuilder, parentComposers) =>
-            $$IndicadoresTableFilterComposer(ComposerState($state.db,
-                $state.db.indicadores, joinBuilder, parentComposers)));
+            $$IndicadorTableFilterComposer(ComposerState(
+                $state.db, $state.db.indicador, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$DimensoesTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $DimensoesTable> {
-  $$DimensoesTableOrderingComposer(super.$state);
+class $$DimensaoTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $DimensaoTable> {
+  $$DimensaoTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2785,52 +2740,52 @@ class $$DimensoesTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  $$CategoriasTableOrderingComposer get categoriaId {
-    final $$CategoriasTableOrderingComposer composer = $state.composerBuilder(
+  $$CategoriaTableOrderingComposer get categoriaId {
+    final $$CategoriaTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.categoriaId,
-        referencedTable: $state.db.categorias,
+        referencedTable: $state.db.categoria,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$CategoriasTableOrderingComposer(ComposerState($state.db,
-                $state.db.categorias, joinBuilder, parentComposers)));
+            $$CategoriaTableOrderingComposer(ComposerState(
+                $state.db, $state.db.categoria, joinBuilder, parentComposers)));
     return composer;
   }
 }
 
-typedef $$PraticasTableCreateCompanionBuilder = PraticasCompanion Function({
+typedef $$PraticaTableCreateCompanionBuilder = PraticaCompanion Function({
   Value<int> id,
   required String nome,
   required int categoriaId,
 });
-typedef $$PraticasTableUpdateCompanionBuilder = PraticasCompanion Function({
+typedef $$PraticaTableUpdateCompanionBuilder = PraticaCompanion Function({
   Value<int> id,
   Value<String> nome,
   Value<int> categoriaId,
 });
 
-class $$PraticasTableTableManager extends RootTableManager<
+class $$PraticaTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $PraticasTable,
-    Pratica,
-    $$PraticasTableFilterComposer,
-    $$PraticasTableOrderingComposer,
-    $$PraticasTableCreateCompanionBuilder,
-    $$PraticasTableUpdateCompanionBuilder> {
-  $$PraticasTableTableManager(_$AppDatabase db, $PraticasTable table)
+    $PraticaTable,
+    PraticaData,
+    $$PraticaTableFilterComposer,
+    $$PraticaTableOrderingComposer,
+    $$PraticaTableCreateCompanionBuilder,
+    $$PraticaTableUpdateCompanionBuilder> {
+  $$PraticaTableTableManager(_$AppDatabase db, $PraticaTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$PraticasTableFilterComposer(ComposerState(db, table)),
+              $$PraticaTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$PraticasTableOrderingComposer(ComposerState(db, table)),
+              $$PraticaTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
             Value<int> categoriaId = const Value.absent(),
           }) =>
-              PraticasCompanion(
+              PraticaCompanion(
             id: id,
             nome: nome,
             categoriaId: categoriaId,
@@ -2840,7 +2795,7 @@ class $$PraticasTableTableManager extends RootTableManager<
             required String nome,
             required int categoriaId,
           }) =>
-              PraticasCompanion.insert(
+              PraticaCompanion.insert(
             id: id,
             nome: nome,
             categoriaId: categoriaId,
@@ -2848,9 +2803,9 @@ class $$PraticasTableTableManager extends RootTableManager<
         ));
 }
 
-class $$PraticasTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $PraticasTable> {
-  $$PraticasTableFilterComposer(super.$state);
+class $$PraticaTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $PraticaTable> {
+  $$PraticaTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2861,35 +2816,35 @@ class $$PraticasTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  $$CategoriasTableFilterComposer get categoriaId {
-    final $$CategoriasTableFilterComposer composer = $state.composerBuilder(
+  $$CategoriaTableFilterComposer get categoriaId {
+    final $$CategoriaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.categoriaId,
-        referencedTable: $state.db.categorias,
+        referencedTable: $state.db.categoria,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$CategoriasTableFilterComposer(ComposerState($state.db,
-                $state.db.categorias, joinBuilder, parentComposers)));
+            $$CategoriaTableFilterComposer(ComposerState(
+                $state.db, $state.db.categoria, joinBuilder, parentComposers)));
     return composer;
   }
 
-  ComposableFilter avaliacaoItensRefs(
-      ComposableFilter Function($$AvaliacaoItensTableFilterComposer f) f) {
-    final $$AvaliacaoItensTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter avaliacaoItemRefs(
+      ComposableFilter Function($$AvaliacaoItemTableFilterComposer f) f) {
+    final $$AvaliacaoItemTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.avaliacaoItens,
+        referencedTable: $state.db.avaliacaoItem,
         getReferencedColumn: (t) => t.praticaId,
         builder: (joinBuilder, parentComposers) =>
-            $$AvaliacaoItensTableFilterComposer(ComposerState($state.db,
-                $state.db.avaliacaoItens, joinBuilder, parentComposers)));
+            $$AvaliacaoItemTableFilterComposer(ComposerState($state.db,
+                $state.db.avaliacaoItem, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$PraticasTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $PraticasTable> {
-  $$PraticasTableOrderingComposer(super.$state);
+class $$PraticaTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $PraticaTable> {
+  $$PraticaTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2900,21 +2855,20 @@ class $$PraticasTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  $$CategoriasTableOrderingComposer get categoriaId {
-    final $$CategoriasTableOrderingComposer composer = $state.composerBuilder(
+  $$CategoriaTableOrderingComposer get categoriaId {
+    final $$CategoriaTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.categoriaId,
-        referencedTable: $state.db.categorias,
+        referencedTable: $state.db.categoria,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$CategoriasTableOrderingComposer(ComposerState($state.db,
-                $state.db.categorias, joinBuilder, parentComposers)));
+            $$CategoriaTableOrderingComposer(ComposerState(
+                $state.db, $state.db.categoria, joinBuilder, parentComposers)));
     return composer;
   }
 }
 
-typedef $$IndicadoresTableCreateCompanionBuilder = IndicadoresCompanion
-    Function({
+typedef $$IndicadorTableCreateCompanionBuilder = IndicadorCompanion Function({
   Value<int> id,
   required String nome,
   required String descricao,
@@ -2922,8 +2876,7 @@ typedef $$IndicadoresTableCreateCompanionBuilder = IndicadoresCompanion
   required int categoriaId,
   Value<int?> dimensaoId,
 });
-typedef $$IndicadoresTableUpdateCompanionBuilder = IndicadoresCompanion
-    Function({
+typedef $$IndicadorTableUpdateCompanionBuilder = IndicadorCompanion Function({
   Value<int> id,
   Value<String> nome,
   Value<String> descricao,
@@ -2932,22 +2885,22 @@ typedef $$IndicadoresTableUpdateCompanionBuilder = IndicadoresCompanion
   Value<int?> dimensaoId,
 });
 
-class $$IndicadoresTableTableManager extends RootTableManager<
+class $$IndicadorTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $IndicadoresTable,
-    Indicador,
-    $$IndicadoresTableFilterComposer,
-    $$IndicadoresTableOrderingComposer,
-    $$IndicadoresTableCreateCompanionBuilder,
-    $$IndicadoresTableUpdateCompanionBuilder> {
-  $$IndicadoresTableTableManager(_$AppDatabase db, $IndicadoresTable table)
+    $IndicadorTable,
+    IndicadorData,
+    $$IndicadorTableFilterComposer,
+    $$IndicadorTableOrderingComposer,
+    $$IndicadorTableCreateCompanionBuilder,
+    $$IndicadorTableUpdateCompanionBuilder> {
+  $$IndicadorTableTableManager(_$AppDatabase db, $IndicadorTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$IndicadoresTableFilterComposer(ComposerState(db, table)),
+              $$IndicadorTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$IndicadoresTableOrderingComposer(ComposerState(db, table)),
+              $$IndicadorTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
@@ -2956,7 +2909,7 @@ class $$IndicadoresTableTableManager extends RootTableManager<
             Value<int> categoriaId = const Value.absent(),
             Value<int?> dimensaoId = const Value.absent(),
           }) =>
-              IndicadoresCompanion(
+              IndicadorCompanion(
             id: id,
             nome: nome,
             descricao: descricao,
@@ -2972,7 +2925,7 @@ class $$IndicadoresTableTableManager extends RootTableManager<
             required int categoriaId,
             Value<int?> dimensaoId = const Value.absent(),
           }) =>
-              IndicadoresCompanion.insert(
+              IndicadorCompanion.insert(
             id: id,
             nome: nome,
             descricao: descricao,
@@ -2983,9 +2936,9 @@ class $$IndicadoresTableTableManager extends RootTableManager<
         ));
 }
 
-class $$IndicadoresTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $IndicadoresTable> {
-  $$IndicadoresTableFilterComposer(super.$state);
+class $$IndicadorTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $IndicadorTable> {
+  $$IndicadorTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -3006,47 +2959,47 @@ class $$IndicadoresTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  $$CategoriasTableFilterComposer get categoriaId {
-    final $$CategoriasTableFilterComposer composer = $state.composerBuilder(
+  $$CategoriaTableFilterComposer get categoriaId {
+    final $$CategoriaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.categoriaId,
-        referencedTable: $state.db.categorias,
+        referencedTable: $state.db.categoria,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$CategoriasTableFilterComposer(ComposerState($state.db,
-                $state.db.categorias, joinBuilder, parentComposers)));
+            $$CategoriaTableFilterComposer(ComposerState(
+                $state.db, $state.db.categoria, joinBuilder, parentComposers)));
     return composer;
   }
 
-  $$DimensoesTableFilterComposer get dimensaoId {
-    final $$DimensoesTableFilterComposer composer = $state.composerBuilder(
+  $$DimensaoTableFilterComposer get dimensaoId {
+    final $$DimensaoTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.dimensaoId,
-        referencedTable: $state.db.dimensoes,
+        referencedTable: $state.db.dimensao,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$DimensoesTableFilterComposer(ComposerState(
-                $state.db, $state.db.dimensoes, joinBuilder, parentComposers)));
+            $$DimensaoTableFilterComposer(ComposerState(
+                $state.db, $state.db.dimensao, joinBuilder, parentComposers)));
     return composer;
   }
 
-  ComposableFilter avaliacaoItensRefs(
-      ComposableFilter Function($$AvaliacaoItensTableFilterComposer f) f) {
-    final $$AvaliacaoItensTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter avaliacaoItemRefs(
+      ComposableFilter Function($$AvaliacaoItemTableFilterComposer f) f) {
+    final $$AvaliacaoItemTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.avaliacaoItens,
+        referencedTable: $state.db.avaliacaoItem,
         getReferencedColumn: (t) => t.indicadorId,
         builder: (joinBuilder, parentComposers) =>
-            $$AvaliacaoItensTableFilterComposer(ComposerState($state.db,
-                $state.db.avaliacaoItens, joinBuilder, parentComposers)));
+            $$AvaliacaoItemTableFilterComposer(ComposerState($state.db,
+                $state.db.avaliacaoItem, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$IndicadoresTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $IndicadoresTable> {
-  $$IndicadoresTableOrderingComposer(super.$state);
+class $$IndicadorTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $IndicadorTable> {
+  $$IndicadorTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -3067,68 +3020,66 @@ class $$IndicadoresTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  $$CategoriasTableOrderingComposer get categoriaId {
-    final $$CategoriasTableOrderingComposer composer = $state.composerBuilder(
+  $$CategoriaTableOrderingComposer get categoriaId {
+    final $$CategoriaTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.categoriaId,
-        referencedTable: $state.db.categorias,
+        referencedTable: $state.db.categoria,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$CategoriasTableOrderingComposer(ComposerState($state.db,
-                $state.db.categorias, joinBuilder, parentComposers)));
+            $$CategoriaTableOrderingComposer(ComposerState(
+                $state.db, $state.db.categoria, joinBuilder, parentComposers)));
     return composer;
   }
 
-  $$DimensoesTableOrderingComposer get dimensaoId {
-    final $$DimensoesTableOrderingComposer composer = $state.composerBuilder(
+  $$DimensaoTableOrderingComposer get dimensaoId {
+    final $$DimensaoTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.dimensaoId,
-        referencedTable: $state.db.dimensoes,
+        referencedTable: $state.db.dimensao,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$DimensoesTableOrderingComposer(ComposerState(
-                $state.db, $state.db.dimensoes, joinBuilder, parentComposers)));
+            $$DimensaoTableOrderingComposer(ComposerState(
+                $state.db, $state.db.dimensao, joinBuilder, parentComposers)));
     return composer;
   }
 }
 
-typedef $$AvaliacoesTableCreateCompanionBuilder = AvaliacoesCompanion Function({
+typedef $$AvaliacaoTableCreateCompanionBuilder = AvaliacaoCompanion Function({
   Value<int> id,
   Value<DateTime> data,
   Value<DateTime> dataAlteracao,
   required String avaliador,
   Value<String?> observacoes,
   Value<String> status,
-  Value<int> categoriaAtual,
   required int familiaId,
 });
-typedef $$AvaliacoesTableUpdateCompanionBuilder = AvaliacoesCompanion Function({
+typedef $$AvaliacaoTableUpdateCompanionBuilder = AvaliacaoCompanion Function({
   Value<int> id,
   Value<DateTime> data,
   Value<DateTime> dataAlteracao,
   Value<String> avaliador,
   Value<String?> observacoes,
   Value<String> status,
-  Value<int> categoriaAtual,
   Value<int> familiaId,
 });
 
-class $$AvaliacoesTableTableManager extends RootTableManager<
+class $$AvaliacaoTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $AvaliacoesTable,
-    Avaliacao,
-    $$AvaliacoesTableFilterComposer,
-    $$AvaliacoesTableOrderingComposer,
-    $$AvaliacoesTableCreateCompanionBuilder,
-    $$AvaliacoesTableUpdateCompanionBuilder> {
-  $$AvaliacoesTableTableManager(_$AppDatabase db, $AvaliacoesTable table)
+    $AvaliacaoTable,
+    AvaliacaoData,
+    $$AvaliacaoTableFilterComposer,
+    $$AvaliacaoTableOrderingComposer,
+    $$AvaliacaoTableCreateCompanionBuilder,
+    $$AvaliacaoTableUpdateCompanionBuilder> {
+  $$AvaliacaoTableTableManager(_$AppDatabase db, $AvaliacaoTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$AvaliacoesTableFilterComposer(ComposerState(db, table)),
+              $$AvaliacaoTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$AvaliacoesTableOrderingComposer(ComposerState(db, table)),
+              $$AvaliacaoTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> data = const Value.absent(),
@@ -3136,17 +3087,15 @@ class $$AvaliacoesTableTableManager extends RootTableManager<
             Value<String> avaliador = const Value.absent(),
             Value<String?> observacoes = const Value.absent(),
             Value<String> status = const Value.absent(),
-            Value<int> categoriaAtual = const Value.absent(),
             Value<int> familiaId = const Value.absent(),
           }) =>
-              AvaliacoesCompanion(
+              AvaliacaoCompanion(
             id: id,
             data: data,
             dataAlteracao: dataAlteracao,
             avaliador: avaliador,
             observacoes: observacoes,
             status: status,
-            categoriaAtual: categoriaAtual,
             familiaId: familiaId,
           ),
           createCompanionCallback: ({
@@ -3156,25 +3105,23 @@ class $$AvaliacoesTableTableManager extends RootTableManager<
             required String avaliador,
             Value<String?> observacoes = const Value.absent(),
             Value<String> status = const Value.absent(),
-            Value<int> categoriaAtual = const Value.absent(),
             required int familiaId,
           }) =>
-              AvaliacoesCompanion.insert(
+              AvaliacaoCompanion.insert(
             id: id,
             data: data,
             dataAlteracao: dataAlteracao,
             avaliador: avaliador,
             observacoes: observacoes,
             status: status,
-            categoriaAtual: categoriaAtual,
             familiaId: familiaId,
           ),
         ));
 }
 
-class $$AvaliacoesTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $AvaliacoesTable> {
-  $$AvaliacoesTableFilterComposer(super.$state);
+class $$AvaliacaoTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $AvaliacaoTable> {
+  $$AvaliacaoTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -3205,40 +3152,35 @@ class $$AvaliacoesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<int> get categoriaAtual => $state.composableBuilder(
-      column: $state.table.categoriaAtual,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  $$FamiliasTableFilterComposer get familiaId {
-    final $$FamiliasTableFilterComposer composer = $state.composerBuilder(
+  $$FamiliaTableFilterComposer get familiaId {
+    final $$FamiliaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.familiaId,
-        referencedTable: $state.db.familias,
+        referencedTable: $state.db.familia,
         getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$FamiliasTableFilterComposer(ComposerState(
-                $state.db, $state.db.familias, joinBuilder, parentComposers)));
+        builder: (joinBuilder, parentComposers) => $$FamiliaTableFilterComposer(
+            ComposerState(
+                $state.db, $state.db.familia, joinBuilder, parentComposers)));
     return composer;
   }
 
-  ComposableFilter avaliacaoItensRefs(
-      ComposableFilter Function($$AvaliacaoItensTableFilterComposer f) f) {
-    final $$AvaliacaoItensTableFilterComposer composer = $state.composerBuilder(
+  ComposableFilter avaliacaoItemRefs(
+      ComposableFilter Function($$AvaliacaoItemTableFilterComposer f) f) {
+    final $$AvaliacaoItemTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.id,
-        referencedTable: $state.db.avaliacaoItens,
+        referencedTable: $state.db.avaliacaoItem,
         getReferencedColumn: (t) => t.avaliacaoId,
         builder: (joinBuilder, parentComposers) =>
-            $$AvaliacaoItensTableFilterComposer(ComposerState($state.db,
-                $state.db.avaliacaoItens, joinBuilder, parentComposers)));
+            $$AvaliacaoItemTableFilterComposer(ComposerState($state.db,
+                $state.db.avaliacaoItem, joinBuilder, parentComposers)));
     return f(composer);
   }
 }
 
-class $$AvaliacoesTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $AvaliacoesTable> {
-  $$AvaliacoesTableOrderingComposer(super.$state);
+class $$AvaliacaoTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $AvaliacaoTable> {
+  $$AvaliacaoTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -3269,25 +3211,20 @@ class $$AvaliacoesTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<int> get categoriaAtual => $state.composableBuilder(
-      column: $state.table.categoriaAtual,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  $$FamiliasTableOrderingComposer get familiaId {
-    final $$FamiliasTableOrderingComposer composer = $state.composerBuilder(
+  $$FamiliaTableOrderingComposer get familiaId {
+    final $$FamiliaTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.familiaId,
-        referencedTable: $state.db.familias,
+        referencedTable: $state.db.familia,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$FamiliasTableOrderingComposer(ComposerState(
-                $state.db, $state.db.familias, joinBuilder, parentComposers)));
+            $$FamiliaTableOrderingComposer(ComposerState(
+                $state.db, $state.db.familia, joinBuilder, parentComposers)));
     return composer;
   }
 }
 
-typedef $$AvaliacaoItensTableCreateCompanionBuilder = AvaliacaoItensCompanion
+typedef $$AvaliacaoItemTableCreateCompanionBuilder = AvaliacaoItemCompanion
     Function({
   Value<int> id,
   required int avaliacaoId,
@@ -3296,7 +3233,7 @@ typedef $$AvaliacaoItensTableCreateCompanionBuilder = AvaliacaoItensCompanion
   Value<int?> valorLikert,
   Value<double?> valorFuzzy,
 });
-typedef $$AvaliacaoItensTableUpdateCompanionBuilder = AvaliacaoItensCompanion
+typedef $$AvaliacaoItemTableUpdateCompanionBuilder = AvaliacaoItemCompanion
     Function({
   Value<int> id,
   Value<int> avaliacaoId,
@@ -3306,23 +3243,22 @@ typedef $$AvaliacaoItensTableUpdateCompanionBuilder = AvaliacaoItensCompanion
   Value<double?> valorFuzzy,
 });
 
-class $$AvaliacaoItensTableTableManager extends RootTableManager<
+class $$AvaliacaoItemTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $AvaliacaoItensTable,
-    AvaliacaoItem,
-    $$AvaliacaoItensTableFilterComposer,
-    $$AvaliacaoItensTableOrderingComposer,
-    $$AvaliacaoItensTableCreateCompanionBuilder,
-    $$AvaliacaoItensTableUpdateCompanionBuilder> {
-  $$AvaliacaoItensTableTableManager(
-      _$AppDatabase db, $AvaliacaoItensTable table)
+    $AvaliacaoItemTable,
+    AvaliacaoItemData,
+    $$AvaliacaoItemTableFilterComposer,
+    $$AvaliacaoItemTableOrderingComposer,
+    $$AvaliacaoItemTableCreateCompanionBuilder,
+    $$AvaliacaoItemTableUpdateCompanionBuilder> {
+  $$AvaliacaoItemTableTableManager(_$AppDatabase db, $AvaliacaoItemTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$AvaliacaoItensTableFilterComposer(ComposerState(db, table)),
+              $$AvaliacaoItemTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$AvaliacaoItensTableOrderingComposer(ComposerState(db, table)),
+              $$AvaliacaoItemTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<int> avaliacaoId = const Value.absent(),
@@ -3331,7 +3267,7 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
             Value<int?> valorLikert = const Value.absent(),
             Value<double?> valorFuzzy = const Value.absent(),
           }) =>
-              AvaliacaoItensCompanion(
+              AvaliacaoItemCompanion(
             id: id,
             avaliacaoId: avaliacaoId,
             indicadorId: indicadorId,
@@ -3347,7 +3283,7 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
             Value<int?> valorLikert = const Value.absent(),
             Value<double?> valorFuzzy = const Value.absent(),
           }) =>
-              AvaliacaoItensCompanion.insert(
+              AvaliacaoItemCompanion.insert(
             id: id,
             avaliacaoId: avaliacaoId,
             indicadorId: indicadorId,
@@ -3358,9 +3294,9 @@ class $$AvaliacaoItensTableTableManager extends RootTableManager<
         ));
 }
 
-class $$AvaliacaoItensTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $AvaliacaoItensTable> {
-  $$AvaliacaoItensTableFilterComposer(super.$state);
+class $$AvaliacaoItemTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $AvaliacaoItemTable> {
+  $$AvaliacaoItemTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -3376,46 +3312,46 @@ class $$AvaliacaoItensTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  $$AvaliacoesTableFilterComposer get avaliacaoId {
-    final $$AvaliacoesTableFilterComposer composer = $state.composerBuilder(
+  $$AvaliacaoTableFilterComposer get avaliacaoId {
+    final $$AvaliacaoTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.avaliacaoId,
-        referencedTable: $state.db.avaliacoes,
+        referencedTable: $state.db.avaliacao,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$AvaliacoesTableFilterComposer(ComposerState($state.db,
-                $state.db.avaliacoes, joinBuilder, parentComposers)));
+            $$AvaliacaoTableFilterComposer(ComposerState(
+                $state.db, $state.db.avaliacao, joinBuilder, parentComposers)));
     return composer;
   }
 
-  $$IndicadoresTableFilterComposer get indicadorId {
-    final $$IndicadoresTableFilterComposer composer = $state.composerBuilder(
+  $$IndicadorTableFilterComposer get indicadorId {
+    final $$IndicadorTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.indicadorId,
-        referencedTable: $state.db.indicadores,
+        referencedTable: $state.db.indicador,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$IndicadoresTableFilterComposer(ComposerState($state.db,
-                $state.db.indicadores, joinBuilder, parentComposers)));
+            $$IndicadorTableFilterComposer(ComposerState(
+                $state.db, $state.db.indicador, joinBuilder, parentComposers)));
     return composer;
   }
 
-  $$PraticasTableFilterComposer get praticaId {
-    final $$PraticasTableFilterComposer composer = $state.composerBuilder(
+  $$PraticaTableFilterComposer get praticaId {
+    final $$PraticaTableFilterComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.praticaId,
-        referencedTable: $state.db.praticas,
+        referencedTable: $state.db.pratica,
         getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) =>
-            $$PraticasTableFilterComposer(ComposerState(
-                $state.db, $state.db.praticas, joinBuilder, parentComposers)));
+        builder: (joinBuilder, parentComposers) => $$PraticaTableFilterComposer(
+            ComposerState(
+                $state.db, $state.db.pratica, joinBuilder, parentComposers)));
     return composer;
   }
 }
 
-class $$AvaliacaoItensTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $AvaliacaoItensTable> {
-  $$AvaliacaoItensTableOrderingComposer(super.$state);
+class $$AvaliacaoItemTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $AvaliacaoItemTable> {
+  $$AvaliacaoItemTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -3431,39 +3367,39 @@ class $$AvaliacaoItensTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  $$AvaliacoesTableOrderingComposer get avaliacaoId {
-    final $$AvaliacoesTableOrderingComposer composer = $state.composerBuilder(
+  $$AvaliacaoTableOrderingComposer get avaliacaoId {
+    final $$AvaliacaoTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.avaliacaoId,
-        referencedTable: $state.db.avaliacoes,
+        referencedTable: $state.db.avaliacao,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$AvaliacoesTableOrderingComposer(ComposerState($state.db,
-                $state.db.avaliacoes, joinBuilder, parentComposers)));
+            $$AvaliacaoTableOrderingComposer(ComposerState(
+                $state.db, $state.db.avaliacao, joinBuilder, parentComposers)));
     return composer;
   }
 
-  $$IndicadoresTableOrderingComposer get indicadorId {
-    final $$IndicadoresTableOrderingComposer composer = $state.composerBuilder(
+  $$IndicadorTableOrderingComposer get indicadorId {
+    final $$IndicadorTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.indicadorId,
-        referencedTable: $state.db.indicadores,
+        referencedTable: $state.db.indicador,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$IndicadoresTableOrderingComposer(ComposerState($state.db,
-                $state.db.indicadores, joinBuilder, parentComposers)));
+            $$IndicadorTableOrderingComposer(ComposerState(
+                $state.db, $state.db.indicador, joinBuilder, parentComposers)));
     return composer;
   }
 
-  $$PraticasTableOrderingComposer get praticaId {
-    final $$PraticasTableOrderingComposer composer = $state.composerBuilder(
+  $$PraticaTableOrderingComposer get praticaId {
+    final $$PraticaTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
         getCurrentColumn: (t) => t.praticaId,
-        referencedTable: $state.db.praticas,
+        referencedTable: $state.db.pratica,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$PraticasTableOrderingComposer(ComposerState(
-                $state.db, $state.db.praticas, joinBuilder, parentComposers)));
+            $$PraticaTableOrderingComposer(ComposerState(
+                $state.db, $state.db.pratica, joinBuilder, parentComposers)));
     return composer;
   }
 }
@@ -3471,20 +3407,20 @@ class $$AvaliacaoItensTableOrderingComposer
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$RegioesTableTableManager get regioes =>
-      $$RegioesTableTableManager(_db, _db.regioes);
-  $$FamiliasTableTableManager get familias =>
-      $$FamiliasTableTableManager(_db, _db.familias);
-  $$CategoriasTableTableManager get categorias =>
-      $$CategoriasTableTableManager(_db, _db.categorias);
-  $$DimensoesTableTableManager get dimensoes =>
-      $$DimensoesTableTableManager(_db, _db.dimensoes);
-  $$PraticasTableTableManager get praticas =>
-      $$PraticasTableTableManager(_db, _db.praticas);
-  $$IndicadoresTableTableManager get indicadores =>
-      $$IndicadoresTableTableManager(_db, _db.indicadores);
-  $$AvaliacoesTableTableManager get avaliacoes =>
-      $$AvaliacoesTableTableManager(_db, _db.avaliacoes);
-  $$AvaliacaoItensTableTableManager get avaliacaoItens =>
-      $$AvaliacaoItensTableTableManager(_db, _db.avaliacaoItens);
+  $$RegiaoTableTableManager get regiao =>
+      $$RegiaoTableTableManager(_db, _db.regiao);
+  $$FamiliaTableTableManager get familia =>
+      $$FamiliaTableTableManager(_db, _db.familia);
+  $$CategoriaTableTableManager get categoria =>
+      $$CategoriaTableTableManager(_db, _db.categoria);
+  $$DimensaoTableTableManager get dimensao =>
+      $$DimensaoTableTableManager(_db, _db.dimensao);
+  $$PraticaTableTableManager get pratica =>
+      $$PraticaTableTableManager(_db, _db.pratica);
+  $$IndicadorTableTableManager get indicador =>
+      $$IndicadorTableTableManager(_db, _db.indicador);
+  $$AvaliacaoTableTableManager get avaliacao =>
+      $$AvaliacaoTableTableManager(_db, _db.avaliacao);
+  $$AvaliacaoItemTableTableManager get avaliacaoItem =>
+      $$AvaliacaoItemTableTableManager(_db, _db.avaliacaoItem);
 }

@@ -5,8 +5,8 @@ import 'package:transicao_ecologica/features/familias/familias_page.dart';
 import 'package:transicao_ecologica/features/configuracoes/gerenciar_pesos_page.dart';
 
 import '../core/database/app_database.dart';
-import '../core/services/categorias_service.dart';
-import '../core/services/indicadores_service.dart';
+import '../core/services/categoria_service.dart';
+import '../core/services/indicador_service.dart';
 import '../core/services/database_diagnostico.dart';
 import '../core/services/resultado_avaliacao_service.dart';
 import 'avaliacao/familias_resultados_page.dart';
@@ -45,8 +45,8 @@ class _HomePageState extends State<HomePage> {
     final db = await AppDatabase.instance();
     final resultadoService = ResultadoAvaliacaoService(db);
 
-    final familias = await db.select(db.familias).get();
-    final avaliacoes = await db.select(db.avaliacoes).get();
+    final familias = await db.select(db.familia).get();
+    final avaliacoes = await db.select(db.avaliacao).get();
     final concluido = avaliacoes.where((a) => a.status == 'completed').toList();
 
     double mediaFuzzy = 0.0;
@@ -73,12 +73,12 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _mostrarRelatorio(BuildContext context) async {
     final db = await AppDatabase.instance();
-    final categoriasService = CategoriasService(db);
-    final indicadoresService = IndicadoresService(db);
+    final categoriaService = CategoriaService(db);
+    final indicadorService = IndicadorService(db);
 
     final diagnostico = DatabaseDiagnostico(
-      categoriasService: categoriasService,
-      indicadoresService: indicadoresService,
+      categoriaService: categoriaService,
+      indicadorService: indicadorService,
     );
 
     if (context.mounted) {

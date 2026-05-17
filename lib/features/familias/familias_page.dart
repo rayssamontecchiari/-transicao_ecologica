@@ -15,7 +15,7 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
   late AppDatabase _db;
   late FamiliasService _familiasService;
 
-  List<Familia> _familias = [];
+  List<FamiliaData> _familias = [];
   bool _isLoading = true;
 
   @override
@@ -81,7 +81,7 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
     }
   }
 
-  void _confirmarDelecao(Familia familia) {
+  void _confirmarDelecao(FamiliaData familia) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -109,7 +109,7 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
     );
   }
 
-  Future<void> _editarFamilia(Familia familia) async {
+  Future<void> _editarFamilia(FamiliaData familia) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CadastroFamiliaPage(familia: familia),
