@@ -16,6 +16,10 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
   late FamiliasService _familiasService;
 
   List<FamiliaData> _familias = [];
+  List<FamiliaData> _familiasFiltradas = [];
+  List<RegiaoData> _regioes = [];
+  int? _selectedRegiaoFilter;
+  String _searchQuery = '';
   bool _isLoading = true;
 
   @override
@@ -27,7 +31,25 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
   Future<void> _init() async {
     _db = await AppDatabase.instance();
     _familiasService = FamiliasService(_db);
+    _regioes = await _db.select(_db.regiao).get();
     await _carregarFamilias();
+  }
+
+  void _aplicarFiltros() {
+    final query = _searchQuery.toLowerCase().trim();
+    _familiasFiltradas = _familias.where((familia) {
+      if (_selectedRegiaoFilter != null &&
+          familia.regiaoId != _selectedRegiaoFilter) {
+        return false;
+      }
+      if (query.isNotEmpty &&
+          !familia.nomeResponsavel.toLowerCase().contains(query) &&
+          !familia.endereco.toLowerCase().contains(query) &&
+          !familia.telefone.toLowerCase().contains(query)) {
+        return false;
+      }
+      return true;
+    }).toList();
   }
 
   Future<void> _carregarFamilias() async {
@@ -39,6 +61,7 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
       if (mounted) {
         setState(() {
           _familias = familias;
+          _aplicarFiltros();
           _isLoading = false;
         });
       }
@@ -138,103 +161,185 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _familias.isEmpty
-              ? Center(
-                  child: Text(
-                    'Nenhuma família cadastrada',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Filtros',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            decoration: const InputDecoration(
+                              labelText: 'Buscar família',
+                              prefixIcon: Icon(Icons.search),
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value;
+                                _aplicarFiltros();
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<int>(
+                            value: _selectedRegiaoFilter,
+                            decoration: const InputDecoration(
+                              labelText: 'Região',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: [
+                              const DropdownMenuItem<int>(
+                                value: null,
+                                child: Text('Todas as regiões'),
+                              ),
+                              ..._regioes.map(
+                                (regiao) => DropdownMenuItem<int>(
+                                  value: regiao.id,
+                                  child: Text(regiao.nome),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedRegiaoFilter = value;
+                                _aplicarFiltros();
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _selectedRegiaoFilter = null;
+                                _searchQuery = '';
+                                _aplicarFiltros();
+                              });
+                            },
+                            icon: const Icon(Icons.clear),
+                            label: const Text('Limpar filtros'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _carregarFamilias,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _familias.length,
-                    itemBuilder: (context, index) {
-                      final familia = _familias[index];
+                ),
+                Expanded(
+                  child: _familiasFiltradas.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Nenhuma família encontrada',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _carregarFamilias,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _familiasFiltradas.length,
+                            itemBuilder: (context, index) {
+                              final familia = _familiasFiltradas[index];
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Card(
-                          child: ListTile(
-                            onTap: () async {
-                              await Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => FamiliaDetalhesPage(
-                                    familiaId: familia.id,
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Card(
+                                  child: ListTile(
+                                    onTap: () async {
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => FamiliaDetalhesPage(
+                                            familiaId: familia.id,
+                                          ),
+                                        ),
+                                      );
+
+                                      // Opcional: recarrega a lista ao voltar
+                                      _carregarFamilias();
+                                    },
+                                    leading: CircleAvatar(
+                                      backgroundColor: Theme.of(context)
+                                          .primaryColor
+                                          .withOpacity(0.1),
+                                      child: Text(
+                                        familia.id.toString(),
+                                        style: TextStyle(
+                                          color: Theme.of(context).primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      familia.nomeResponsavel,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'ID: ${familia.id}',
+                                    ),
+                                    trailing: PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'edit') {
+                                          _editarFamilia(familia);
+                                        } else if (value == 'delete') {
+                                          _confirmarDelecao(familia);
+                                        }
+                                      },
+                                      itemBuilder: (context) => const [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.edit,
+                                                  color: Colors.blue, size: 20),
+                                              SizedBox(width: 8),
+                                              Text('Editar'),
+                                            ],
+                                          ),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: [
+                                              Icon(Icons.delete,
+                                                  color: Colors.red, size: 20),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Deletar',
+                                                style: TextStyle(
+                                                    color: Colors.red),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
-
-                              // Opcional: recarrega a lista ao voltar
-                              _carregarFamilias();
                             },
-                            leading: CircleAvatar(
-                              backgroundColor: Theme.of(context)
-                                  .primaryColor
-                                  .withOpacity(0.1),
-                              child: Text(
-                                familia.id.toString(),
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              familia.nomeResponsavel,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              'ID: ${familia.id}',
-                            ),
-                            trailing: PopupMenuButton<String>(
-                              onSelected: (value) {
-                                if (value == 'edit') {
-                                  _editarFamilia(familia);
-                                } else if (value == 'delete') {
-                                  _confirmarDelecao(familia);
-                                }
-                              },
-                              itemBuilder: (context) => const [
-                                PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.edit,
-                                          color: Colors.blue, size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Editar'),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.delete,
-                                          color: Colors.red, size: 20),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Deletar',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
                 ),
+              ],
+            ),
     );
   }
 }

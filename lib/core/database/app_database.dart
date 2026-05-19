@@ -157,49 +157,50 @@ class AppDatabase extends _$AppDatabase {
 
           // aspects / indicador por dimensão
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome:
+            nome: 'Condições do solo',
+            descricao:
                 'Conservação ou melhoria das condições químicas, físicas e biológicas do solo',
-            descricao: '...',
             peso: Value(1.0),
             categoriaId: cat2.id,
             dimensaoId: Value(ecolDim.id),
           ));
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome:
+            nome: 'Recursos hídricos',
+            descricao:
                 'Manutenção ou melhoria da agrobiodiversidade e dos recursos hídricos',
-            descricao: '...',
             peso: Value(1.0),
             categoriaId: cat2.id,
             dimensaoId: Value(ecolDim.id),
           ));
 
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome:
+            nome: 'Eliminação de insumos tóxicos',
+            descricao:
                 'Melhoria da qualidade de vida pela eliminação do uso de insumos tóxicos',
-            descricao: '...',
             peso: Value(1.0),
             categoriaId: cat2.id,
             dimensaoId: Value(socDim.id),
           ));
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome:
+            nome: 'Condições de trabalho',
+            descricao:
                 'Melhoria da qualidade de vida pelo menor uso de mão de obra e redução da penosidade do trabalho devido a melhor ergonomia',
-            descricao: '...',
             peso: Value(1.0),
             categoriaId: cat2.id,
             dimensaoId: Value(socDim.id),
           ));
 
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome: 'Baixo consumo de energias não renováveis',
-            descricao: '...',
+            nome: 'Energias renováveis',
+            descricao: 'Baixo consumo de energias não renováveis',
             peso: Value(1.0),
             categoriaId: cat2.id,
             dimensaoId: Value(econDim.id),
           ));
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome: 'Geração de renda com menor dependência de insumos externos',
-            descricao: '...',
+            nome: 'Geração de renda',
+            descricao:
+                'Geração de renda com menor dependência de insumos externos',
             peso: Value(1.0),
             categoriaId: cat2.id,
             dimensaoId: Value(econDim.id),

@@ -28,6 +28,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   int _categoriaAtual = 0;
   bool _isProcessing = false;
   int? _avaliacaoIdEmProgresso; // ID da avaliação em draft
+  int? _avaliacaoPendenteId;
   final TextEditingController _avaliadorController = TextEditingController();
 
   @override
@@ -58,9 +59,29 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
         _selectedFamilia = familias.first;
       }
     });
+
+    if (_selectedFamilia != null) {
+      await _carregarAvaliacaoPendente();
+    }
   }
 
-  Future<void> _iniciarAvaliacao() async {
+  Future<void> _carregarAvaliacaoPendente() async {
+    if (_selectedFamilia == null) return;
+
+    final avaliacaoPendente = await (_db.select(_db.avaliacao)
+          ..where((a) =>
+              a.familiaId.equals(_selectedFamilia!.id) &
+              a.status.equals('draft')))
+        .getSingleOrNull();
+
+    if (!mounted) return;
+
+    setState(() {
+      _avaliacaoPendenteId = avaliacaoPendente?.id;
+    });
+  }
+
+  Future<void> _iniciarAvaliacao({required bool continuar}) async {
     if (_selectedFamilia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione uma família')),
@@ -73,15 +94,8 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     try {
       int avaliacaoIdExistente;
 
-      // Buscar avaliações pendentes (draft) da família
-      final avaliacoesPendentes = await (_db.select(_db.avaliacao)
-            ..where((a) =>
-                a.familiaId.equals(_selectedFamilia!.id) &
-                a.status.equals('draft')))
-          .get();
-
-      if (avaliacoesPendentes.isNotEmpty) {
-        avaliacaoIdExistente = avaliacoesPendentes.first.id;
+      if (continuar && _avaliacaoPendenteId != null) {
+        avaliacaoIdExistente = _avaliacaoPendenteId!;
       } else {
         // Criar uma nova avaliação
         avaliacaoIdExistente = await _db.avaliacao.insertOne(
@@ -105,7 +119,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
 
         final categoria = _categorias[i];
 
-        final result = await Navigator.of(context).push<int>(
+        final completed = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
             builder: (_) => CategoriaFormPage(
               categoriaId: categoria.id,
@@ -117,13 +131,10 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
           ),
         );
 
-        if (result == null || result <= 0) {
-          // User cancelled - a avaliação fica em draft
+        if (completed != true) {
+          // User cancelled or did not complete the category
           break;
         }
-
-        // Atualizar o ID da avaliação com o retorno do formulário
-        _avaliacaoIdEmProgresso = result;
 
         // Não atualizamos mais `categoriaAtual` no banco; apenas registramos
         // a data de alteração para referência.
@@ -357,8 +368,9 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                                       .toList(),
                                   onChanged: _isProcessing
                                       ? null
-                                      : (f) {
+                                      : (f) async {
                                           setState(() => _selectedFamilia = f);
+                                          await _carregarAvaliacaoPendente();
                                         },
                                 ),
                               ),
@@ -441,28 +453,82 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                               ),
                             ),
                             const SizedBox(height: 28),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed:
-                                    _isProcessing ? null : _iniciarAvaliacao,
-                                icon: const Icon(Icons.play_arrow),
-                                label: Text(
-                                  _isProcessing
-                                      ? 'Iniciando...'
-                                      : 'Iniciar Avaliação',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primary,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 18),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
+                            if (_avaliacaoPendenteId != null)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _isProcessing
+                                          ? null
+                                          : () => _iniciarAvaliacao(
+                                              continuar: true),
+                                      icon: const Icon(Icons.play_arrow),
+                                      label: Text(
+                                        _isProcessing
+                                            ? 'Processando...'
+                                            : 'Continuar Avaliação',
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primary,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 18),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _isProcessing
+                                          ? null
+                                          : () => _iniciarAvaliacao(
+                                              continuar: false),
+                                      icon: const Icon(Icons.add),
+                                      label:
+                                          const Text('Iniciar nova avaliação'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: primary,
+                                        side: BorderSide(color: primary),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 18),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _isProcessing
+                                      ? null
+                                      : () =>
+                                          _iniciarAvaliacao(continuar: false),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: Text(
+                                    _isProcessing
+                                        ? 'Iniciando...'
+                                        : 'Iniciar Avaliação',
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 18),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),

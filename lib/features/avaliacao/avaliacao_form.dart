@@ -209,6 +209,62 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
     }
   }
 
+  Widget _buildIndicadorHeader(IndicadorData indicador) {
+    return Container(
+      width: 140,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Text(
+              indicador.nome,
+              textAlign: TextAlign.center,
+              softWrap: true,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                height: 1.2,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _showIndicadorNomeCompleto(indicador),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(
+                Icons.info_outline,
+                size: 18,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showIndicadorNomeCompleto(IndicadorData indicador) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Detalhes'),
+          content: Text(indicador.descricao),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final progress =
@@ -286,17 +342,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                                   width: 220,
                                   child: Text('Práticas agrícolas')),
                               ..._indicadores.map(
-                                (ind) => Container(
-                                  width: 140,
-                                  alignment: Alignment.center,
-                                  padding: const EdgeInsets.all(8),
-                                  child: Text(
-                                    ind.nome,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
+                                _buildIndicadorHeader,
                               ),
                             ],
                           ),
