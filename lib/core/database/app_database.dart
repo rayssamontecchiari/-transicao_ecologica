@@ -102,9 +102,9 @@ class AppDatabase extends _$AppDatabase {
             categoriaId: 1,
           ));
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome: 'Agrobiodiversidade',
+            nome: 'Multifuncionalidade do trabalho',
             descricao:
-                'Diversidade de espécies/variedades e uso de sementes locais versus híbridas/transgênicas',
+                'Diversificação das atividades, presença de autoconsumo e serviços locais',
             peso: Value(0.9),
             categoriaId: 1,
           ));
@@ -115,13 +115,15 @@ class AppDatabase extends _$AppDatabase {
             peso: Value(0.7),
             categoriaId: 1,
           ));
+
           await into(indicador).insert(IndicadorCompanion.insert(
-            nome: 'Multifuncionalidade do trabalho',
+            nome: 'Agrobiodiversidade',
             descricao:
-                'Diversificação das atividades, presença de autoconsumo e serviços locais',
+                'Diversidade de espécies/variedades e uso de sementes locais versus híbridas/transgênicas',
             peso: Value(0.8),
             categoriaId: 1,
           ));
+
           await into(indicador).insert(IndicadorCompanion.insert(
             nome: 'Conhecimento',
             descricao:
