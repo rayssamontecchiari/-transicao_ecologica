@@ -126,44 +126,14 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildSummaryRow(theme),
-                    const SizedBox(height: 18),
-                    if (_avaliacoesEmRascunho > 0) _buildDraftCard(theme),
-                    const SizedBox(height: 18),
                     _buildEvolutionCard(theme),
                     const SizedBox(height: 18),
                     _buildCategoryScoresCard(theme),
                     const SizedBox(height: 18),
-                    _buildRecentEvaluationsCard(theme),
                   ],
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildSummaryRow(ThemeData theme) {
-    return Row(
-      children: [
-        _buildMetricCard(
-          title: 'Famílias',
-          value: _familiasCadastradas.toString(),
-          color: Colors.green,
-          theme: theme,
-        ),
-        _buildMetricCard(
-          title: 'Avaliações',
-          value: _avaliacoesRealizadas.toString(),
-          color: Colors.blue,
-          theme: theme,
-        ),
-        _buildMetricCard(
-          title: 'Média Geral',
-          value: _mediaGeral.isNaN ? '--' : _mediaGeral.toStringAsFixed(1),
-          color: Colors.amber.shade700,
-          theme: theme,
-        ),
-      ],
     );
   }
 
@@ -192,42 +162,6 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 fontWeight: FontWeight.bold,
                 color: color.withOpacity(0.9),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDraftCard(ThemeData theme) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Avaliações em Rascunho',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Há $_avaliacoesEmRascunho avaliações ainda não finalizadas. Continue o fluxo para salvar seus resultados.',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const IniciarAvaliacaoPage(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Continuar Avaliação'),
             ),
           ],
         ),
@@ -269,19 +203,6 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _evolucao
-                    .map(
-                      (item) => Chip(
-                        label: Text(
-                          '${_formatDate(item.date)}: ${item.media.toStringAsFixed(1)}',
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
             ],
           ],
         ),
@@ -298,7 +219,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Pontuação por Categoria',
+              'Pontuação Média por Categoria',
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
@@ -330,47 +251,6 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                     ),
                   );
                 }).toList(),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentEvaluationsCard(ThemeData theme) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Últimas Avaliações',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            if (_evolucao.isEmpty)
-              Text('Nenhuma avaliação concluída encontrada.',
-                  style: theme.textTheme.bodyMedium)
-            else
-              Column(
-                children: _evolucao.reversed
-                    .take(5)
-                    .map((item) => ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(_formatDate(item.date)),
-                          trailing: Text(
-                            item.media.toStringAsFixed(2),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: _corPorValor(item.media),
-                            ),
-                          ),
-                        ))
-                    .toList(),
               ),
           ],
         ),
