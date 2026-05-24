@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
-import 'iniciar_avaliacao_page.dart';
+
+enum _ResultadoViewMode {
+  geral,
+  categoria,
+}
 
 class ResultadosDashboardPage extends StatefulWidget {
   const ResultadosDashboardPage({super.key});
@@ -20,10 +24,19 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
   late AppDatabase _db;
   late ResultadoAvaliacaoService _resultadoService;
   bool _isLoading = true;
-  int _familiasCadastradas = 0;
-  int _avaliacoesRealizadas = 0;
-  int _avaliacoesEmRascunho = 0;
   double _mediaGeral = 0.0;
+  double _chartMin = 0.0;
+  double _chartMax = 0.0;
+  List<AvaliacaoData> _allAvaliacoes = [];
+  List<FamiliaData> _familias = [];
+  List<RegiaoData> _regioes = [];
+  List<CategoriaData> _categoriasData = [];
+  int? _selectedFamiliaId;
+  int? _selectedRegiaoId;
+  DateTime? _startDate;
+  DateTime? _endDate;
+  _ResultadoViewMode _viewMode = _ResultadoViewMode.geral;
+  int? _selectedCategoriaId;
   List<_AvaliacaoResumo> _evolucao = [];
   List<_CategoriaScore> _categorias = [];
 
@@ -38,22 +51,61 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     final familias = await _db.select(_db.familia).get();
+    final regioes = await _db.select(_db.regiao).get();
+    final categoriasData = await _db.select(_db.categoria).get();
     final avaliacoes = await (_db.select(_db.avaliacao)
           ..orderBy([
             (a) => OrderingTerm(expression: a.data, mode: OrderingMode.asc)
           ]))
         .get();
 
-    final avaliacoesConcluidas =
-        avaliacoes.where((a) => a.status == 'completed').toList();
+    setState(() {
+      _familias = familias;
+      _regioes = regioes;
+      _categoriasData = categoriasData;
+      _allAvaliacoes = avaliacoes;
+      _selectedCategoriaId ??=
+          categoriasData.isNotEmpty ? categoriasData.first.id : null;
+    });
 
-    final avaliacoesEmRascunho = avaliacoes.where((a) => a.status == 'draft');
-    final categorias = await _db.select(_db.categoria).get();
+    await _applyFilters();
+  }
+
+  Future<void> _applyFilters() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final avaliacoesConcluidas =
+        _allAvaliacoes.where((a) => a.status == 'completed').toList();
+    final avaliacoesFiltradas = avaliacoesConcluidas.where((avaliacao) {
+      if (_selectedFamiliaId != null &&
+          avaliacao.familiaId != _selectedFamiliaId) {
+        return false;
+      }
+
+      if (_selectedRegiaoId != null) {
+        final familiasMatch =
+            _familias.where((f) => f.id == avaliacao.familiaId).toList();
+        if (familiasMatch.isEmpty ||
+            familiasMatch.first.regiaoId != _selectedRegiaoId) {
+          return false;
+        }
+      }
+
+      if (_startDate != null && avaliacao.data.isBefore(_startDate!)) {
+        return false;
+      }
+
+      if (_endDate != null && avaliacao.data.isAfter(_endDate!)) {
+        return false;
+      }
+
+      return true;
+    }).toList();
 
     final categoriaMedia = <int, _CategoriaScore>{};
-    final avaliacoesResumo = <_AvaliacaoResumo>[];
-
-    for (final categoria in categorias) {
+    for (final categoria in _categoriasData) {
       categoriaMedia[categoria.id] = _CategoriaScore(
         categoriaId: categoria.id,
         nome: categoria.nome,
@@ -62,20 +114,14 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
       );
     }
 
-    double somaMedias = 0.0;
-    int quantidadeMedias = 0;
+    final avaliacoesResumo = <_AvaliacaoResumo>[];
 
-    for (final avaliacao in avaliacoesConcluidas) {
+    for (final avaliacao in avaliacoesFiltradas) {
       final stats =
           await _resultadoService.obterEstatisticasAvaliacao(avaliacao.id);
-      if (stats.isEmpty || stats['media'] == null) {
+      if (stats.isEmpty) {
         continue;
       }
-
-      final media = stats['media'] as double;
-      somaMedias += media;
-      quantidadeMedias += 1;
-      avaliacoesResumo.add(_AvaliacaoResumo(avaliacao.data, media));
 
       final resultados =
           (stats['resultados'] as List<ResultadoAvaliacao>?) ?? [];
@@ -86,17 +132,128 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
           score.quantidade += 1;
         }
       }
+
+      if (_viewMode == _ResultadoViewMode.geral) {
+        final media = stats['media'] as double?;
+        if (media == null) {
+          continue;
+        }
+
+        avaliacoesResumo.add(_AvaliacaoResumo(avaliacao.data, media));
+      } else {
+        final categoriaId = _selectedCategoriaId;
+        if (categoriaId == null) {
+          continue;
+        }
+
+        final categoriaResultados = resultados
+            .where((resultado) => resultado.categoriaId == categoriaId)
+            .toList();
+        if (categoriaResultados.isEmpty) {
+          continue;
+        }
+
+        final valor = categoriaResultados.first.valorFuzzyFinal;
+        avaliacoesResumo.add(_AvaliacaoResumo(avaliacao.data, valor));
+      }
     }
 
+    final valoresResumo = avaliacoesResumo.map((item) => item.media).toList();
+    final mediaAtual = valoresResumo.isNotEmpty
+        ? valoresResumo.reduce((a, b) => a + b) / valoresResumo.length
+        : 0.0;
+    final minAtual = valoresResumo.isNotEmpty
+        ? valoresResumo.reduce((a, b) => a < b ? a : b)
+        : 0.0;
+    final maxAtual = valoresResumo.isNotEmpty
+        ? valoresResumo.reduce((a, b) => a > b ? a : b)
+        : 0.0;
+
     setState(() {
-      _familiasCadastradas = familias.length;
-      _avaliacoesRealizadas = avaliacoes.length;
-      _avaliacoesEmRascunho = avaliacoesEmRascunho.length;
-      _mediaGeral = quantidadeMedias > 0 ? somaMedias / quantidadeMedias : 0.0;
+      _mediaGeral = mediaAtual;
+      _chartMin = minAtual;
+      _chartMax = maxAtual;
       _evolucao = avaliacoesResumo;
       _categorias = categoriaMedia.values.toList();
       _isLoading = false;
     });
+  }
+
+  String _nomeFamilia(int? id) {
+    if (id == null) return 'Todas as famílias';
+    final familia = _familias.where((f) => f.id == id).toList();
+    return familia.isNotEmpty
+        ? familia.first.nomeResponsavel
+        : 'Família desconhecida';
+  }
+
+  String _nomeRegiao(int? id) {
+    if (id == null) return 'Todas as regiões';
+    final regiao = _regioes.where((r) => r.id == id).toList();
+    return regiao.isNotEmpty ? regiao.first.nome : 'Região desconhecida';
+  }
+
+  String _nomeCategoria(int? id) {
+    if (id == null) return 'Todas as categorias';
+    final categoria = _categoriasData.where((c) => c.id == id).toList();
+    return categoria.isNotEmpty
+        ? categoria.first.nome
+        : 'Categoria desconhecida';
+  }
+
+  String _periodoLabel() {
+    if (_startDate == null && _endDate == null) {
+      return 'Período: todo o histórico';
+    }
+
+    final inicio = _startDate != null ? _formatDate(_startDate!) : 'início';
+    final fim = _endDate != null ? _formatDate(_endDate!) : 'presente';
+    return 'Período: $inicio até $fim';
+  }
+
+  Future<void> _selectDate({required bool isStart}) async {
+    final initialDate =
+        isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now());
+    final firstDate = DateTime(2000);
+    final lastDate = DateTime.now().add(const Duration(days: 365));
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      if (isStart) {
+        _startDate = picked;
+        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+          _endDate = _startDate;
+        }
+      } else {
+        _endDate = picked;
+        if (_startDate != null && _startDate!.isAfter(_endDate!)) {
+          _startDate = _endDate;
+        }
+      }
+    });
+
+    await _applyFilters();
+  }
+
+  Future<void> _clearFilters() async {
+    setState(() {
+      _selectedFamiliaId = null;
+      _selectedRegiaoId = null;
+      _startDate = null;
+      _endDate = null;
+      _viewMode = _ResultadoViewMode.geral;
+      _selectedCategoriaId =
+          _categoriasData.isNotEmpty ? _categoriasData.first.id : null;
+    });
+    await _applyFilters();
   }
 
   Color _corPorValor(double valor) {
@@ -126,6 +283,8 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _buildFilterCard(theme),
+                    const SizedBox(height: 18),
                     _buildEvolutionCard(theme),
                     const SizedBox(height: 18),
                     _buildCategoryScoresCard(theme),
@@ -170,6 +329,12 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
   }
 
   Widget _buildEvolutionCard(ThemeData theme) {
+    final viewLabel = _viewMode == _ResultadoViewMode.geral
+        ? 'Resultado geral'
+        : 'Categoria: ${_nomeCategoria(_selectedCategoriaId)}';
+    final filterLabel =
+        '${_nomeFamilia(_selectedFamiliaId)} • ${_nomeRegiao(_selectedRegiaoId)}';
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
@@ -182,6 +347,10 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
+            Text(viewLabel, style: theme.textTheme.bodySmall),
+            Text(_periodoLabel(), style: theme.textTheme.bodySmall),
+            Text(filterLabel, style: theme.textTheme.bodySmall),
             const SizedBox(height: 12),
             if (_evolucao.isEmpty)
               Text(
@@ -193,6 +362,20 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 'Últimas ${_evolucao.length} avaliações',
                 style: theme.textTheme.bodySmall,
               ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Mín: ${_chartMin.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodySmall),
+                  Text('Média: ${_mediaGeral.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary)),
+                  Text('Máx: ${_chartMax.toStringAsFixed(2)}',
+                      style: theme.textTheme.bodySmall),
+                ],
+              ),
               const SizedBox(height: 16),
               SizedBox(
                 height: 180,
@@ -200,6 +383,17 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                   values: _evolucao.map((item) => item.media).toList(),
                   lineColor: Colors.green.shade700,
                   fillColor: Colors.green.withOpacity(0.12),
+                  xLabels: _evolucao.isNotEmpty
+                      ? [
+                          _formatDate(_evolucao.first.date),
+                          _formatDate(_evolucao.last.date),
+                        ]
+                      : [],
+                  yLabels: [
+                    _chartMax.toStringAsFixed(1),
+                    _mediaGeral.toStringAsFixed(1),
+                    _chartMin.toStringAsFixed(1),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
@@ -258,6 +452,188 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     );
   }
 
+  Widget _buildFilterCard(ThemeData theme) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Filtros de resultado',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Geral'),
+                  selected: _viewMode == _ResultadoViewMode.geral,
+                  onSelected: (_) async {
+                    setState(() => _viewMode = _ResultadoViewMode.geral);
+                    await _applyFilters();
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Por categoria'),
+                  selected: _viewMode == _ResultadoViewMode.categoria,
+                  onSelected: (_) async {
+                    setState(() => _viewMode = _ResultadoViewMode.categoria);
+                    await _applyFilters();
+                  },
+                ),
+              ],
+            ),
+            if (_viewMode == _ResultadoViewMode.categoria) ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int?>(
+                isExpanded: true,
+                value: _selectedCategoriaId,
+                decoration: const InputDecoration(
+                  labelText: 'Categoria',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  if (_categoriasData.isNotEmpty)
+                    ..._categoriasData.map(
+                      (cat) => DropdownMenuItem<int?>(
+                        value: cat.id,
+                        child: Text(
+                          cat.nome,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                ],
+                onChanged: (value) async {
+                  setState(() => _selectedCategoriaId = value);
+                  await _applyFilters();
+                },
+              ),
+            ],
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int?>(
+              isExpanded: true,
+              value: _selectedFamiliaId,
+              decoration: const InputDecoration(
+                labelText: 'Família',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text('Todas as famílias'),
+                ),
+                ..._familias.map(
+                  (familia) => DropdownMenuItem<int?>(
+                    value: familia.id,
+                    child: Text(
+                      familia.nomeResponsavel,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: (value) async {
+                setState(() {
+                  _selectedFamiliaId = value;
+                  _selectedRegiaoId = value == null
+                      ? null
+                      : _familias.firstWhere((f) => f.id == value).regiaoId;
+                });
+                await _applyFilters();
+              },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int?>(
+              isExpanded: true,
+              value: _selectedRegiaoId,
+              decoration: InputDecoration(
+                labelText: 'Região',
+                border: const OutlineInputBorder(),
+                helperText: _selectedFamiliaId != null
+                    ? 'Região definida pela família selecionada'
+                    : null,
+              ),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text('Todas as regiões'),
+                ),
+                ..._regioes.map(
+                  (regiao) => DropdownMenuItem<int?>(
+                    value: regiao.id,
+                    child: Text(
+                      regiao.nome,
+                      softWrap: true,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+              onChanged: _selectedFamiliaId == null
+                  ? (value) async {
+                      setState(() => _selectedRegiaoId = value);
+                      await _applyFilters();
+                    }
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _selectDate(isStart: true),
+                    child: Text(
+                      _startDate != null
+                          ? 'Início: ${_formatDate(_startDate!)}'
+                          : 'Data de início',
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _selectDate(isStart: false),
+                    child: Text(
+                      _endDate != null
+                          ? 'Fim: ${_formatDate(_endDate!)}'
+                          : 'Data de fim',
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_startDate != null ||
+                _endDate != null ||
+                _selectedFamiliaId != null ||
+                _selectedRegiaoId != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _clearFilters,
+                    child: const Text('Limpar filtros'),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
@@ -267,21 +643,23 @@ class SparklineChart extends StatelessWidget {
   final List<double> values;
   final Color lineColor;
   final Color fillColor;
+  final List<String> xLabels;
+  final List<String> yLabels;
 
   const SparklineChart({
     super.key,
     required this.values,
     required this.lineColor,
     required this.fillColor,
+    this.xLabels = const [],
+    this.yLabels = const [],
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 180,
-      child: CustomPaint(
-        painter: _SparklinePainter(values, lineColor, fillColor),
-      ),
+    return CustomPaint(
+      painter:
+          _SparklinePainter(values, lineColor, fillColor, xLabels, yLabels),
     );
   }
 }
@@ -290,12 +668,28 @@ class _SparklinePainter extends CustomPainter {
   final List<double> values;
   final Color lineColor;
   final Color fillColor;
+  final List<String> xLabels;
+  final List<String> yLabels;
 
-  _SparklinePainter(this.values, this.lineColor, this.fillColor);
+  _SparklinePainter(
+      this.values, this.lineColor, this.fillColor, this.xLabels, this.yLabels);
 
   @override
   void paint(Canvas canvas, Size size) {
     if (values.isEmpty) return;
+
+    const leftPadding = 40.0;
+    const bottomPadding = 28.0;
+    const topPadding = 12.0;
+    const rightPadding = 12.0;
+
+    final chartWidth = size.width - leftPadding - rightPadding;
+    final chartHeight = size.height - topPadding - bottomPadding;
+
+    final axisPaint = Paint()
+      ..color = lineColor.withOpacity(0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
 
     final paintLine = Paint()
       ..color = lineColor
@@ -313,15 +707,18 @@ class _SparklinePainter extends CustomPainter {
     final path = Path();
     final fillPath = Path();
 
+    final startX = leftPadding;
+    final startY = topPadding + chartHeight;
+
     for (var i = 0; i < values.length; i++) {
-      final x =
-          i * (size.width / (values.length - 1).clamp(1, values.length - 1));
+      final x = startX +
+          (i * (chartWidth / (values.length - 1).clamp(1, values.length - 1)));
       final normalized = (values[i] - minValue) / range;
-      final y = size.height - (normalized * size.height);
+      final y = topPadding + chartHeight - (normalized * chartHeight);
 
       if (i == 0) {
         path.moveTo(x, y);
-        fillPath.moveTo(x, size.height);
+        fillPath.moveTo(x, startY);
         fillPath.lineTo(x, y);
       } else {
         path.lineTo(x, y);
@@ -331,8 +728,63 @@ class _SparklinePainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), 4, paintDot);
     }
 
-    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(startX + chartWidth, startY);
     fillPath.close();
+
+    canvas.drawLine(
+        Offset(startX, topPadding), Offset(startX, startY), axisPaint);
+    canvas.drawLine(
+        Offset(startX, startY), Offset(startX + chartWidth, startY), axisPaint);
+
+    for (var labelIndex = 0; labelIndex < yLabels.length; labelIndex++) {
+      final label = yLabels[labelIndex];
+      final y = topPadding + (chartHeight * labelIndex / (yLabels.length - 1));
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            color: lineColor.withOpacity(0.8),
+            fontSize: 10,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(
+          canvas,
+          Offset(
+              leftPadding - textPainter.width - 8, y - textPainter.height / 2));
+
+      canvas.drawLine(
+        Offset(startX, y),
+        Offset(startX + chartWidth, y),
+        axisPaint..strokeWidth = 0.5,
+      );
+    }
+
+    if (xLabels.isNotEmpty) {
+      for (var i = 0; i < xLabels.length; i++) {
+        final label = xLabels[i];
+        final x = startX +
+            (i *
+                chartWidth /
+                (xLabels.length - 1).clamp(1, xLabels.length - 1));
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: label,
+            style: TextStyle(
+              color: lineColor.withOpacity(0.8),
+              fontSize: 10,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout(maxWidth: rightPadding + 60);
+        textPainter.paint(
+            canvas, Offset(x - textPainter.width / 2, startY + 4));
+      }
+    }
+
     canvas.drawPath(fillPath, paintFill);
     canvas.drawPath(path, paintLine);
   }
