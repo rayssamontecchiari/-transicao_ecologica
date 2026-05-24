@@ -29,6 +29,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   bool _isProcessing = false;
   int? _avaliacaoIdEmProgresso; // ID da avaliação em draft
   int? _avaliacaoPendenteId;
+  int _draftCount = 0;
   final TextEditingController _avaliadorController = TextEditingController();
 
   @override
@@ -68,16 +69,19 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   Future<void> _carregarAvaliacaoPendente() async {
     if (_selectedFamilia == null) return;
 
-    final avaliacaoPendente = await (_db.select(_db.avaliacao)
+    final drafts = await (_db.select(_db.avaliacao)
           ..where((a) =>
               a.familiaId.equals(_selectedFamilia!.id) &
               a.status.equals('draft')))
-        .getSingleOrNull();
+        .get();
+
+    final avaliacaoPendente = drafts.isNotEmpty ? drafts.first : null;
 
     if (!mounted) return;
 
     setState(() {
       _avaliacaoPendenteId = avaliacaoPendente?.id;
+      _draftCount = drafts.length;
     });
   }
 
@@ -152,6 +156,14 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
       if (mounted) {
         // Verificar se completou todas as categorias
         if (_categoriaAtual == _categorias.length - 1) {
+          // Marca avaliação como finalizada quando todas as categorias foram preenchidas.
+          await (_db.update(_db.avaliacao)
+                ..where((a) => a.id.equals(_avaliacaoIdEmProgresso!)))
+              .write(AvaliacaoCompanion(
+            status: const drift.Value('completed'),
+            dataAlteracao: drift.Value(DateTime.now()),
+          ));
+
           // Avaliação foi completada - ir para página de resultados
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -453,6 +465,35 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                               ),
                             ),
                             const SizedBox(height: 28),
+                            if (_draftCount > 0)
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                color: primary.withOpacity(0.08),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Text(
+                                        'Avaliação em andamento',
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: primary.withOpacity(0.95),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Você possui $_draftCount avaliação(ões) em rascunho para esta família. Continue para finalizar o fluxo.',
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             if (_avaliacaoPendenteId != null)
                               Row(
                                 children: [

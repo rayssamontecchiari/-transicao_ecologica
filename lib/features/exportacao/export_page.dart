@@ -1,12 +1,14 @@
 import 'dart:io';
-import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../home_page.dart';
 
 class ExportPage extends StatefulWidget {
   const ExportPage({super.key});
@@ -88,6 +90,84 @@ class _ExportPageState extends State<ExportPage> {
     }
   }
 
+  Future<bool> _isValidDatabaseFile(File file) async {
+    final path = file.path.toLowerCase();
+    return path.endsWith('.db') ||
+        path.endsWith('.sqlite') ||
+        path.endsWith('.sqlite3');
+  }
+
+  Future<void> _importDatabase() async {
+    if (exportService == null) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      dialogTitle: 'Selecione o arquivo de banco de dados (.db ou .sqlite)',
+    );
+
+    if (result == null ||
+        result.files.isEmpty ||
+        result.files.single.path == null) {
+      return;
+    }
+
+    final file = File(result.files.single.path!);
+    if (!await _isValidDatabaseFile(file)) {
+      _showMessage('Selecione um arquivo .db ou .sqlite válido.',
+          isError: true);
+      return;
+    }
+
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Importar Banco de Dados'),
+          content: const Text(
+            'Importar este arquivo irá substituir o banco de dados atual e pode causar perda de dados recentes. Deseja continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Importar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => isLoading = true);
+    try {
+      await exportService!.restoreDatabaseBackup(file);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Banco importado com sucesso! Reiniciando app...'),
+        ),
+      );
+      await Future.delayed(const Duration(milliseconds: 300));
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
+      );
+    } catch (e) {
+      _showMessage('Erro ao importar banco: $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
   Future<void> _exportTableCSV(String tableName) async {
     if (exportService == null) return;
     setState(() => isLoading = true);
@@ -102,6 +182,121 @@ class _ExportPageState extends State<ExportPage> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  Future<void> _restoreBackup(File file) async {
+    if (exportService == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Restaurar Backup'),
+          content: const Text(
+            'Restaurar esse backup irá substituir o banco de dados atual e pode causar perda de dados recentes. Deseja continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Restaurar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => isLoading = true);
+    try {
+      final restored = await exportService!.restoreDatabaseBackup(file);
+      _showMessage(
+          'Backup restaurado com sucesso! Reinicie o app para aplicar.\n${restored.path}');
+      await _initializeService();
+    } catch (e) {
+      _showMessage('Erro ao restaurar backup: $e', isError: true);
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Widget _buildImportButton() {
+    return ElevatedButton.icon(
+      onPressed: isLoading || exportService == null ? null : _importDatabase,
+      icon: const Icon(Icons.upload_file),
+      label: const Text('Importar BD externo'),
+    );
+  }
+
+  Widget _buildBackupsList() {
+    if (exportService == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return FutureBuilder<List<FileSystemEntity>>(
+      future: exportService!.listBackups(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Nenhum backup encontrado. Crie um backup antes de restaurar.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          );
+        }
+
+        final files = snapshot.data!;
+        return Column(
+          children: files.map((file) {
+            final fileName = p.basename(file.path);
+            final stat = File(file.path).statSync();
+            final size = _formatBytes(stat.size);
+            final modified =
+                DateFormat('dd/MM/yyyy HH:mm').format(stat.modified);
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: const Icon(Icons.storage),
+                title: Text(fileName),
+                subtitle: Text('$size • $modified'),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'restore') {
+                      await _restoreBackup(File(file.path));
+                    } else if (value == 'share') {
+                      Share.shareXFiles([XFile(file.path)], text: fileName);
+                    } else if (value == 'delete') {
+                      _deleteFile(file.path);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                        value: 'restore', child: Text('Restaurar')),
+                    const PopupMenuItem(
+                        value: 'share', child: Text('Compartilhar')),
+                    const PopupMenuItem(
+                        value: 'delete', child: Text('Deletar')),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 
   void _showShareDialog(File file) {
@@ -119,7 +314,7 @@ class _ExportPageState extends State<ExportPage> {
             onPressed: () {
               Share.shareXFiles(
                 [XFile(file.path)],
-                text: 'Exportação de dados - ${file.path.split('/').last}',
+                text: 'Exportação de dados - ${p.basename(file.path)}',
               );
               Navigator.pop(context);
             },
@@ -188,6 +383,18 @@ class _ExportPageState extends State<ExportPage> {
                   icon: const Icon(Icons.table_chart),
                   label: const Text('Exportar como CSV (Completo)'),
                 ),
+                const SizedBox(height: 24),
+
+                _buildSectionTitle('📥 Restaurar Backup'),
+                const SizedBox(height: 8),
+                Text(
+                  'Restaure um backup anterior. Isso substitui os dados atuais do aplicativo.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                _buildImportButton(),
+                const SizedBox(height: 16),
+                _buildBackupsList(),
                 const SizedBox(height: 24),
 
                 // ========================
@@ -278,7 +485,7 @@ class _ExportPageState extends State<ExportPage> {
         final files = snapshot.data!;
         return Column(
           children: files.map((file) {
-            final fileName = file.path.split('/').last;
+            final fileName = p.basename(file.path);
             final stat = File(file.path).statSync();
             final size = _formatBytes(stat.size);
             final modified =

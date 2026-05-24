@@ -39,6 +39,13 @@ class AppDatabase extends _$AppDatabase {
     return _instance!;
   }
 
+  static Future<void> resetInstance() async {
+    if (_instance != null) {
+      await _instance!.close();
+      _instance = null;
+    }
+  }
+
   @override
   int get schemaVersion => 5;
 

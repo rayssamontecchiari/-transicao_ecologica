@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:transicao_ecologica/features/avaliacao/iniciar_avaliacao_page.dart';
+import 'package:transicao_ecologica/features/avaliacao/resultados_dashboard_page.dart';
+import 'package:transicao_ecologica/features/exportacao/export_page.dart';
 import 'package:transicao_ecologica/features/familias/familias_page.dart';
-import 'package:transicao_ecologica/features/configuracoes/gerenciar_pesos_page.dart';
 
 import '../core/database/app_database.dart';
 import '../core/services/categoria_service.dart';
 import '../core/services/indicador_service.dart';
 import '../core/services/database_diagnostico.dart';
 import '../core/services/resultado_avaliacao_service.dart';
-import 'avaliacao/familias_resultados_page.dart';
 import 'avaliacao/todas_avaliacoes_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -318,7 +318,7 @@ class _HomePageState extends State<HomePage> {
                           icon: Icons.plus_one_outlined,
                           title: 'Iniciar nova avaliação',
                           subtitle: 'Crie uma nova avaliação para uma família.',
-                          color: const Color(0xFF1976D2),
+                          color: const Color(0xFF43A047),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -395,14 +395,14 @@ class _HomePageState extends State<HomePage> {
             case 2:
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const FamiliasResultadosPage(),
+                  builder: (_) => const ResultadosDashboardPage(),
                 ),
               );
               break;
             case 3:
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const GerenciarPesosPage(),
+                  builder: (_) => const ExportPage(),
                 ),
               );
               break;
@@ -422,8 +422,8 @@ class _HomePageState extends State<HomePage> {
             label: 'Resultados',
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: 'Configurações',
+            icon: Icon(Icons.backup),
+            label: 'Backup',
           ),
         ],
       ),

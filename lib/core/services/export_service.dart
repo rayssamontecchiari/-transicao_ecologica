@@ -120,7 +120,7 @@ class ExportService {
             data.add([
               row.id,
               row.nome,
-              row.descricao ?? '',
+              row.descricao,
               row.peso,
               row.categoriaId,
             ]);
@@ -203,10 +203,32 @@ class ExportService {
     // Indicadores
     csvBuffer.writeln('=== INDICADORES ===');
     final indicadores = await database.select(database.indicador).get();
-    csvBuffer.writeln('ID,Nome,Descrição,Peso,Categoria ID');
+    csvBuffer.writeln('ID,Nome,Descrição,Peso,Categoria ID,Dimensão ID');
     for (var row in indicadores) {
       csvBuffer.writeln(
-        '${row.id},${_escapeCsv(row.nome)},${_escapeCsv(row.descricao ?? '')},${row.peso},${row.categoriaId}',
+        '${row.id},${_escapeCsv(row.nome)},${_escapeCsv(row.descricao)},${row.peso},${row.categoriaId},${row.dimensaoId ?? ''}',
+      );
+    }
+    csvBuffer.writeln();
+
+    // Dimensões
+    csvBuffer.writeln('=== DIMENSÕES ===');
+    final dimensoes = await database.select(database.dimensao).get();
+    csvBuffer.writeln('ID,Nome,Categoria ID');
+    for (var row in dimensoes) {
+      csvBuffer.writeln(
+        '${row.id},${_escapeCsv(row.nome)},${row.categoriaId}',
+      );
+    }
+    csvBuffer.writeln();
+
+    // Práticas
+    csvBuffer.writeln('=== PRÁTICAS ===');
+    final praticas = await database.select(database.pratica).get();
+    csvBuffer.writeln('ID,Nome,Categoria ID');
+    for (var row in praticas) {
+      csvBuffer.writeln(
+        '${row.id},${_escapeCsv(row.nome)},${row.categoriaId}',
       );
     }
     csvBuffer.writeln();
@@ -214,10 +236,22 @@ class ExportService {
     // Avaliações
     csvBuffer.writeln('=== AVALIAÇÕES ===');
     final avaliacoes = await database.select(database.avaliacao).get();
-    csvBuffer.writeln('ID,Família ID,Data');
+    csvBuffer.writeln('ID,Família ID,Data,Avaliador,Status');
     for (var row in avaliacoes) {
       csvBuffer.writeln(
-        '${row.id},${row.familiaId},${row.data.toIso8601String()}',
+        '${row.id},${row.familiaId},${row.data.toIso8601String()},${_escapeCsv(row.avaliador)},${row.status}',
+      );
+    }
+    csvBuffer.writeln();
+
+    // Itens de Avaliação
+    csvBuffer.writeln('=== ITENS DE AVALIAÇÃO ===');
+    final avaliacaoItens = await database.select(database.avaliacaoItem).get();
+    csvBuffer.writeln(
+        'ID,Avaliação ID,Indicador ID,Prática ID,Valor Likert,Valor Fuzzy');
+    for (var row in avaliacaoItens) {
+      csvBuffer.writeln(
+        '${row.id},${row.avaliacaoId},${row.indicadorId},${row.praticaId ?? ''},${row.valorLikert ?? ''},${row.valorFuzzy ?? ''}',
       );
     }
 
@@ -227,10 +261,28 @@ class ExportService {
     return file;
   }
 
-  /// Obtem o caminho do banco de dados
+  /// Restaura o banco de dados a partir de um backup existente
+  Future<File> restoreDatabaseBackup(File backupFile) async {
+    if (!backupFile.existsSync()) {
+      throw Exception('Backup não encontrado: ${backupFile.path}');
+    }
+
+    await AppDatabase.resetInstance();
+
+    final dbPath = await _getDatabasePath();
+    final currentFile = File(dbPath);
+    if (currentFile.existsSync()) {
+      await currentFile.delete();
+    }
+
+    final restored = await backupFile.copy(dbPath);
+    return restored;
+  }
+
+  /// Obtem o caminho do banco de dados usado pelo aplicativo
   Future<String> _getDatabasePath() async {
     final documentsDir = await getApplicationDocumentsDirectory();
-    return '${documentsDir.path}/app_database.db';
+    return '${documentsDir.path}/db.sqlite';
   }
 
   /// Escapa caracteres especiais em CSV
