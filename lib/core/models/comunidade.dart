@@ -1,8 +1,8 @@
-class Regiao {
+class Comunidade {
   final int id;
   final String nome;
 
-  Regiao({
+  Comunidade({
     required this.id,
     required this.nome,
   });

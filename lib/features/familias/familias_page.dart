@@ -17,8 +17,8 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
 
   List<FamiliaData> _familias = [];
   List<FamiliaData> _familiasFiltradas = [];
-  List<RegiaoData> _regioes = [];
-  int? _selectedRegiaoFilter;
+  List<ComunidadeData> _comunidades = [];
+  int? _selectedComunidadeFilter;
   String _searchQuery = '';
   bool _isLoading = true;
 
@@ -31,15 +31,15 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
   Future<void> _init() async {
     _db = await AppDatabase.instance();
     _familiasService = FamiliasService(_db);
-    _regioes = await _db.select(_db.regiao).get();
+    _comunidades = await _db.select(_db.comunidade).get();
     await _carregarFamilias();
   }
 
   void _aplicarFiltros() {
     final query = _searchQuery.toLowerCase().trim();
     _familiasFiltradas = _familias.where((familia) {
-      if (_selectedRegiaoFilter != null &&
-          familia.regiaoId != _selectedRegiaoFilter) {
+      if (_selectedComunidadeFilter != null &&
+          familia.comunidadeId != _selectedComunidadeFilter) {
         return false;
       }
       if (query.isNotEmpty &&
@@ -141,12 +141,113 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
     _carregarFamilias();
   }
 
+  Future<void> _mostrarModalFiltros() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Filtros',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Buscar família',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                        _aplicarFiltros();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _selectedComunidadeFilter,
+                    decoration: const InputDecoration(
+                      labelText: 'Comunidade',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('Todas as comunidades'),
+                      ),
+                      ..._comunidades.map(
+                        (comunidade) => DropdownMenuItem<int>(
+                          value: comunidade.id,
+                          child: Text(comunidade.nome),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedComunidadeFilter = value;
+                        _aplicarFiltros();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selectedComunidadeFilter = null;
+                        _searchQuery = '';
+                        _aplicarFiltros();
+                      });
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Limpar filtros'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Famílias Cadastradas'),
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _mostrarModalFiltros,
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Filtros',
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -163,81 +264,6 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Filtros',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            decoration: const InputDecoration(
-                              labelText: 'Buscar família',
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                                _aplicarFiltros();
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<int>(
-                            value: _selectedRegiaoFilter,
-                            decoration: const InputDecoration(
-                              labelText: 'Região',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: [
-                              const DropdownMenuItem<int>(
-                                value: null,
-                                child: Text('Todas as regiões'),
-                              ),
-                              ..._regioes.map(
-                                (regiao) => DropdownMenuItem<int>(
-                                  value: regiao.id,
-                                  child: Text(regiao.nome),
-                                ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedRegiaoFilter = value;
-                                _aplicarFiltros();
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _selectedRegiaoFilter = null;
-                                _searchQuery = '';
-                                _aplicarFiltros();
-                              });
-                            },
-                            icon: const Icon(Icons.clear),
-                            label: const Text('Limpar filtros'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: _familiasFiltradas.isEmpty
                       ? Center(

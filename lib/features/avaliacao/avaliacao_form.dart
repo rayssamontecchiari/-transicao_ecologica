@@ -50,6 +50,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
   // Para a categoria multidimensional (categoria 2) guardamos seleções
   // por prática: mapa praticaId -> conjunto de indicadorIds selecionados.
   final Map<int, Set<int>> _respostasPorPratica = {};
+  final Map<int, bool> _praticaNaoExecutada = {};
 
   @override
   void initState() {
@@ -79,6 +80,7 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
           .get();
       for (final pratica in _praticas) {
         _respostasPorPratica[pratica.id] = <int>{};
+        _praticaNaoExecutada[pratica.id] = false;
       }
     }
 
@@ -100,6 +102,14 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
         _respostasPorPratica[item.praticaId!]!.add(item.indicadorId);
       } else if (item.valorLikert != null) {
         _respostas[item.indicadorId] = item.valorLikert;
+      }
+    }
+
+    if ((widget.categoriaAtual ?? 0) == 2) {
+      for (final pratica in _praticas) {
+        final possuiMarcacao =
+            _respostasPorPratica[pratica.id]?.isNotEmpty ?? false;
+        _praticaNaoExecutada[pratica.id] = !possuiMarcacao;
       }
     }
 
@@ -248,12 +258,37 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
   }
 
   void _showIndicadorNomeCompleto(IndicadorData indicador) {
+    final nivel1 = indicador.descricaoNivel1;
+    final nivel5 = indicador.descricaoNivel5;
+
     showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Detalhes'),
-          content: Text(indicador.descricao),
+          title: Text(indicador.nome),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(indicador.descricao),
+                if ((nivel1 ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Nota 1: $nivel1',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+                if ((nivel5 ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Nota 5: $nivel5',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ],
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -341,6 +376,13 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                               const SizedBox(
                                   width: 220,
                                   child: Text('Práticas agrícolas')),
+                              const SizedBox(
+                                width: 110,
+                                child: Text(
+                                  '0 (não executa)',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                               ..._indicadores.map(
                                 _buildIndicadorHeader,
                               ),
@@ -371,6 +413,58 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                                       width: 220,
                                       child: Text(pratica.nome),
                                     ),
+                                    Container(
+                                      width: 110,
+                                      alignment: Alignment.center,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            final atual = _praticaNaoExecutada[
+                                                    pratica.id] ??
+                                                false;
+                                            _praticaNaoExecutada[pratica.id] =
+                                                !atual;
+                                            if (!atual) {
+                                              _respostasPorPratica[pratica.id]
+                                                  ?.clear();
+                                            }
+                                          });
+                                        },
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: (_praticaNaoExecutada[
+                                                        pratica.id] ??
+                                                    false)
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                : Colors.white,
+                                            border: Border.all(
+                                              color: (_praticaNaoExecutada[
+                                                          pratica.id] ??
+                                                      false)
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
+                                                  : Colors.grey.shade300,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                          child: Center(
+                                            child: (_praticaNaoExecutada[
+                                                        pratica.id] ??
+                                                    false)
+                                                ? const Icon(Icons.check,
+                                                    color: Colors.white,
+                                                    size: 18)
+                                                : const Text('0'),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                     ..._indicadores.map((ind) {
                                       final selected =
                                           _respostasPorPratica[pratica.id]
@@ -384,6 +478,8 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                                             setState(() {
                                               final set = _respostasPorPratica[
                                                   pratica.id]!;
+                                              _praticaNaoExecutada[pratica.id] =
+                                                  false;
                                               if (selected) {
                                                 set.remove(ind.id);
                                               } else {
@@ -461,12 +557,30 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            indicador.nome,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  indicador.nome,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _showIndicadorNomeCompleto(indicador),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(

@@ -31,6 +31,11 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   int? _avaliacaoPendenteId;
   int _draftCount = 0;
   final TextEditingController _avaliadorController = TextEditingController();
+  DateTime _dataAvaliacao = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
 
   @override
   void initState() {
@@ -82,7 +87,31 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     setState(() {
       _avaliacaoPendenteId = avaliacaoPendente?.id;
       _draftCount = drafts.length;
+      _avaliadorController.text = avaliacaoPendente?.avaliador ?? '';
+      _dataAvaliacao = avaliacaoPendente != null
+          ? DateTime(avaliacaoPendente.data.year, avaliacaoPendente.data.month)
+          : DateTime(DateTime.now().year, DateTime.now().month, 1);
     });
+  }
+
+  Future<void> _selecionarMesAno() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dataAvaliacao,
+      firstDate: DateTime(2000, 1, 1),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      _dataAvaliacao = DateTime(picked.year, picked.month, 1);
+    });
+  }
+
+  String _formatarMesAno(DateTime data) {
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 
   Future<void> _iniciarAvaliacao({required bool continuar}) async {
@@ -100,12 +129,22 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
 
       if (continuar && _avaliacaoPendenteId != null) {
         avaliacaoIdExistente = _avaliacaoPendenteId!;
+        await (_db.update(_db.avaliacao)
+              ..where((a) => a.id.equals(avaliacaoIdExistente)))
+            .write(
+          AvaliacaoCompanion(
+            data: drift.Value(_dataAvaliacao),
+            dataAlteracao: drift.Value(DateTime.now()),
+            avaliador: drift.Value(_avaliadorController.text.trim()),
+          ),
+        );
       } else {
         // Criar uma nova avaliação
         avaliacaoIdExistente = await _db.avaliacao.insertOne(
           AvaliacaoCompanion.insert(
             familiaId: _selectedFamilia!.id,
             avaliador: _avaliadorController.text,
+            data: drift.Value(_dataAvaliacao),
             status: const drift.Value('draft'),
           ),
         );
@@ -460,6 +499,71 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
                                       Icons.person,
                                       color: primary,
                                     ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '3',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Data da Avaliação',
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Defina mês e ano da avaliação.',
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed:
+                                    _isProcessing ? null : _selecionarMesAno,
+                                icon: const Icon(Icons.calendar_month),
+                                label: Text(
+                                  'Mês/Ano: ${_formatarMesAno(_dataAvaliacao)}',
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
                               ),

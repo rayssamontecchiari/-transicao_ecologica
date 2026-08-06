@@ -2,9 +2,11 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../database/daos/avaliacao_dao.dart';
+import 'resultado_cache_service.dart';
 
 class AvaliacaoService {
   final AvaliacaoDao _avaliacaoDao;
+  final ResultadoCacheService _cacheService = ResultadoCacheService();
 
   AvaliacaoService(AppDatabase db) : _avaliacaoDao = AvaliacaoDao(db);
 
@@ -71,8 +73,9 @@ class AvaliacaoService {
     return _avaliacaoDao.getItensPorAvaliacao(avaliacaoId);
   }
 
-  Future<void> deletarAvaliacao(int avaliacaoId) {
-    return _avaliacaoDao.deletarAvaliacao(avaliacaoId);
+  Future<void> deletarAvaliacao(int avaliacaoId) async {
+    await _avaliacaoDao.deletarAvaliacao(avaliacaoId);
+    await _cacheService.removerResultadosDaAvaliacao(avaliacaoId);
   }
 
   Future<void> atualizarAvaliacao({
@@ -90,6 +93,7 @@ class AvaliacaoService {
           familiaId: Value(familiaId),
           avaliador: Value(avaliador),
           observacoes: Value(observacoes),
+          dataAlteracao: Value(DateTime.now()),
         ),
       );
 

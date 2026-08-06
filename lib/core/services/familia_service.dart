@@ -10,7 +10,66 @@ class FamiliasService {
     return _familiasDao.getTodas();
   }
 
-  Future<int> cadastrarFamilia(FamiliaCompanion familia) {
+  static bool saoFamiliasDuplicadas({
+    required String? nomeResponsavel,
+    required String? telefone,
+    required String? nomeResponsavelExistente,
+    required String? telefoneExistente,
+  }) {
+    final nomeNormalizado = _normalizarTexto(nomeResponsavel);
+    final telefoneNormalizado = _normalizarTexto(telefone);
+    final nomeExistenteNormalizado = _normalizarTexto(nomeResponsavelExistente);
+    final telefoneExistenteNormalizado = _normalizarTexto(telefoneExistente);
+
+    if (nomeNormalizado.isEmpty || telefoneNormalizado.isEmpty) {
+      return false;
+    }
+
+    return nomeNormalizado == nomeExistenteNormalizado &&
+        telefoneNormalizado == telefoneExistenteNormalizado;
+  }
+
+  static bool possuiComunidadeAssociada(int? comunidadeId) {
+    return comunidadeId != null && comunidadeId > 0;
+  }
+
+  Future<void> validarFamilia(
+    FamiliaCompanion familia, {
+    int? familiaIdIgnorada,
+  }) async {
+    final comunidadeId =
+        familia.comunidadeId.present ? familia.comunidadeId.value : null;
+    if (!possuiComunidadeAssociada(comunidadeId)) {
+      throw StateError('Família deve estar associada a uma comunidade.');
+    }
+
+    final nomeResponsavel =
+        familia.nomeResponsavel.present ? familia.nomeResponsavel.value : '';
+    final telefone = familia.telefone.present ? familia.telefone.value : '';
+    final familiasCadastradas = await _familiasDao.getTodas();
+
+    final duplicada = familiasCadastradas.any((familiaExistente) {
+      if (familiaExistente.id == familiaIdIgnorada) {
+        return false;
+      }
+
+      return saoFamiliasDuplicadas(
+        nomeResponsavel: nomeResponsavel,
+        telefone: telefone,
+        nomeResponsavelExistente: familiaExistente.nomeResponsavel,
+        telefoneExistente: familiaExistente.telefone,
+      );
+    });
+
+    if (duplicada) {
+      throw StateError(
+        'Já existe uma família cadastrada com o mesmo nome e telefone.',
+      );
+    }
+  }
+
+  Future<int> cadastrarFamilia(FamiliaCompanion familia) async {
+    await validarFamilia(familia);
     return _familiasDao.inserir(familia);
   }
 
@@ -20,7 +79,12 @@ class FamiliasService {
   }
 
   /// Atualiza uma família
-  Future<bool> atualizarFamilia(int familiaId, FamiliaCompanion familia) {
+  Future<bool> atualizarFamilia(int familiaId, FamiliaCompanion familia) async {
+    await validarFamilia(familia, familiaIdIgnorada: familiaId);
     return _familiasDao.atualizar(familiaId, familia);
+  }
+
+  static String _normalizarTexto(String? valor) {
+    return (valor ?? '').trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 }

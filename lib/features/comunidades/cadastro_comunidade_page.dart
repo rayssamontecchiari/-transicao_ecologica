@@ -2,21 +2,21 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/services/regiao_service.dart';
+import '../../core/services/comunidade_service.dart';
 
-/// Página para cadastro de uma nova região.
-class CadastroRegiaoPage extends StatefulWidget {
-  const CadastroRegiaoPage({super.key});
+/// Pagina para cadastro de uma nova comunidade.
+class CadastroComunidadePage extends StatefulWidget {
+  const CadastroComunidadePage({super.key});
 
   @override
-  State<CadastroRegiaoPage> createState() => _CadastroRegiaoPageState();
+  State<CadastroComunidadePage> createState() => _CadastroComunidadePageState();
 }
 
-class _CadastroRegiaoPageState extends State<CadastroRegiaoPage> {
+class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   bool _isSaving = false;
-  late RegiaoService _regioesService;
+  late ComunidadeService _comunidadesService;
 
   @override
   void initState() {
@@ -26,27 +26,28 @@ class _CadastroRegiaoPageState extends State<CadastroRegiaoPage> {
 
   Future<void> _initService() async {
     final db = await AppDatabase.instance();
-    _regioesService = RegiaoService(db);
+    _comunidadesService = ComunidadeService(db);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isSaving = true);
     try {
-      final regiao = RegiaoCompanion(
-        nome: Value(_nomeController.text),
+      final comunidade = ComunidadeCompanion(
+        nome: Value(_nomeController.text.trim()),
       );
-      await _regioesService.inserir(regiao);
+      await _comunidadesService.inserir(comunidade);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Região cadastrada com sucesso!')),
+          const SnackBar(content: Text('Comunidade cadastrada com sucesso!')),
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao cadastrar região: $e')),
+          SnackBar(content: Text('Erro ao cadastrar comunidade: $e')),
         );
       }
     } finally {
@@ -63,21 +64,29 @@ class _CadastroRegiaoPageState extends State<CadastroRegiaoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cadastro de Região')),
+      appBar: AppBar(title: const Text('Cadastro de Comunidade')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                'Cadastre uma nova comunidade para organizar familias e avaliacoes.',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _nomeController,
                 decoration: const InputDecoration(
-                  labelText: 'Nome da Região',
+                  labelText: 'Nome da Comunidade',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Nome é obrigatório';
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Nome e obrigatorio';
+                  }
                   return null;
                 },
               ),
@@ -92,7 +101,7 @@ class _CadastroRegiaoPageState extends State<CadastroRegiaoPage> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Cadastrar Região'),
+                      : const Text('Cadastrar Comunidade'),
                 ),
               ),
             ],

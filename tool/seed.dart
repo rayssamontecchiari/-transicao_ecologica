@@ -8,16 +8,24 @@ import 'package:transicao_ecologica/core/database/app_database.dart';
 Future<void> main() async {
   final db = await AppDatabase.instance();
 
-  // Check existing regions and categories first so we don't duplicate entries.
-  final regioes = await db.select(db.regiao).get();
-  if (regioes.isEmpty) {
-    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Norte'));
-    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Sul'));
-    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Leste'));
-    await db.into(db.regiao).insert(RegiaoCompanion.insert(nome: 'Oeste'));
-    print('Regiões seed inseridas.');
+  // Check existing communities and categories first so we don't duplicate entries.
+  final comunidades = await db.select(db.comunidade).get();
+  if (comunidades.isEmpty) {
+    await db
+        .into(db.comunidade)
+        .insert(ComunidadeCompanion.insert(nome: 'Norte'));
+    await db
+        .into(db.comunidade)
+        .insert(ComunidadeCompanion.insert(nome: 'Sul'));
+    await db
+        .into(db.comunidade)
+        .insert(ComunidadeCompanion.insert(nome: 'Leste'));
+    await db
+        .into(db.comunidade)
+        .insert(ComunidadeCompanion.insert(nome: 'Oeste'));
+    print('Comunidades seed inseridas.');
   } else {
-    print('Regiões já existem, pulando.');
+    print('Comunidades já existem, pulando.');
   }
 
   final categorias = await db.select(db.categoria).get();

@@ -16,8 +16,6 @@ class FuzzyCalculator {
     double somaC = 0;
     double somaD = 0;
 
-    double somaPesos = 0;
-
     for (int i = 0; i < notas.length; i++) {
       final fuzzy = FuzzyNumber(
         nota: notas[i],
@@ -30,14 +28,14 @@ class FuzzyCalculator {
       somaB += res['b']! * pesos[i];
       somaC += res['c']! * pesos[i];
       somaD += res['d']! * pesos[i];
-
-      somaPesos += pesos[i];
     }
 
-    final a = somaA / somaPesos;
-    final b = somaB / somaPesos;
-    final c = somaC / somaPesos;
-    final d = somaD / somaPesos;
+    final n = notas.length.toDouble();
+
+    final a = somaA / n;
+    final b = somaB / n;
+    final c = somaC / n;
+    final d = somaD / n;
 
     final centroide = (a + b + c + d) / 4.0;
 

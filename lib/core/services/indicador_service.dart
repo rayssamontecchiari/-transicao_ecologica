@@ -1,10 +1,12 @@
 import '../database/daos/indicador_dao.dart';
 import '../database/daos/categoria_dao.dart';
 import '../database/app_database.dart';
+import 'resultado_cache_service.dart';
 
 class IndicadorService {
   final IndicadorDao _indicadoresDao;
   late final CategoriaDao _categoriasDao;
+  final ResultadoCacheService _cacheService = ResultadoCacheService();
 
   IndicadorService(AppDatabase db) : _indicadoresDao = IndicadorDao(db) {
     _categoriasDao = CategoriaDao(db);
@@ -45,12 +47,16 @@ class IndicadorService {
   }
 
   /// Atualiza peso (uso administrativo)
-  Future<void> atualizarPesoIndicador(int indicadorId, double novoPeso) {
-    return _indicadoresDao.atualizarPeso(indicadorId, novoPeso);
+  Future<void> atualizarPesoIndicador(int indicadorId, double novoPeso) async {
+    await _indicadoresDao.atualizarPeso(indicadorId, novoPeso);
+    await _cacheService.invalidarTodosResultados();
   }
 
   /// Insere um novo indicador no banco
-  Future<int> inserirIndicador(IndicadorCompanion indicador) {
-    return _indicadoresDao.into(_indicadoresDao.indicador).insert(indicador);
+  Future<int> inserirIndicador(IndicadorCompanion indicador) async {
+    final id =
+        await _indicadoresDao.into(_indicadoresDao.indicador).insert(indicador);
+    await _cacheService.invalidarTodosResultados();
+    return id;
   }
 }

@@ -29,10 +29,10 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
   double _chartMax = 0.0;
   List<AvaliacaoData> _allAvaliacoes = [];
   List<FamiliaData> _familias = [];
-  List<RegiaoData> _regioes = [];
+  List<ComunidadeData> _comunidades = [];
   List<CategoriaData> _categoriasData = [];
   int? _selectedFamiliaId;
-  int? _selectedRegiaoId;
+  int? _selectedComunidadeId;
   DateTime? _startDate;
   DateTime? _endDate;
   _ResultadoViewMode _viewMode = _ResultadoViewMode.geral;
@@ -51,7 +51,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     final familias = await _db.select(_db.familia).get();
-    final regioes = await _db.select(_db.regiao).get();
+    final comunidades = await _db.select(_db.comunidade).get();
     final categoriasData = await _db.select(_db.categoria).get();
     final avaliacoes = await (_db.select(_db.avaliacao)
           ..orderBy([
@@ -61,7 +61,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
 
     setState(() {
       _familias = familias;
-      _regioes = regioes;
+      _comunidades = comunidades;
       _categoriasData = categoriasData;
       _allAvaliacoes = avaliacoes;
       _selectedCategoriaId ??=
@@ -84,11 +84,11 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
         return false;
       }
 
-      if (_selectedRegiaoId != null) {
+      if (_selectedComunidadeId != null) {
         final familiasMatch =
             _familias.where((f) => f.id == avaliacao.familiaId).toList();
         if (familiasMatch.isEmpty ||
-            familiasMatch.first.regiaoId != _selectedRegiaoId) {
+            familiasMatch.first.comunidadeId != _selectedComunidadeId) {
           return false;
         }
       }
@@ -187,10 +187,12 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
         : 'Família desconhecida';
   }
 
-  String _nomeRegiao(int? id) {
-    if (id == null) return 'Todas as regiões';
-    final regiao = _regioes.where((r) => r.id == id).toList();
-    return regiao.isNotEmpty ? regiao.first.nome : 'Região desconhecida';
+  String _nomeComunidade(int? id) {
+    if (id == null) return 'Todas as comunidades';
+    final comunidade = _comunidades.where((c) => c.id == id).toList();
+    return comunidade.isNotEmpty
+        ? comunidade.first.nome
+        : 'Comunidade desconhecida';
   }
 
   String _nomeCategoria(int? id) {
@@ -246,7 +248,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
   Future<void> _clearFilters() async {
     setState(() {
       _selectedFamiliaId = null;
-      _selectedRegiaoId = null;
+      _selectedComunidadeId = null;
       _startDate = null;
       _endDate = null;
       _viewMode = _ResultadoViewMode.geral;
@@ -333,7 +335,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
         ? 'Resultado geral'
         : 'Categoria: ${_nomeCategoria(_selectedCategoriaId)}';
     final filterLabel =
-        '${_nomeFamilia(_selectedFamiliaId)} • ${_nomeRegiao(_selectedRegiaoId)}';
+        '${_nomeFamilia(_selectedFamiliaId)} • ${_nomeComunidade(_selectedComunidadeId)}';
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -543,9 +545,9 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
               onChanged: (value) async {
                 setState(() {
                   _selectedFamiliaId = value;
-                  _selectedRegiaoId = value == null
+                  _selectedComunidadeId = value == null
                       ? null
-                      : _familias.firstWhere((f) => f.id == value).regiaoId;
+                      : _familias.firstWhere((f) => f.id == value).comunidadeId;
                 });
                 await _applyFilters();
               },
@@ -553,24 +555,24 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<int?>(
               isExpanded: true,
-              value: _selectedRegiaoId,
+              value: _selectedComunidadeId,
               decoration: InputDecoration(
-                labelText: 'Região',
+                labelText: 'Comunidade',
                 border: const OutlineInputBorder(),
                 helperText: _selectedFamiliaId != null
-                    ? 'Região definida pela família selecionada'
+                    ? 'Comunidade definida pela família selecionada'
                     : null,
               ),
               items: [
                 const DropdownMenuItem<int?>(
                   value: null,
-                  child: Text('Todas as regiões'),
+                  child: Text('Todas as comunidades'),
                 ),
-                ..._regioes.map(
-                  (regiao) => DropdownMenuItem<int?>(
-                    value: regiao.id,
+                ..._comunidades.map(
+                  (comunidade) => DropdownMenuItem<int?>(
+                    value: comunidade.id,
                     child: Text(
-                      regiao.nome,
+                      comunidade.nome,
                       softWrap: true,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -579,7 +581,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
               ],
               onChanged: _selectedFamiliaId == null
                   ? (value) async {
-                      setState(() => _selectedRegiaoId = value);
+                      setState(() => _selectedComunidadeId = value);
                       await _applyFilters();
                     }
                   : null,
@@ -617,7 +619,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
             if (_startDate != null ||
                 _endDate != null ||
                 _selectedFamiliaId != null ||
-                _selectedRegiaoId != null)
+                _selectedComunidadeId != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Align(

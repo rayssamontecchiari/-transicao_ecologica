@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
-import '../../core/services/regiao_service.dart';
+import '../../core/services/comunidade_service.dart';
 
 /// Página para cadastro de novas famílias.
 class CadastroFamiliaPage extends StatefulWidget {
@@ -22,10 +22,10 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   final _enderecoController = TextEditingController();
 
   late FamiliasService _familiasService;
-  late RegiaoService _regioesService;
+  late ComunidadeService _comunidadesService;
 
-  List<RegiaoData> _regioes = [];
-  RegiaoData? _selectedRegiao;
+  List<ComunidadeData> _comunidades = [];
+  ComunidadeData? _selectedComunidade;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -40,31 +40,31 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
   Future<void> _initializeServices() async {
     final db = await AppDatabase.instance();
     _familiasService = FamiliasService(db);
-    _regioesService = RegiaoService(db);
-    await _loadRegioes();
+    _comunidadesService = ComunidadeService(db);
+    await _loadComunidades();
 
     // Se estiver editando, preencher os campos
     if (_isEditing) {
       _nomeResponsavelController.text = widget.familia!.nomeResponsavel;
-      _telefoneController.text = widget.familia!.telefone ?? '';
-      _enderecoController.text = widget.familia!.endereco ?? '';
+      _telefoneController.text = widget.familia!.telefone;
+      _enderecoController.text = widget.familia!.endereco;
     }
   }
 
-  Future<void> _loadRegioes() async {
+  Future<void> _loadComunidades() async {
     try {
-      final regioes = await _regioesService.getTodas();
+      final comunidades = await _comunidadesService.getTodas();
       setState(() {
-        _regioes = regioes;
+        _comunidades = comunidades;
         _isLoading = false;
-        if (_regioes.isNotEmpty) {
+        if (_comunidades.isNotEmpty) {
           if (_isEditing) {
-            _selectedRegiao = _regioes.firstWhere(
-              (r) => r.id == widget.familia!.regiaoId,
-              orElse: () => _regioes.first,
+            _selectedComunidade = _comunidades.firstWhere(
+              (c) => c.id == widget.familia!.comunidadeId,
+              orElse: () => _comunidades.first,
             );
           } else {
-            _selectedRegiao = _regioes.first;
+            _selectedComunidade = _comunidades.first;
           }
         }
       });
@@ -72,7 +72,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar regiões: $e')),
+          SnackBar(content: Text('Erro ao carregar comunidades: $e')),
         );
       }
     }
@@ -80,9 +80,9 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedRegiao == null) {
+    if (_selectedComunidade == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione uma região')),
+        const SnackBar(content: Text('Selecione uma comunidade')),
       );
       return;
     }
@@ -94,7 +94,7 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
         nomeResponsavel: Value(_nomeResponsavelController.text),
         telefone: Value(_telefoneController.text),
         endereco: Value(_enderecoController.text),
-        regiaoId: Value(_selectedRegiao!.id),
+        comunidadeId: Value(_selectedComunidade!.id),
       );
 
       if (_isEditing) {
@@ -118,10 +118,12 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
       }
     } catch (e) {
       if (mounted) {
+        final mensagem = e is StateError
+            ? e.message
+            : 'Erro ao ${_isEditing ? 'atualizar' : 'cadastrar'} família.';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Erro ao ${_isEditing ? 'atualizar' : 'cadastrar'} família: $e')),
+          SnackBar(content: Text(mensagem)),
         );
       }
     } finally {
@@ -195,24 +197,24 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<RegiaoData>(
-                      value: _selectedRegiao,
+                    DropdownButtonFormField<ComunidadeData>(
+                      value: _selectedComunidade,
                       decoration: const InputDecoration(
-                        labelText: 'Região',
+                        labelText: 'Comunidade',
                         border: OutlineInputBorder(),
                       ),
-                      items: _regioes
-                          .map((regiao) => DropdownMenuItem(
-                                value: regiao,
-                                child: Text(regiao.nome),
+                      items: _comunidades
+                          .map((comunidade) => DropdownMenuItem(
+                                value: comunidade,
+                                child: Text(comunidade.nome),
                               ))
                           .toList(),
-                      onChanged: (regiao) {
-                        setState(() => _selectedRegiao = regiao);
+                      onChanged: (comunidade) {
+                        setState(() => _selectedComunidade = comunidade);
                       },
                       validator: (value) {
                         if (value == null) {
-                          return 'Região é obrigatória';
+                          return 'Comunidade é obrigatória';
                         }
                         return null;
                       },

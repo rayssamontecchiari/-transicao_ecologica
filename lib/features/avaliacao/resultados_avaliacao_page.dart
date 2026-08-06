@@ -25,6 +25,7 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
   bool _isLoading = true;
   Map<String, dynamic> _estatisticas = {};
   AvaliacaoData? _avaliacao;
+  String? _nomeFamilia;
 
   @override
   void initState() {
@@ -41,12 +42,21 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
           ..where((a) => a.id.equals(widget.avaliacaoId)))
         .getSingleOrNull();
 
+    String? nomeFamilia;
+    if (avaliacao != null) {
+      final familia = await (_db.select(_db.familia)
+            ..where((f) => f.id.equals(avaliacao.familiaId)))
+          .getSingleOrNull();
+      nomeFamilia = familia?.nomeResponsavel;
+    }
+
     // Calcular estatísticas
     final estatisticas =
         await _resultadoService.obterEstatisticasAvaliacao(widget.avaliacaoId);
 
     setState(() {
       _avaliacao = avaliacao;
+      _nomeFamilia = nomeFamilia;
       _estatisticas = estatisticas;
       _isLoading = false;
     });
@@ -74,7 +84,18 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resultados da Avaliação'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Resultados da Avaliação'),
+            if ((_nomeFamilia ?? '').isNotEmpty)
+              Text(
+                _nomeFamilia!,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
+        ),
         elevation: 0,
       ),
       body: _isLoading
@@ -292,10 +313,6 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
                     resultado.base.toStringAsFixed(4),
                   ),
                   _buildDetailRow(
-                    'Soma D',
-                    resultado.sumD.toStringAsFixed(4),
-                  ),
-                  _buildDetailRow(
                     'Soma A',
                     resultado.sumA.toStringAsFixed(4),
                   ),
@@ -306,6 +323,10 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
                   _buildDetailRow(
                     'Soma C',
                     resultado.sumC.toStringAsFixed(4),
+                  ),
+                  _buildDetailRow(
+                    'Soma D',
+                    resultado.sumD.toStringAsFixed(4),
                   ),
                 ],
               ),

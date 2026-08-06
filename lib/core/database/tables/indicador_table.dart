@@ -16,6 +16,8 @@ class Indicador extends Table {
 
   TextColumn get nome => text()();
   TextColumn get descricao => text()();
+  TextColumn get descricaoNivel1 => text().nullable()();
+  TextColumn get descricaoNivel5 => text().nullable()();
 
   RealColumn get peso => real().withDefault(const Constant(1.0))();
 

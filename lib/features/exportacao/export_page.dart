@@ -408,7 +408,7 @@ class _ExportPageState extends State<ExportPage> {
                 ),
                 const SizedBox(height: 16),
 
-                _buildTableButton('Regiões', 'regioes'),
+                _buildTableButton('Comunidades', 'comunidades'),
                 const SizedBox(height: 8),
                 _buildTableButton('Famílias', 'familias'),
                 const SizedBox(height: 8),

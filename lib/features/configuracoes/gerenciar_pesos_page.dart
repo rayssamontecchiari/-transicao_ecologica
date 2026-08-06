@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column, Table;
 
 import '../../core/database/app_database.dart';
+import '../../core/services/resultado_cache_service.dart';
 
 /// Página para administrar/ajustar os pesos dos indicadores por categoria
 class GerenciarPesosPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class GerenciarPesosPage extends StatefulWidget {
 
 class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
   late AppDatabase _db;
+  final ResultadoCacheService _cacheService = ResultadoCacheService();
 
   bool _isLoading = true;
   int? _categoriaSelecionada;
@@ -87,12 +89,16 @@ class _GerenciarPesosPageState extends State<GerenciarPesosPage> {
                 id: Value(item.indicador.id),
                 nome: Value(item.indicador.nome),
                 descricao: Value(item.indicador.descricao),
+                descricaoNivel1: Value(item.indicador.descricaoNivel1),
+                descricaoNivel5: Value(item.indicador.descricaoNivel5),
                 peso: Value(novoPeso),
                 categoriaId: Value(item.indicador.categoriaId),
                 dimensaoId: Value(item.indicador.dimensaoId),
               ),
             );
       }
+
+      await _cacheService.invalidarTodosResultados();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

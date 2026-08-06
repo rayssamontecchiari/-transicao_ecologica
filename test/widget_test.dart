@@ -13,10 +13,9 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    expect(find.text('Avaliação transição agroecológica'), findsOneWidget);
-    expect(find.text('Cadastrar Família'), findsOneWidget);
-    expect(find.text('Cadastrar Região'), findsOneWidget);
-    expect(find.text('Cadastrar Indicador'), findsOneWidget);
-    expect(find.text('Cadastrar Nova Avaliação'), findsOneWidget);
+    expect(find.text('Sistema de Avaliação Agroecológica'), findsOneWidget);
+    expect(find.text('Cadastrar comunidade'), findsOneWidget);
+    expect(find.text('Famílias'), findsOneWidget);
+    expect(find.text('Iniciar nova avaliação'), findsOneWidget);
   });
 }

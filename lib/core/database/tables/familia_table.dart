@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'regiao_table.dart';
+import 'comunidade_table.dart';
 
 @DataClassName('FamiliaData')
 class Familia extends Table {
@@ -11,5 +11,5 @@ class Familia extends Table {
   TextColumn get telefone => text()();
   TextColumn get endereco => text()();
 
-  IntColumn get regiaoId => integer().references(Regiao, #id)();
+  IntColumn get comunidadeId => integer().references(Comunidade, #id)();
 }

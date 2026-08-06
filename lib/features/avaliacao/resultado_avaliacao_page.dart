@@ -68,7 +68,17 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resultados da Avaliação'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Resultados da Avaliação'),
+            Text(
+              widget.familia.nomeResponsavel,
+              style: const TextStyle(fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
         elevation: 2,
       ),
       body: _isLoading

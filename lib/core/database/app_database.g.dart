@@ -3,11 +3,12 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $RegiaoTable extends Regiao with TableInfo<$RegiaoTable, RegiaoData> {
+class $ComunidadeTable extends Comunidade
+    with TableInfo<$ComunidadeTable, ComunidadeData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $RegiaoTable(this.attachedDatabase, [this._alias]);
+  $ComunidadeTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -28,9 +29,9 @@ class $RegiaoTable extends Regiao with TableInfo<$RegiaoTable, RegiaoData> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'regiao';
+  static const String $name = 'comunidade';
   @override
-  VerificationContext validateIntegrity(Insertable<RegiaoData> instance,
+  VerificationContext validateIntegrity(Insertable<ComunidadeData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -49,9 +50,9 @@ class $RegiaoTable extends Regiao with TableInfo<$RegiaoTable, RegiaoData> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  RegiaoData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  ComunidadeData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return RegiaoData(
+    return ComunidadeData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       nome: attachedDatabase.typeMapping
@@ -60,15 +61,15 @@ class $RegiaoTable extends Regiao with TableInfo<$RegiaoTable, RegiaoData> {
   }
 
   @override
-  $RegiaoTable createAlias(String alias) {
-    return $RegiaoTable(attachedDatabase, alias);
+  $ComunidadeTable createAlias(String alias) {
+    return $ComunidadeTable(attachedDatabase, alias);
   }
 }
 
-class RegiaoData extends DataClass implements Insertable<RegiaoData> {
+class ComunidadeData extends DataClass implements Insertable<ComunidadeData> {
   final int id;
   final String nome;
-  const RegiaoData({required this.id, required this.nome});
+  const ComunidadeData({required this.id, required this.nome});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -77,17 +78,17 @@ class RegiaoData extends DataClass implements Insertable<RegiaoData> {
     return map;
   }
 
-  RegiaoCompanion toCompanion(bool nullToAbsent) {
-    return RegiaoCompanion(
+  ComunidadeCompanion toCompanion(bool nullToAbsent) {
+    return ComunidadeCompanion(
       id: Value(id),
       nome: Value(nome),
     );
   }
 
-  factory RegiaoData.fromJson(Map<String, dynamic> json,
+  factory ComunidadeData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return RegiaoData(
+    return ComunidadeData(
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
     );
@@ -101,12 +102,12 @@ class RegiaoData extends DataClass implements Insertable<RegiaoData> {
     };
   }
 
-  RegiaoData copyWith({int? id, String? nome}) => RegiaoData(
+  ComunidadeData copyWith({int? id, String? nome}) => ComunidadeData(
         id: id ?? this.id,
         nome: nome ?? this.nome,
       );
-  RegiaoData copyWithCompanion(RegiaoCompanion data) {
-    return RegiaoData(
+  ComunidadeData copyWithCompanion(ComunidadeCompanion data) {
+    return ComunidadeData(
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
     );
@@ -114,7 +115,7 @@ class RegiaoData extends DataClass implements Insertable<RegiaoData> {
 
   @override
   String toString() {
-    return (StringBuffer('RegiaoData(')
+    return (StringBuffer('ComunidadeData(')
           ..write('id: $id, ')
           ..write('nome: $nome')
           ..write(')'))
@@ -126,21 +127,23 @@ class RegiaoData extends DataClass implements Insertable<RegiaoData> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is RegiaoData && other.id == this.id && other.nome == this.nome);
+      (other is ComunidadeData &&
+          other.id == this.id &&
+          other.nome == this.nome);
 }
 
-class RegiaoCompanion extends UpdateCompanion<RegiaoData> {
+class ComunidadeCompanion extends UpdateCompanion<ComunidadeData> {
   final Value<int> id;
   final Value<String> nome;
-  const RegiaoCompanion({
+  const ComunidadeCompanion({
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
   });
-  RegiaoCompanion.insert({
+  ComunidadeCompanion.insert({
     this.id = const Value.absent(),
     required String nome,
   }) : nome = Value(nome);
-  static Insertable<RegiaoData> custom({
+  static Insertable<ComunidadeData> custom({
     Expression<int>? id,
     Expression<String>? nome,
   }) {
@@ -150,8 +153,8 @@ class RegiaoCompanion extends UpdateCompanion<RegiaoData> {
     });
   }
 
-  RegiaoCompanion copyWith({Value<int>? id, Value<String>? nome}) {
-    return RegiaoCompanion(
+  ComunidadeCompanion copyWith({Value<int>? id, Value<String>? nome}) {
+    return ComunidadeCompanion(
       id: id ?? this.id,
       nome: nome ?? this.nome,
     );
@@ -171,7 +174,7 @@ class RegiaoCompanion extends UpdateCompanion<RegiaoData> {
 
   @override
   String toString() {
-    return (StringBuffer('RegiaoCompanion(')
+    return (StringBuffer('ComunidadeCompanion(')
           ..write('id: $id, ')
           ..write('nome: $nome')
           ..write(')'))
@@ -211,18 +214,18 @@ class $FamiliaTable extends Familia with TableInfo<$FamiliaTable, FamiliaData> {
   late final GeneratedColumn<String> endereco = GeneratedColumn<String>(
       'endereco', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _regiaoIdMeta =
-      const VerificationMeta('regiaoId');
+  static const VerificationMeta _comunidadeIdMeta =
+      const VerificationMeta('comunidadeId');
   @override
-  late final GeneratedColumn<int> regiaoId = GeneratedColumn<int>(
-      'regiao_id', aliasedName, false,
+  late final GeneratedColumn<int> comunidadeId = GeneratedColumn<int>(
+      'comunidade_id', aliasedName, false,
       type: DriftSqlType.int,
       requiredDuringInsert: true,
       defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES regiao (id)'));
+          GeneratedColumn.constraintIsAlways('REFERENCES comunidade (id)'));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, nomeResponsavel, telefone, endereco, regiaoId];
+      [id, nomeResponsavel, telefone, endereco, comunidadeId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -256,11 +259,13 @@ class $FamiliaTable extends Familia with TableInfo<$FamiliaTable, FamiliaData> {
     } else if (isInserting) {
       context.missing(_enderecoMeta);
     }
-    if (data.containsKey('regiao_id')) {
-      context.handle(_regiaoIdMeta,
-          regiaoId.isAcceptableOrUnknown(data['regiao_id']!, _regiaoIdMeta));
+    if (data.containsKey('comunidade_id')) {
+      context.handle(
+          _comunidadeIdMeta,
+          comunidadeId.isAcceptableOrUnknown(
+              data['comunidade_id']!, _comunidadeIdMeta));
     } else if (isInserting) {
-      context.missing(_regiaoIdMeta);
+      context.missing(_comunidadeIdMeta);
     }
     return context;
   }
@@ -279,8 +284,8 @@ class $FamiliaTable extends Familia with TableInfo<$FamiliaTable, FamiliaData> {
           .read(DriftSqlType.string, data['${effectivePrefix}telefone'])!,
       endereco: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}endereco'])!,
-      regiaoId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}regiao_id'])!,
+      comunidadeId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}comunidade_id'])!,
     );
   }
 
@@ -295,13 +300,13 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
   final String nomeResponsavel;
   final String telefone;
   final String endereco;
-  final int regiaoId;
+  final int comunidadeId;
   const FamiliaData(
       {required this.id,
       required this.nomeResponsavel,
       required this.telefone,
       required this.endereco,
-      required this.regiaoId});
+      required this.comunidadeId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -309,7 +314,7 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
     map['nome_responsavel'] = Variable<String>(nomeResponsavel);
     map['telefone'] = Variable<String>(telefone);
     map['endereco'] = Variable<String>(endereco);
-    map['regiao_id'] = Variable<int>(regiaoId);
+    map['comunidade_id'] = Variable<int>(comunidadeId);
     return map;
   }
 
@@ -319,7 +324,7 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
       nomeResponsavel: Value(nomeResponsavel),
       telefone: Value(telefone),
       endereco: Value(endereco),
-      regiaoId: Value(regiaoId),
+      comunidadeId: Value(comunidadeId),
     );
   }
 
@@ -331,7 +336,7 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
       nomeResponsavel: serializer.fromJson<String>(json['nomeResponsavel']),
       telefone: serializer.fromJson<String>(json['telefone']),
       endereco: serializer.fromJson<String>(json['endereco']),
-      regiaoId: serializer.fromJson<int>(json['regiaoId']),
+      comunidadeId: serializer.fromJson<int>(json['comunidadeId']),
     );
   }
   @override
@@ -342,7 +347,7 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
       'nomeResponsavel': serializer.toJson<String>(nomeResponsavel),
       'telefone': serializer.toJson<String>(telefone),
       'endereco': serializer.toJson<String>(endereco),
-      'regiaoId': serializer.toJson<int>(regiaoId),
+      'comunidadeId': serializer.toJson<int>(comunidadeId),
     };
   }
 
@@ -351,13 +356,13 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
           String? nomeResponsavel,
           String? telefone,
           String? endereco,
-          int? regiaoId}) =>
+          int? comunidadeId}) =>
       FamiliaData(
         id: id ?? this.id,
         nomeResponsavel: nomeResponsavel ?? this.nomeResponsavel,
         telefone: telefone ?? this.telefone,
         endereco: endereco ?? this.endereco,
-        regiaoId: regiaoId ?? this.regiaoId,
+        comunidadeId: comunidadeId ?? this.comunidadeId,
       );
   FamiliaData copyWithCompanion(FamiliaCompanion data) {
     return FamiliaData(
@@ -367,7 +372,9 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
           : this.nomeResponsavel,
       telefone: data.telefone.present ? data.telefone.value : this.telefone,
       endereco: data.endereco.present ? data.endereco.value : this.endereco,
-      regiaoId: data.regiaoId.present ? data.regiaoId.value : this.regiaoId,
+      comunidadeId: data.comunidadeId.present
+          ? data.comunidadeId.value
+          : this.comunidadeId,
     );
   }
 
@@ -378,14 +385,14 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
           ..write('nomeResponsavel: $nomeResponsavel, ')
           ..write('telefone: $telefone, ')
           ..write('endereco: $endereco, ')
-          ..write('regiaoId: $regiaoId')
+          ..write('comunidadeId: $comunidadeId')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, nomeResponsavel, telefone, endereco, regiaoId);
+      Object.hash(id, nomeResponsavel, telefone, endereco, comunidadeId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -394,7 +401,7 @@ class FamiliaData extends DataClass implements Insertable<FamiliaData> {
           other.nomeResponsavel == this.nomeResponsavel &&
           other.telefone == this.telefone &&
           other.endereco == this.endereco &&
-          other.regiaoId == this.regiaoId);
+          other.comunidadeId == this.comunidadeId);
 }
 
 class FamiliaCompanion extends UpdateCompanion<FamiliaData> {
@@ -402,37 +409,37 @@ class FamiliaCompanion extends UpdateCompanion<FamiliaData> {
   final Value<String> nomeResponsavel;
   final Value<String> telefone;
   final Value<String> endereco;
-  final Value<int> regiaoId;
+  final Value<int> comunidadeId;
   const FamiliaCompanion({
     this.id = const Value.absent(),
     this.nomeResponsavel = const Value.absent(),
     this.telefone = const Value.absent(),
     this.endereco = const Value.absent(),
-    this.regiaoId = const Value.absent(),
+    this.comunidadeId = const Value.absent(),
   });
   FamiliaCompanion.insert({
     this.id = const Value.absent(),
     required String nomeResponsavel,
     required String telefone,
     required String endereco,
-    required int regiaoId,
+    required int comunidadeId,
   })  : nomeResponsavel = Value(nomeResponsavel),
         telefone = Value(telefone),
         endereco = Value(endereco),
-        regiaoId = Value(regiaoId);
+        comunidadeId = Value(comunidadeId);
   static Insertable<FamiliaData> custom({
     Expression<int>? id,
     Expression<String>? nomeResponsavel,
     Expression<String>? telefone,
     Expression<String>? endereco,
-    Expression<int>? regiaoId,
+    Expression<int>? comunidadeId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (nomeResponsavel != null) 'nome_responsavel': nomeResponsavel,
       if (telefone != null) 'telefone': telefone,
       if (endereco != null) 'endereco': endereco,
-      if (regiaoId != null) 'regiao_id': regiaoId,
+      if (comunidadeId != null) 'comunidade_id': comunidadeId,
     });
   }
 
@@ -441,13 +448,13 @@ class FamiliaCompanion extends UpdateCompanion<FamiliaData> {
       Value<String>? nomeResponsavel,
       Value<String>? telefone,
       Value<String>? endereco,
-      Value<int>? regiaoId}) {
+      Value<int>? comunidadeId}) {
     return FamiliaCompanion(
       id: id ?? this.id,
       nomeResponsavel: nomeResponsavel ?? this.nomeResponsavel,
       telefone: telefone ?? this.telefone,
       endereco: endereco ?? this.endereco,
-      regiaoId: regiaoId ?? this.regiaoId,
+      comunidadeId: comunidadeId ?? this.comunidadeId,
     );
   }
 
@@ -466,8 +473,8 @@ class FamiliaCompanion extends UpdateCompanion<FamiliaData> {
     if (endereco.present) {
       map['endereco'] = Variable<String>(endereco.value);
     }
-    if (regiaoId.present) {
-      map['regiao_id'] = Variable<int>(regiaoId.value);
+    if (comunidadeId.present) {
+      map['comunidade_id'] = Variable<int>(comunidadeId.value);
     }
     return map;
   }
@@ -479,7 +486,7 @@ class FamiliaCompanion extends UpdateCompanion<FamiliaData> {
           ..write('nomeResponsavel: $nomeResponsavel, ')
           ..write('telefone: $telefone, ')
           ..write('endereco: $endereco, ')
-          ..write('regiaoId: $regiaoId')
+          ..write('comunidadeId: $comunidadeId')
           ..write(')'))
         .toString();
   }
@@ -1179,6 +1186,18 @@ class $IndicadorTable extends Indicador
   late final GeneratedColumn<String> descricao = GeneratedColumn<String>(
       'descricao', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descricaoNivel1Meta =
+      const VerificationMeta('descricaoNivel1');
+  @override
+  late final GeneratedColumn<String> descricaoNivel1 = GeneratedColumn<String>(
+      'descricao_nivel1', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _descricaoNivel5Meta =
+      const VerificationMeta('descricaoNivel5');
+  @override
+  late final GeneratedColumn<String> descricaoNivel5 = GeneratedColumn<String>(
+      'descricao_nivel5', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _pesoMeta = const VerificationMeta('peso');
   @override
   late final GeneratedColumn<double> peso = GeneratedColumn<double>(
@@ -1205,8 +1224,16 @@ class $IndicadorTable extends Indicador
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES dimensao (id)'));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, nome, descricao, peso, categoriaId, dimensaoId];
+  List<GeneratedColumn> get $columns => [
+        id,
+        nome,
+        descricao,
+        descricaoNivel1,
+        descricaoNivel5,
+        peso,
+        categoriaId,
+        dimensaoId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1231,6 +1258,18 @@ class $IndicadorTable extends Indicador
           descricao.isAcceptableOrUnknown(data['descricao']!, _descricaoMeta));
     } else if (isInserting) {
       context.missing(_descricaoMeta);
+    }
+    if (data.containsKey('descricao_nivel1')) {
+      context.handle(
+          _descricaoNivel1Meta,
+          descricaoNivel1.isAcceptableOrUnknown(
+              data['descricao_nivel1']!, _descricaoNivel1Meta));
+    }
+    if (data.containsKey('descricao_nivel5')) {
+      context.handle(
+          _descricaoNivel5Meta,
+          descricaoNivel5.isAcceptableOrUnknown(
+              data['descricao_nivel5']!, _descricaoNivel5Meta));
     }
     if (data.containsKey('peso')) {
       context.handle(
@@ -1265,6 +1304,10 @@ class $IndicadorTable extends Indicador
           .read(DriftSqlType.string, data['${effectivePrefix}nome'])!,
       descricao: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}descricao'])!,
+      descricaoNivel1: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}descricao_nivel1']),
+      descricaoNivel5: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}descricao_nivel5']),
       peso: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}peso'])!,
       categoriaId: attachedDatabase.typeMapping
@@ -1284,6 +1327,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
   final int id;
   final String nome;
   final String descricao;
+  final String? descricaoNivel1;
+  final String? descricaoNivel5;
   final double peso;
   final int categoriaId;
   final int? dimensaoId;
@@ -1291,6 +1336,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
       {required this.id,
       required this.nome,
       required this.descricao,
+      this.descricaoNivel1,
+      this.descricaoNivel5,
       required this.peso,
       required this.categoriaId,
       this.dimensaoId});
@@ -1300,6 +1347,12 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
     map['id'] = Variable<int>(id);
     map['nome'] = Variable<String>(nome);
     map['descricao'] = Variable<String>(descricao);
+    if (!nullToAbsent || descricaoNivel1 != null) {
+      map['descricao_nivel1'] = Variable<String>(descricaoNivel1);
+    }
+    if (!nullToAbsent || descricaoNivel5 != null) {
+      map['descricao_nivel5'] = Variable<String>(descricaoNivel5);
+    }
     map['peso'] = Variable<double>(peso);
     map['categoria_id'] = Variable<int>(categoriaId);
     if (!nullToAbsent || dimensaoId != null) {
@@ -1313,6 +1366,12 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
       id: Value(id),
       nome: Value(nome),
       descricao: Value(descricao),
+      descricaoNivel1: descricaoNivel1 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(descricaoNivel1),
+      descricaoNivel5: descricaoNivel5 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(descricaoNivel5),
       peso: Value(peso),
       categoriaId: Value(categoriaId),
       dimensaoId: dimensaoId == null && nullToAbsent
@@ -1328,6 +1387,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
       id: serializer.fromJson<int>(json['id']),
       nome: serializer.fromJson<String>(json['nome']),
       descricao: serializer.fromJson<String>(json['descricao']),
+      descricaoNivel1: serializer.fromJson<String?>(json['descricaoNivel1']),
+      descricaoNivel5: serializer.fromJson<String?>(json['descricaoNivel5']),
       peso: serializer.fromJson<double>(json['peso']),
       categoriaId: serializer.fromJson<int>(json['categoriaId']),
       dimensaoId: serializer.fromJson<int?>(json['dimensaoId']),
@@ -1340,6 +1401,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
       'id': serializer.toJson<int>(id),
       'nome': serializer.toJson<String>(nome),
       'descricao': serializer.toJson<String>(descricao),
+      'descricaoNivel1': serializer.toJson<String?>(descricaoNivel1),
+      'descricaoNivel5': serializer.toJson<String?>(descricaoNivel5),
       'peso': serializer.toJson<double>(peso),
       'categoriaId': serializer.toJson<int>(categoriaId),
       'dimensaoId': serializer.toJson<int?>(dimensaoId),
@@ -1350,6 +1413,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
           {int? id,
           String? nome,
           String? descricao,
+          Value<String?> descricaoNivel1 = const Value.absent(),
+          Value<String?> descricaoNivel5 = const Value.absent(),
           double? peso,
           int? categoriaId,
           Value<int?> dimensaoId = const Value.absent()}) =>
@@ -1357,6 +1422,12 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
         id: id ?? this.id,
         nome: nome ?? this.nome,
         descricao: descricao ?? this.descricao,
+        descricaoNivel1: descricaoNivel1.present
+            ? descricaoNivel1.value
+            : this.descricaoNivel1,
+        descricaoNivel5: descricaoNivel5.present
+            ? descricaoNivel5.value
+            : this.descricaoNivel5,
         peso: peso ?? this.peso,
         categoriaId: categoriaId ?? this.categoriaId,
         dimensaoId: dimensaoId.present ? dimensaoId.value : this.dimensaoId,
@@ -1366,6 +1437,12 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
       id: data.id.present ? data.id.value : this.id,
       nome: data.nome.present ? data.nome.value : this.nome,
       descricao: data.descricao.present ? data.descricao.value : this.descricao,
+      descricaoNivel1: data.descricaoNivel1.present
+          ? data.descricaoNivel1.value
+          : this.descricaoNivel1,
+      descricaoNivel5: data.descricaoNivel5.present
+          ? data.descricaoNivel5.value
+          : this.descricaoNivel5,
       peso: data.peso.present ? data.peso.value : this.peso,
       categoriaId:
           data.categoriaId.present ? data.categoriaId.value : this.categoriaId,
@@ -1380,6 +1457,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
+          ..write('descricaoNivel1: $descricaoNivel1, ')
+          ..write('descricaoNivel5: $descricaoNivel5, ')
           ..write('peso: $peso, ')
           ..write('categoriaId: $categoriaId, ')
           ..write('dimensaoId: $dimensaoId')
@@ -1388,8 +1467,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, nome, descricao, peso, categoriaId, dimensaoId);
+  int get hashCode => Object.hash(id, nome, descricao, descricaoNivel1,
+      descricaoNivel5, peso, categoriaId, dimensaoId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1397,6 +1476,8 @@ class IndicadorData extends DataClass implements Insertable<IndicadorData> {
           other.id == this.id &&
           other.nome == this.nome &&
           other.descricao == this.descricao &&
+          other.descricaoNivel1 == this.descricaoNivel1 &&
+          other.descricaoNivel5 == this.descricaoNivel5 &&
           other.peso == this.peso &&
           other.categoriaId == this.categoriaId &&
           other.dimensaoId == this.dimensaoId);
@@ -1406,6 +1487,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
   final Value<int> id;
   final Value<String> nome;
   final Value<String> descricao;
+  final Value<String?> descricaoNivel1;
+  final Value<String?> descricaoNivel5;
   final Value<double> peso;
   final Value<int> categoriaId;
   final Value<int?> dimensaoId;
@@ -1413,6 +1496,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
     this.id = const Value.absent(),
     this.nome = const Value.absent(),
     this.descricao = const Value.absent(),
+    this.descricaoNivel1 = const Value.absent(),
+    this.descricaoNivel5 = const Value.absent(),
     this.peso = const Value.absent(),
     this.categoriaId = const Value.absent(),
     this.dimensaoId = const Value.absent(),
@@ -1421,6 +1506,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
     this.id = const Value.absent(),
     required String nome,
     required String descricao,
+    this.descricaoNivel1 = const Value.absent(),
+    this.descricaoNivel5 = const Value.absent(),
     this.peso = const Value.absent(),
     required int categoriaId,
     this.dimensaoId = const Value.absent(),
@@ -1431,6 +1518,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
     Expression<int>? id,
     Expression<String>? nome,
     Expression<String>? descricao,
+    Expression<String>? descricaoNivel1,
+    Expression<String>? descricaoNivel5,
     Expression<double>? peso,
     Expression<int>? categoriaId,
     Expression<int>? dimensaoId,
@@ -1439,6 +1528,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
       if (id != null) 'id': id,
       if (nome != null) 'nome': nome,
       if (descricao != null) 'descricao': descricao,
+      if (descricaoNivel1 != null) 'descricao_nivel1': descricaoNivel1,
+      if (descricaoNivel5 != null) 'descricao_nivel5': descricaoNivel5,
       if (peso != null) 'peso': peso,
       if (categoriaId != null) 'categoria_id': categoriaId,
       if (dimensaoId != null) 'dimensao_id': dimensaoId,
@@ -1449,6 +1540,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
       {Value<int>? id,
       Value<String>? nome,
       Value<String>? descricao,
+      Value<String?>? descricaoNivel1,
+      Value<String?>? descricaoNivel5,
       Value<double>? peso,
       Value<int>? categoriaId,
       Value<int?>? dimensaoId}) {
@@ -1456,6 +1549,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
       id: id ?? this.id,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
+      descricaoNivel1: descricaoNivel1 ?? this.descricaoNivel1,
+      descricaoNivel5: descricaoNivel5 ?? this.descricaoNivel5,
       peso: peso ?? this.peso,
       categoriaId: categoriaId ?? this.categoriaId,
       dimensaoId: dimensaoId ?? this.dimensaoId,
@@ -1473,6 +1568,12 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
     }
     if (descricao.present) {
       map['descricao'] = Variable<String>(descricao.value);
+    }
+    if (descricaoNivel1.present) {
+      map['descricao_nivel1'] = Variable<String>(descricaoNivel1.value);
+    }
+    if (descricaoNivel5.present) {
+      map['descricao_nivel5'] = Variable<String>(descricaoNivel5.value);
     }
     if (peso.present) {
       map['peso'] = Variable<double>(peso.value);
@@ -1492,6 +1593,8 @@ class IndicadorCompanion extends UpdateCompanion<IndicadorData> {
           ..write('id: $id, ')
           ..write('nome: $nome, ')
           ..write('descricao: $descricao, ')
+          ..write('descricaoNivel1: $descricaoNivel1, ')
+          ..write('descricaoNivel5: $descricaoNivel5, ')
           ..write('peso: $peso, ')
           ..write('categoriaId: $categoriaId, ')
           ..write('dimensaoId: $dimensaoId')
@@ -2255,7 +2358,7 @@ class AvaliacaoItemCompanion extends UpdateCompanion<AvaliacaoItemData> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $RegiaoTable regiao = $RegiaoTable(this);
+  late final $ComunidadeTable comunidade = $ComunidadeTable(this);
   late final $FamiliaTable familia = $FamiliaTable(this);
   late final $CategoriaTable categoria = $CategoriaTable(this);
   late final $DimensaoTable dimensao = $DimensaoTable(this);
@@ -2268,7 +2371,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-        regiao,
+        comunidade,
         familia,
         categoria,
         dimensao,
@@ -2279,36 +2382,36 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ];
 }
 
-typedef $$RegiaoTableCreateCompanionBuilder = RegiaoCompanion Function({
+typedef $$ComunidadeTableCreateCompanionBuilder = ComunidadeCompanion Function({
   Value<int> id,
   required String nome,
 });
-typedef $$RegiaoTableUpdateCompanionBuilder = RegiaoCompanion Function({
+typedef $$ComunidadeTableUpdateCompanionBuilder = ComunidadeCompanion Function({
   Value<int> id,
   Value<String> nome,
 });
 
-class $$RegiaoTableTableManager extends RootTableManager<
+class $$ComunidadeTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $RegiaoTable,
-    RegiaoData,
-    $$RegiaoTableFilterComposer,
-    $$RegiaoTableOrderingComposer,
-    $$RegiaoTableCreateCompanionBuilder,
-    $$RegiaoTableUpdateCompanionBuilder> {
-  $$RegiaoTableTableManager(_$AppDatabase db, $RegiaoTable table)
+    $ComunidadeTable,
+    ComunidadeData,
+    $$ComunidadeTableFilterComposer,
+    $$ComunidadeTableOrderingComposer,
+    $$ComunidadeTableCreateCompanionBuilder,
+    $$ComunidadeTableUpdateCompanionBuilder> {
+  $$ComunidadeTableTableManager(_$AppDatabase db, $ComunidadeTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$RegiaoTableFilterComposer(ComposerState(db, table)),
+              $$ComunidadeTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$RegiaoTableOrderingComposer(ComposerState(db, table)),
+              $$ComunidadeTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
           }) =>
-              RegiaoCompanion(
+              ComunidadeCompanion(
             id: id,
             nome: nome,
           ),
@@ -2316,16 +2419,16 @@ class $$RegiaoTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required String nome,
           }) =>
-              RegiaoCompanion.insert(
+              ComunidadeCompanion.insert(
             id: id,
             nome: nome,
           ),
         ));
 }
 
-class $$RegiaoTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $RegiaoTable> {
-  $$RegiaoTableFilterComposer(super.$state);
+class $$ComunidadeTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $ComunidadeTable> {
+  $$ComunidadeTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2342,7 +2445,7 @@ class $$RegiaoTableFilterComposer
         composer: this,
         getCurrentColumn: (t) => t.id,
         referencedTable: $state.db.familia,
-        getReferencedColumn: (t) => t.regiaoId,
+        getReferencedColumn: (t) => t.comunidadeId,
         builder: (joinBuilder, parentComposers) => $$FamiliaTableFilterComposer(
             ComposerState(
                 $state.db, $state.db.familia, joinBuilder, parentComposers)));
@@ -2350,9 +2453,9 @@ class $$RegiaoTableFilterComposer
   }
 }
 
-class $$RegiaoTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $RegiaoTable> {
-  $$RegiaoTableOrderingComposer(super.$state);
+class $$ComunidadeTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $ComunidadeTable> {
+  $$ComunidadeTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2369,14 +2472,14 @@ typedef $$FamiliaTableCreateCompanionBuilder = FamiliaCompanion Function({
   required String nomeResponsavel,
   required String telefone,
   required String endereco,
-  required int regiaoId,
+  required int comunidadeId,
 });
 typedef $$FamiliaTableUpdateCompanionBuilder = FamiliaCompanion Function({
   Value<int> id,
   Value<String> nomeResponsavel,
   Value<String> telefone,
   Value<String> endereco,
-  Value<int> regiaoId,
+  Value<int> comunidadeId,
 });
 
 class $$FamiliaTableTableManager extends RootTableManager<
@@ -2400,28 +2503,28 @@ class $$FamiliaTableTableManager extends RootTableManager<
             Value<String> nomeResponsavel = const Value.absent(),
             Value<String> telefone = const Value.absent(),
             Value<String> endereco = const Value.absent(),
-            Value<int> regiaoId = const Value.absent(),
+            Value<int> comunidadeId = const Value.absent(),
           }) =>
               FamiliaCompanion(
             id: id,
             nomeResponsavel: nomeResponsavel,
             telefone: telefone,
             endereco: endereco,
-            regiaoId: regiaoId,
+            comunidadeId: comunidadeId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String nomeResponsavel,
             required String telefone,
             required String endereco,
-            required int regiaoId,
+            required int comunidadeId,
           }) =>
               FamiliaCompanion.insert(
             id: id,
             nomeResponsavel: nomeResponsavel,
             telefone: telefone,
             endereco: endereco,
-            regiaoId: regiaoId,
+            comunidadeId: comunidadeId,
           ),
         ));
 }
@@ -2449,15 +2552,15 @@ class $$FamiliaTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  $$RegiaoTableFilterComposer get regiaoId {
-    final $$RegiaoTableFilterComposer composer = $state.composerBuilder(
+  $$ComunidadeTableFilterComposer get comunidadeId {
+    final $$ComunidadeTableFilterComposer composer = $state.composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.regiaoId,
-        referencedTable: $state.db.regiao,
+        getCurrentColumn: (t) => t.comunidadeId,
+        referencedTable: $state.db.comunidade,
         getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder, parentComposers) => $$RegiaoTableFilterComposer(
-            ComposerState(
-                $state.db, $state.db.regiao, joinBuilder, parentComposers)));
+        builder: (joinBuilder, parentComposers) =>
+            $$ComunidadeTableFilterComposer(ComposerState($state.db,
+                $state.db.comunidade, joinBuilder, parentComposers)));
     return composer;
   }
 
@@ -2498,15 +2601,15 @@ class $$FamiliaTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  $$RegiaoTableOrderingComposer get regiaoId {
-    final $$RegiaoTableOrderingComposer composer = $state.composerBuilder(
+  $$ComunidadeTableOrderingComposer get comunidadeId {
+    final $$ComunidadeTableOrderingComposer composer = $state.composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.regiaoId,
-        referencedTable: $state.db.regiao,
+        getCurrentColumn: (t) => t.comunidadeId,
+        referencedTable: $state.db.comunidade,
         getReferencedColumn: (t) => t.id,
         builder: (joinBuilder, parentComposers) =>
-            $$RegiaoTableOrderingComposer(ComposerState(
-                $state.db, $state.db.regiao, joinBuilder, parentComposers)));
+            $$ComunidadeTableOrderingComposer(ComposerState($state.db,
+                $state.db.comunidade, joinBuilder, parentComposers)));
     return composer;
   }
 }
@@ -2872,6 +2975,8 @@ typedef $$IndicadorTableCreateCompanionBuilder = IndicadorCompanion Function({
   Value<int> id,
   required String nome,
   required String descricao,
+  Value<String?> descricaoNivel1,
+  Value<String?> descricaoNivel5,
   Value<double> peso,
   required int categoriaId,
   Value<int?> dimensaoId,
@@ -2880,6 +2985,8 @@ typedef $$IndicadorTableUpdateCompanionBuilder = IndicadorCompanion Function({
   Value<int> id,
   Value<String> nome,
   Value<String> descricao,
+  Value<String?> descricaoNivel1,
+  Value<String?> descricaoNivel5,
   Value<double> peso,
   Value<int> categoriaId,
   Value<int?> dimensaoId,
@@ -2905,6 +3012,8 @@ class $$IndicadorTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> nome = const Value.absent(),
             Value<String> descricao = const Value.absent(),
+            Value<String?> descricaoNivel1 = const Value.absent(),
+            Value<String?> descricaoNivel5 = const Value.absent(),
             Value<double> peso = const Value.absent(),
             Value<int> categoriaId = const Value.absent(),
             Value<int?> dimensaoId = const Value.absent(),
@@ -2913,6 +3022,8 @@ class $$IndicadorTableTableManager extends RootTableManager<
             id: id,
             nome: nome,
             descricao: descricao,
+            descricaoNivel1: descricaoNivel1,
+            descricaoNivel5: descricaoNivel5,
             peso: peso,
             categoriaId: categoriaId,
             dimensaoId: dimensaoId,
@@ -2921,6 +3032,8 @@ class $$IndicadorTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required String nome,
             required String descricao,
+            Value<String?> descricaoNivel1 = const Value.absent(),
+            Value<String?> descricaoNivel5 = const Value.absent(),
             Value<double> peso = const Value.absent(),
             required int categoriaId,
             Value<int?> dimensaoId = const Value.absent(),
@@ -2929,6 +3042,8 @@ class $$IndicadorTableTableManager extends RootTableManager<
             id: id,
             nome: nome,
             descricao: descricao,
+            descricaoNivel1: descricaoNivel1,
+            descricaoNivel5: descricaoNivel5,
             peso: peso,
             categoriaId: categoriaId,
             dimensaoId: dimensaoId,
@@ -2951,6 +3066,16 @@ class $$IndicadorTableFilterComposer
 
   ColumnFilters<String> get descricao => $state.composableBuilder(
       column: $state.table.descricao,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get descricaoNivel1 => $state.composableBuilder(
+      column: $state.table.descricaoNivel1,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get descricaoNivel5 => $state.composableBuilder(
+      column: $state.table.descricaoNivel5,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -3012,6 +3137,16 @@ class $$IndicadorTableOrderingComposer
 
   ColumnOrderings<String> get descricao => $state.composableBuilder(
       column: $state.table.descricao,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get descricaoNivel1 => $state.composableBuilder(
+      column: $state.table.descricaoNivel1,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get descricaoNivel5 => $state.composableBuilder(
+      column: $state.table.descricaoNivel5,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -3407,8 +3542,8 @@ class $$AvaliacaoItemTableOrderingComposer
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$RegiaoTableTableManager get regiao =>
-      $$RegiaoTableTableManager(_db, _db.regiao);
+  $$ComunidadeTableTableManager get comunidade =>
+      $$ComunidadeTableTableManager(_db, _db.comunidade);
   $$FamiliaTableTableManager get familia =>
       $$FamiliaTableTableManager(_db, _db.familia);
   $$CategoriaTableTableManager get categoria =>

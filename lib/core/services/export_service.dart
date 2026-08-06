@@ -45,7 +45,7 @@ class ExportService {
 
     // Coleta dados de todas as tabelas (usando nomes no singular)
     final data = {
-      'regiao': await database.select(database.regiao).get(),
+      'comunidade': await database.select(database.comunidade).get(),
       'familia': await database.select(database.familia).get(),
       'categoria': await database.select(database.categoria).get(),
       'dimensao': await database.select(database.dimensao).get(),
@@ -78,9 +78,9 @@ class ExportService {
 
     final t = tableName.toLowerCase();
     switch (t) {
-      case 'regioes':
-      case 'regiao':
-        final rows = await database.select(database.regiao).get();
+      case 'comunidades':
+      case 'comunidade':
+        final rows = await database.select(database.comunidade).get();
         if (rows.isNotEmpty) {
           data.add(['ID', 'Nome']);
           for (var row in rows) {
@@ -93,9 +93,9 @@ class ExportService {
       case 'familia':
         final rows = await database.select(database.familia).get();
         if (rows.isNotEmpty) {
-          data.add(['ID', 'Nome Responsável', 'Região ID']);
+          data.add(['ID', 'Nome Responsável', 'Comunidade ID']);
           for (var row in rows) {
-            data.add([row.id, row.nomeResponsavel, row.regiaoId]);
+            data.add([row.id, row.nomeResponsavel, row.comunidadeId]);
           }
         }
         break;
@@ -115,12 +115,22 @@ class ExportService {
       case 'indicador':
         final rows = await database.select(database.indicador).get();
         if (rows.isNotEmpty) {
-          data.add(['ID', 'Nome', 'Descrição', 'Peso', 'Categoria ID']);
+          data.add([
+            'ID',
+            'Nome',
+            'Descrição',
+            'Descrição Nível 1',
+            'Descrição Nível 5',
+            'Peso',
+            'Categoria ID',
+          ]);
           for (var row in rows) {
             data.add([
               row.id,
               row.nome,
               row.descricao,
+              row.descricaoNivel1 ?? '',
+              row.descricaoNivel5 ?? '',
               row.peso,
               row.categoriaId,
             ]);
@@ -170,11 +180,11 @@ class ExportService {
 
     StringBuffer csvBuffer = StringBuffer();
 
-    // Regiões
-    csvBuffer.writeln('=== REGIÕES ===');
-    final regioes = await database.select(database.regiao).get();
+    // Comunidades
+    csvBuffer.writeln('=== COMUNIDADES ===');
+    final comunidades = await database.select(database.comunidade).get();
     csvBuffer.writeln('ID,Nome');
-    for (var row in regioes) {
+    for (var row in comunidades) {
       csvBuffer.writeln('${row.id},${_escapeCsv(row.nome)}');
     }
     csvBuffer.writeln();
@@ -182,10 +192,10 @@ class ExportService {
     // Famílias
     csvBuffer.writeln('=== FAMÍLIAS ===');
     final familias = await database.select(database.familia).get();
-    csvBuffer.writeln('ID,Nome Responsável,Telefone,Endereço,Região ID');
+    csvBuffer.writeln('ID,Nome Responsável,Telefone,Endereço,Comunidade ID');
     for (var row in familias) {
       csvBuffer.writeln(
-          '${row.id},${_escapeCsv(row.nomeResponsavel)},${_escapeCsv(row.telefone)},${_escapeCsv(row.endereco)},${row.regiaoId}');
+          '${row.id},${_escapeCsv(row.nomeResponsavel)},${_escapeCsv(row.telefone)},${_escapeCsv(row.endereco)},${row.comunidadeId}');
     }
     csvBuffer.writeln();
 
@@ -203,10 +213,11 @@ class ExportService {
     // Indicadores
     csvBuffer.writeln('=== INDICADORES ===');
     final indicadores = await database.select(database.indicador).get();
-    csvBuffer.writeln('ID,Nome,Descrição,Peso,Categoria ID,Dimensão ID');
+    csvBuffer.writeln(
+        'ID,Nome,Descrição,Descrição Nível 1,Descrição Nível 5,Peso,Categoria ID,Dimensão ID');
     for (var row in indicadores) {
       csvBuffer.writeln(
-        '${row.id},${_escapeCsv(row.nome)},${_escapeCsv(row.descricao)},${row.peso},${row.categoriaId},${row.dimensaoId ?? ''}',
+        '${row.id},${_escapeCsv(row.nome)},${_escapeCsv(row.descricao)},${_escapeCsv(row.descricaoNivel1 ?? '')},${_escapeCsv(row.descricaoNivel5 ?? '')},${row.peso},${row.categoriaId},${row.dimensaoId ?? ''}',
       );
     }
     csvBuffer.writeln();

@@ -17,6 +17,8 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _descricaoController = TextEditingController();
+  final _nivel1Controller = TextEditingController();
+  final _nivel5Controller = TextEditingController();
   final _pesoController = TextEditingController(text: '1.0');
 
   late IndicadorService _indicadorService;
@@ -72,6 +74,16 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
       final indicador = IndicadorCompanion(
         nome: Value(_nomeController.text),
         descricao: Value(_descricaoController.text),
+        descricaoNivel1: Value(
+          _nivel1Controller.text.trim().isEmpty
+              ? null
+              : _nivel1Controller.text.trim(),
+        ),
+        descricaoNivel5: Value(
+          _nivel5Controller.text.trim().isEmpty
+              ? null
+              : _nivel5Controller.text.trim(),
+        ),
         peso: Value(peso),
         categoriaId: Value(_selectedCategoria!.id),
       );
@@ -97,6 +109,8 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
   void dispose() {
     _nomeController.dispose();
     _descricaoController.dispose();
+    _nivel1Controller.dispose();
+    _nivel5Controller.dispose();
     _pesoController.dispose();
     super.dispose();
   }
@@ -128,6 +142,24 @@ class _CadastroIndicadorPageState extends State<CadastroIndicadorPage> {
                       controller: _descricaoController,
                       decoration: const InputDecoration(
                         labelText: 'Descrição',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _nivel1Controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Significado da nota 1',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _nivel5Controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Significado da nota 5',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 2,

@@ -4,6 +4,6 @@ part of 'familia_dao.dart';
 
 // ignore_for_file: type=lint
 mixin _$FamiliaDaoMixin on DatabaseAccessor<AppDatabase> {
-  $RegiaoTable get regiao => attachedDatabase.regiao;
+  $ComunidadeTable get comunidade => attachedDatabase.comunidade;
   $FamiliaTable get familia => attachedDatabase.familia;
 }

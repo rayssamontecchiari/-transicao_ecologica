@@ -1,10 +1,12 @@
 import '../database/app_database.dart';
 import '../models/resultado_avaliacao.dart';
 import 'fuzzy_calculator.dart';
+import 'resultado_cache_service.dart';
 
 /// Serviço para cálculo dos resultados das avaliações usando lógica fuzzy
 class ResultadoAvaliacaoService {
   final AppDatabase _db;
+  final ResultadoCacheService _cacheService = ResultadoCacheService();
 
   ResultadoAvaliacaoService(this._db);
 
@@ -59,8 +61,6 @@ class ResultadoAvaliacaoService {
 
       print('[DEBUG] Resultado Fuzzy: $fuzzyResult');
 
-      final valor = fuzzyResult['resultado'] ?? 0.0;
-
       return ResultadoAvaliacao.fromCalculation(
         avaliacaoId: avaliacaoId,
         categoriaId: categoriaId,
@@ -77,6 +77,24 @@ class ResultadoAvaliacaoService {
     int avaliacaoId,
   ) async {
     try {
+      final avaliacao = await (_db.select(_db.avaliacao)
+            ..where((a) => a.id.equals(avaliacaoId)))
+          .getSingleOrNull();
+
+      if (avaliacao == null) return [];
+
+      final configVersion = await _cacheService.obterVersaoConfiguracao();
+
+      final resultadosCache = await _cacheService.obterResultadosSeValidos(
+        avaliacaoId: avaliacaoId,
+        dataAlteracao: avaliacao.dataAlteracao,
+        configVersion: configVersion,
+      );
+
+      if (resultadosCache != null) {
+        return resultadosCache;
+      }
+
       final categorias = await _db.select(_db.categoria).get();
       final resultados = <ResultadoAvaliacao>[];
 
@@ -90,6 +108,13 @@ class ResultadoAvaliacaoService {
           resultados.add(resultado);
         }
       }
+
+      await _cacheService.salvarResultados(
+        avaliacaoId: avaliacaoId,
+        dataAlteracao: avaliacao.dataAlteracao,
+        configVersion: configVersion,
+        resultados: resultados,
+      );
 
       return resultados;
     } catch (e) {

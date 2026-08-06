@@ -20,9 +20,9 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
   List<_AvaliacaoComResultados> _avaliacoes = [];
   List<_AvaliacaoComResultados> _allAvaliacoes = [];
   List<FamiliaData> _familias = [];
-  List<RegiaoData> _regioes = [];
+  List<ComunidadeData> _comunidades = [];
   int? _selectedFamiliaFilter;
-  int? _selectedRegiaoFilter;
+  int? _selectedComunidadeFilter;
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
 
@@ -37,15 +37,15 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     final familias = await _db.select(_db.familia).get();
-    final regioes = await _db.select(_db.regiao).get();
+    final comunidades = await _db.select(_db.comunidade).get();
     final familiaNomes = {
       for (final familia in familias) familia.id: familia.nomeResponsavel,
     };
-    final regiaoNomes = {
-      for (final regiao in regioes) regiao.id: regiao.nome,
+    final comunidadeNomes = {
+      for (final comunidade in comunidades) comunidade.id: comunidade.nome,
     };
-    final familiaRegiaoIds = {
-      for (final familia in familias) familia.id: familia.regiaoId,
+    final familiaComunidadeIds = {
+      for (final familia in familias) familia.id: familia.comunidadeId,
     };
 
     final avaliacoes = await (_db.select(_db.avaliacao)
@@ -60,16 +60,16 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
       final stats =
           await _resultadoService.obterEstatisticasAvaliacao(avaliacao.id);
       final familiaId = avaliacao.familiaId;
-      final regiaoId = familiaRegiaoIds[familiaId];
-      final regiaoNome = regiaoNomes[regiaoId] ??
-          'Região ${regiaoId != null ? regiaoId : '—'}';
+      final comunidadeId = familiaComunidadeIds[familiaId];
+      final comunidadeNome = comunidadeNomes[comunidadeId] ??
+          'Comunidade ${comunidadeId != null ? comunidadeId : '—'}';
 
       avaliacoesComResultados.add(
         _AvaliacaoComResultados(
           item: avaliacao,
           familiaNome: familiaNomes[familiaId] ?? 'Família $familiaId',
-          regiaoId: regiaoId,
-          regiaoNome: regiaoNome,
+          comunidadeId: comunidadeId,
+          comunidadeNome: comunidadeNome,
           media: stats.isNotEmpty ? stats['media'] as double? : null,
           minValor: stats.isNotEmpty ? stats['minValor'] as double? : null,
           maxValor: stats.isNotEmpty ? stats['maxValor'] as double? : null,
@@ -83,7 +83,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     if (mounted) {
       setState(() {
         _familias = familias;
-        _regioes = regioes;
+        _comunidades = comunidades;
         _allAvaliacoes = avaliacoesComResultados;
         _avaliacoes = _aplicarFiltros();
         _isLoading = false;
@@ -106,8 +106,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
           item.item.familiaId != _selectedFamiliaFilter) {
         return false;
       }
-      if (_selectedRegiaoFilter != null &&
-          item.regiaoId != _selectedRegiaoFilter) {
+      if (_selectedComunidadeFilter != null &&
+          item.comunidadeId != _selectedComunidadeFilter) {
         return false;
       }
       if (_filterStartDate != null &&
@@ -158,7 +158,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
   void _limparFiltros() {
     setState(() {
       _selectedFamiliaFilter = null;
-      _selectedRegiaoFilter = null;
+      _selectedComunidadeFilter = null;
       _filterStartDate = null;
       _filterEndDate = null;
       _avaliacoes = _aplicarFiltros();
@@ -261,127 +261,153 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     );
   }
 
+  Future<void> _mostrarModalFiltros() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Filtros',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _selectedFamiliaFilter,
+                    decoration: const InputDecoration(
+                      labelText: 'Família',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('Todas as famílias'),
+                      ),
+                      ..._familias.map(
+                        (familia) => DropdownMenuItem<int>(
+                          value: familia.id,
+                          child: Text(familia.nomeResponsavel),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFamiliaFilter = value;
+                        _avaliacoes = _aplicarFiltros();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _selectedComunidadeFilter,
+                    decoration: const InputDecoration(
+                      labelText: 'Comunidade',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int>(
+                        value: null,
+                        child: Text('Todas as comunidades'),
+                      ),
+                      ..._comunidades.map(
+                        (comunidade) => DropdownMenuItem<int>(
+                          value: comunidade.id,
+                          child: Text(comunidade.nome),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedComunidadeFilter = value;
+                        _avaliacoes = _aplicarFiltros();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _selecionarDataInicial,
+                          icon: const Icon(Icons.calendar_month),
+                          label: Text(_filterStartDate == null
+                              ? 'Início'
+                              : _formatarData(_filterStartDate!)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _selecionarDataFinal,
+                          icon: const Icon(Icons.calendar_today),
+                          label: Text(_filterEndDate == null
+                              ? 'Fim'
+                              : _formatarData(_filterEndDate!)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        _limparFiltros();
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Limpar filtros'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Todas as Avaliações'),
         elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _mostrarModalFiltros,
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Filtros',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Card(
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Filtros',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 12),
-                          Column(
-                            children: [
-                              DropdownButtonFormField<int>(
-                                value: _selectedFamiliaFilter,
-                                decoration: const InputDecoration(
-                                  labelText: 'Família',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: [
-                                  const DropdownMenuItem<int>(
-                                    value: null,
-                                    child: Text('Todas as famílias'),
-                                  ),
-                                  ..._familias.map(
-                                    (familia) => DropdownMenuItem<int>(
-                                      value: familia.id,
-                                      child: Text(familia.nomeResponsavel),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedFamiliaFilter = value;
-                                    _avaliacoes = _aplicarFiltros();
-                                  });
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              DropdownButtonFormField<int>(
-                                value: _selectedRegiaoFilter,
-                                decoration: const InputDecoration(
-                                  labelText: 'Região',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: [
-                                  const DropdownMenuItem<int>(
-                                    value: null,
-                                    child: Text('Todas as regiões'),
-                                  ),
-                                  ..._regioes.map(
-                                    (regiao) => DropdownMenuItem<int>(
-                                      value: regiao.id,
-                                      child: Text(regiao.nome),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedRegiaoFilter = value;
-                                    _avaliacoes = _aplicarFiltros();
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _selecionarDataInicial,
-                                  icon: const Icon(Icons.calendar_month),
-                                  label: Text(_filterStartDate == null
-                                      ? 'Início'
-                                      : _formatarData(_filterStartDate!)),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _selecionarDataFinal,
-                                  icon: const Icon(Icons.calendar_today),
-                                  label: Text(_filterEndDate == null
-                                      ? 'Fim'
-                                      : _formatarData(_filterEndDate!)),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              IconButton(
-                                onPressed: _limparFiltros,
-                                icon: const Icon(Icons.clear),
-                                tooltip: 'Limpar filtros',
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: _avaliacoes.isEmpty
                       ? Center(
@@ -433,7 +459,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Região: ${item.regiaoNome}',
+                                      'Comunidade: ${item.comunidadeNome}',
                                       style: const TextStyle(fontSize: 12),
                                     ),
                                     const SizedBox(height: 4),
@@ -523,8 +549,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
 class _AvaliacaoComResultados {
   final AvaliacaoData item;
   final String familiaNome;
-  final int? regiaoId;
-  final String regiaoNome;
+  final int? comunidadeId;
+  final String comunidadeNome;
   final double? media;
   final double? minValor;
   final double? maxValor;
@@ -533,8 +559,8 @@ class _AvaliacaoComResultados {
   _AvaliacaoComResultados({
     required this.item,
     required this.familiaNome,
-    required this.regiaoId,
-    required this.regiaoNome,
+    required this.comunidadeId,
+    required this.comunidadeNome,
     required this.media,
     required this.minValor,
     required this.maxValor,
