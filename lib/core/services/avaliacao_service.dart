@@ -10,10 +10,15 @@ class AvaliacaoService {
 
   AvaliacaoService(AppDatabase db) : _avaliacaoDao = AvaliacaoDao(db);
 
+  DateTime _normalizarMesAno(DateTime data) {
+    return DateTime(data.year, data.month, 1);
+  }
+
   Future<void> criarAvaliacao({
     required int familiaId,
     required String avaliador,
     String? observacoes,
+    DateTime? dataAvaliacao,
     Map<int, int>? respostasLikert,
     Map<int, Set<int>>? itensPorPratica,
   }) async {
@@ -22,6 +27,9 @@ class AvaliacaoService {
         AvaliacaoCompanion.insert(
           familiaId: familiaId,
           avaliador: avaliador,
+          data: Value(
+            _normalizarMesAno(dataAvaliacao ?? DateTime.now()),
+          ),
           observacoes: Value(observacoes),
         ),
       );
@@ -83,6 +91,7 @@ class AvaliacaoService {
     required int familiaId,
     required String avaliador,
     String? observacoes,
+    DateTime? dataAvaliacao,
     Map<int, int>? respostasLikert,
     Map<int, Set<int>>? itensPorPratica,
   }) async {
@@ -92,6 +101,9 @@ class AvaliacaoService {
         AvaliacaoCompanion(
           familiaId: Value(familiaId),
           avaliador: Value(avaliador),
+          data: Value(
+            _normalizarMesAno(dataAvaliacao ?? DateTime.now()),
+          ),
           observacoes: Value(observacoes),
           dataAlteracao: Value(DateTime.now()),
         ),

@@ -20,7 +20,7 @@ class AvaliacaoItem extends Table {
 
   IntColumn get valorLikert => integer()
       .nullable()
-      .customConstraint('CHECK (valor_likert BETWEEN 1 AND 5)')();
+      .customConstraint('CHECK (valor_likert BETWEEN 0 AND 5)')();
 
   RealColumn get valorFuzzy => real().nullable()();
 }

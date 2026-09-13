@@ -11,10 +11,23 @@ class FuzzyCalculator {
       );
     }
 
-    double somaA = 0;
-    double somaB = 0;
-    double somaC = 0;
-    double somaD = 0;
+    if (notas.isEmpty) {
+      return {
+        'a': 0.0,
+        'b': 0.0,
+        'c': 0.0,
+        'd': 0.0,
+        'centroide': 0.0,
+        'base': 0.0,
+        'resultado': 0.0,
+      };
+    }
+
+    double somaA = 0.0;
+    double somaB = 0.0;
+    double somaC = 0.0;
+    double somaD = 0.0;
+    double somaPesos = 0.0;
 
     for (int i = 0; i < notas.length; i++) {
       final fuzzy = FuzzyNumber(
@@ -23,24 +36,36 @@ class FuzzyCalculator {
 
       final res = fuzzy.calcular();
 
-      // PESO aplicado SOMENTE aqui
       somaA += res['a']! * pesos[i];
       somaB += res['b']! * pesos[i];
       somaC += res['c']! * pesos[i];
       somaD += res['d']! * pesos[i];
+      somaPesos += pesos[i];
     }
 
-    final n = notas.length.toDouble();
+    if (somaPesos == 0.0) {
+      return {
+        'a': 0.0,
+        'b': 0.0,
+        'c': 0.0,
+        'd': 0.0,
+        'centroide': 0.0,
+        'base': 0.0,
+        'resultado': 0.0,
+      };
+    }
 
-    final a = somaA / n;
-    final b = somaB / n;
-    final c = somaC / n;
-    final d = somaD / n;
+    final a = somaA / somaPesos;
+    final b = somaB / somaPesos;
+    final c = somaC / somaPesos;
+    final d = somaD / somaPesos;
 
+    // Defuzzificacao conforme planilha: media simples dos 4 componentes finais.
     final centroide = (a + b + c + d) / 4.0;
 
     final base = c - d;
 
+    // Normalizacao da planilha: acima de 0.1, reescala no intervalo [0.1, 0.9].
     final resultado = centroide < 0.1 ? centroide : (centroide - 0.1) / 0.8;
 
     return {

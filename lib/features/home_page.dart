@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:transicao_ecologica/features/avaliacao/iniciar_avaliacao_page.dart';
 import 'package:transicao_ecologica/features/avaliacao/resultados_dashboard_page.dart';
-import 'package:transicao_ecologica/features/comunidades/cadastro_comunidade_page.dart';
+import 'package:transicao_ecologica/features/comunidades/comunidades_page.dart';
+import 'package:transicao_ecologica/features/configuracoes/indicadores_page.dart';
 import 'package:transicao_ecologica/features/exportacao/export_page.dart';
 import 'package:transicao_ecologica/features/familias/familias_page.dart';
 
@@ -288,14 +289,15 @@ class _HomePageState extends State<HomePage> {
                         _buildFeatureCard(
                           context,
                           icon: Icons.group_add_outlined,
-                          title: 'Cadastrar comunidade',
+                          title: 'Gerenciar comunidades',
                           subtitle:
-                              'Cadastre uma nova comunidade para organizar famílias e avaliações.',
+                              'Liste, cadastre, edite e mantenha o controle das comunidades.',
                           color: const Color(0xFF6A1B9A),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const CadastroComunidadePage(),
+                                builder: (_) =>
+                                    const GerenciarComunidadesPage(),
                               ),
                             );
                           },
@@ -310,6 +312,21 @@ class _HomePageState extends State<HomePage> {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const FamiliasListPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildFeatureCard(
+                          context,
+                          icon: Icons.rule_folder_outlined,
+                          title: 'Metodologia',
+                          subtitle:
+                              'Gerencie categorias, indicadores e regras de pontuação.',
+                          color: const Color(0xFF00897B),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const IndicadoresPage(),
                               ),
                             );
                           },

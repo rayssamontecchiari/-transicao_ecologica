@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:drift/drift.dart';
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../database/app_database.dart';
+import 'resultado_cache_service.dart';
 
 class ExportService {
   final AppDatabase database;
+  final ResultadoCacheService _cacheService = ResultadoCacheService();
 
   ExportService(this.database);
 
@@ -290,6 +293,141 @@ class ExportService {
     return restored;
   }
 
+  /// Importa dados de um arquivo JSON e substitui o conteúdo atual do banco.
+  Future<void> importFromJson(File jsonFile) async {
+    if (!jsonFile.existsSync()) {
+      throw Exception('Arquivo JSON não encontrado: ${jsonFile.path}');
+    }
+
+    final raw = await jsonFile.readAsString();
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception('Formato JSON inválido para importação.');
+    }
+
+    List<dynamic> readList(String key) {
+      final value = decoded[key];
+      if (value is List<dynamic>) return value;
+      return <dynamic>[];
+    }
+
+    await database.transaction(() async {
+      // Limpeza em ordem de dependência (filho -> pai).
+      await database.delete(database.avaliacaoItem).go();
+      await database.delete(database.avaliacao).go();
+      await database.delete(database.indicador).go();
+      await database.delete(database.pratica).go();
+      await database.delete(database.dimensao).go();
+      await database.delete(database.familia).go();
+      await database.delete(database.categoria).go();
+      await database.delete(database.comunidade).go();
+
+      for (final row in readList('comunidade')) {
+        final map = _asMap(row);
+        await database.into(database.comunidade).insert(
+              ComunidadeCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                nome: Value(_asString(map['nome']) ?? ''),
+              ),
+            );
+      }
+
+      for (final row in readList('categoria')) {
+        final map = _asMap(row);
+        await database.into(database.categoria).insert(
+              CategoriaCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                nome: Value(_asString(map['nome']) ?? ''),
+                descricao: Value(_asString(map['descricao'])),
+              ),
+            );
+      }
+
+      for (final row in readList('dimensao')) {
+        final map = _asMap(row);
+        await database.into(database.dimensao).insert(
+              DimensaoCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                nome: Value(_asString(map['nome']) ?? ''),
+                categoriaId: Value(_asInt(map['categoriaId']) ?? 0),
+              ),
+            );
+      }
+
+      for (final row in readList('pratica')) {
+        final map = _asMap(row);
+        await database.into(database.pratica).insert(
+              PraticaCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                nome: Value(_asString(map['nome']) ?? ''),
+                categoriaId: Value(_asInt(map['categoriaId']) ?? 0),
+              ),
+            );
+      }
+
+      for (final row in readList('familia')) {
+        final map = _asMap(row);
+        await database.into(database.familia).insert(
+              FamiliaCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                nomeResponsavel: Value(_asString(map['nomeResponsavel']) ?? ''),
+                telefone: Value(_asString(map['telefone']) ?? ''),
+                endereco: Value(_asString(map['endereco']) ?? ''),
+                comunidadeId: Value(_asInt(map['comunidadeId']) ?? 0),
+              ),
+            );
+      }
+
+      for (final row in readList('indicador')) {
+        final map = _asMap(row);
+        await database.into(database.indicador).insert(
+              IndicadorCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                nome: Value(_asString(map['nome']) ?? ''),
+                descricao: Value(_asString(map['descricao']) ?? ''),
+                descricaoNivel1: Value(_asString(map['descricaoNivel1'])),
+                descricaoNivel5: Value(_asString(map['descricaoNivel5'])),
+                peso: Value(_asDouble(map['peso']) ?? 1.0),
+                categoriaId: Value(_asInt(map['categoriaId']) ?? 0),
+                dimensaoId: Value(_asInt(map['dimensaoId'])),
+              ),
+            );
+      }
+
+      for (final row in readList('avaliacao')) {
+        final map = _asMap(row);
+        await database.into(database.avaliacao).insert(
+              AvaliacaoCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                data: Value(_asDateTime(map['data']) ?? DateTime.now()),
+                dataAlteracao:
+                    Value(_asDateTime(map['dataAlteracao']) ?? DateTime.now()),
+                avaliador: Value(_asString(map['avaliador']) ?? ''),
+                observacoes: Value(_asString(map['observacoes'])),
+                status: Value(_asString(map['status']) ?? 'draft'),
+                familiaId: Value(_asInt(map['familiaId']) ?? 0),
+              ),
+            );
+      }
+
+      for (final row in readList('avaliacao_item')) {
+        final map = _asMap(row);
+        await database.into(database.avaliacaoItem).insert(
+              AvaliacaoItemCompanion(
+                id: Value(_asInt(map['id']) ?? 0),
+                avaliacaoId: Value(_asInt(map['avaliacaoId']) ?? 0),
+                indicadorId: Value(_asInt(map['indicadorId']) ?? 0),
+                praticaId: Value(_asInt(map['praticaId'])),
+                valorLikert: Value(_asInt(map['valorLikert'])),
+                valorFuzzy: Value(_asDouble(map['valorFuzzy'])),
+              ),
+            );
+      }
+    });
+
+    await _cacheService.invalidarTodosResultados();
+  }
+
   /// Obtem o caminho do banco de dados usado pelo aplicativo
   Future<String> _getDatabasePath() async {
     final documentsDir = await getApplicationDocumentsDirectory();
@@ -345,5 +483,40 @@ class ExportService {
     } catch (e) {
       return [];
     }
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return <String, dynamic>{};
+  }
+
+  String? _asString(dynamic value) {
+    if (value == null) return null;
+    return value.toString();
+  }
+
+  int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  DateTime? _asDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString());
   }
 }

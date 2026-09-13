@@ -1,11 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:transicao_ecologica/core/services/comunidade_service.dart';
 import 'package:transicao_ecologica/core/services/familia_service.dart';
 
 void main() {
   group('FamiliasService duplicate detection', () {
-    test(
-        'considers families duplicates when name and phone match ignoring case and whitespace',
-        () {
+    test('considers families duplicates when name and phone match ignoring case and whitespace', () {
       expect(
         FamiliasService.saoFamiliasDuplicadas(
           nomeResponsavel: '  Maria Souza  ',
@@ -28,11 +27,21 @@ void main() {
         isFalse,
       );
     });
+  });
 
-    test('considers families without a community as invalid', () {
-      expect(FamiliasService.possuiComunidadeAssociada(null), isFalse);
-      expect(FamiliasService.possuiComunidadeAssociada(0), isFalse);
-      expect(FamiliasService.possuiComunidadeAssociada(7), isTrue);
+  group('ComunidadeService business rules', () {
+    test('treats a community with no linked families as deletable', () {
+      expect(
+        ComunidadeService.possuiFamiliasVinculadas(0, 0),
+        isFalse,
+      );
+    });
+
+    test('treats a community with linked families as not deletable', () {
+      expect(
+        ComunidadeService.possuiFamiliasVinculadas(3, 1),
+        isTrue,
+      );
     });
   });
 }

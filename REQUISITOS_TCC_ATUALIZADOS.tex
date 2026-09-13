@@ -1,0 +1,280 @@
+\subsection{Requisitos Funcionais}
+\label{subsec:requisitos_funcionais}
+
+Os requisitos funcionais descrevem as funcionalidades que o sistema disponibiliza ao usuário para executar a metodologia de avaliação agroecológica, desde o cadastro das entidades até a consolidação e consulta dos resultados.
+A Tabela \ref{tab:requisitos_funcionais} apresenta os requisitos funcionais do sistema.
+
+\begin{table}[h]
+    \centering
+    \caption{Requisitos Funcionais}
+    \label{tab:requisitos_funcionais}
+    \begin{tabular}{|c|p{10cm}|}
+        \hline
+        \textbf{Código} & \textbf{Descrição} \\
+        \hline
+        RF01 & Cadastrar, editar e excluir comunidades (regiões). \\
+        \hline
+        RF02 & Cadastrar, editar e excluir famílias vinculadas a uma comunidade. \\
+        \hline
+        RF03 & Impedir a exclusão de comunidade que possua famílias vinculadas. \\
+        \hline
+        RF04 & Validar duplicidade de famílias com base em nome do responsável e telefone. \\
+        \hline
+        RF05 & Iniciar nova avaliação para uma família cadastrada. \\
+        \hline
+        RF06 & Registrar respostas dos indicadores por meio da escala Likert e marcações por prática na categoria multidimensional. \\
+        \hline
+        RF07 & Salvar avaliação em rascunho e permitir retomada posterior do preenchimento. \\
+        \hline
+        RF08 & Calcular automaticamente os índices utilizando lógica fuzzy e pesos por indicador. \\
+        \hline
+        RF09 & Armazenar o histórico das avaliações realizadas. \\
+        \hline
+        RF10 & Consultar avaliações por listagem geral com filtros por família, comunidade e período. \\
+        \hline
+        RF11 & Consultar histórico detalhado de avaliações de uma família específica. \\
+        \hline
+        RF12 & Visualizar painel de resultados com análise temporal em visão geral e por categoria. \\
+        \hline
+        RF13 & Editar dados de avaliações registradas (avaliador e observações). \\
+        \hline
+        RF14 & Excluir avaliações registradas. \\
+        \hline
+        RF15 & Cadastrar, editar e excluir categorias da metodologia. \\
+        \hline
+        RF16 & Cadastrar, editar e excluir indicadores da metodologia, incluindo categoria, dimensão e peso. \\
+        \hline
+        RF17 & Gerenciar pesos dos indicadores por categoria. \\
+        \hline
+        RF18 & Exportar dados para backup e compartilhamento em formatos BD, JSON e CSV. \\
+        \hline
+        RF19 & Importar dados por restauração de banco externo e por arquivo JSON. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Requisitos Não Funcionais}
+\label{subsec:requisitos_nao_funcionais}
+
+Os requisitos não funcionais, descritos na Tabela \ref{tab:requisitos_nao_funcionais}, definem restrições relacionadas ao desempenho, disponibilidade, confiabilidade e arquitetura da aplicação.
+
+\begin{table}[h]
+    \centering
+    \caption{Requisitos Não Funcionais}
+    \label{tab:requisitos_nao_funcionais}
+    \begin{tabular}{|c|p{10cm}|}
+        \hline
+        \textbf{Código} & \textbf{Descrição} \\
+        \hline
+        RNF01 & O aplicativo deve funcionar integralmente sem conexão com a Internet. \\
+        \hline
+        RNF02 & Os dados devem ser armazenados localmente no dispositivo utilizando banco de dados SQLite. \\
+        \hline
+        RNF03 & A interface deve ser simples e intuitiva, facilitando a utilização durante avaliações em campo. \\
+        \hline
+        RNF04 & O sistema deve apresentar tempo de resposta compatível com a interação do usuário, com cálculos executados logo após o preenchimento das respostas. \\
+        \hline
+        RNF05 & O aplicativo deve preservar a integridade e a consistência dos dados, mantendo o histórico de avaliações. \\
+        \hline
+        RNF06 & A aplicação deve permitir manutenção e evolução por meio de arquitetura organizada em camadas. \\
+        \hline
+        RNF07 & Operações críticas de importação e restauração devem exigir confirmação explícita do usuário. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Casos de Uso}
+\label{sec:casos_de_uso}
+
+Os casos de uso representam as principais funcionalidades disponibilizadas pelo aplicativo \textbf{(citar ref - talvez o livro de engenharia de sw)}, descrevendo como o usuário interage com o sistema para realizar as atividades relacionadas à avaliação da transição agroecológica. A modelagem foi elaborada com base nos requisitos funcionais definidos na Seção~\ref{subsec:requisitos_funcionais} e busca representar o comportamento esperado da aplicação sob a perspectiva do usuário, único ator que interage com o sistema, sendo apresentada na Figura~\ref{fig:casos_de_uso}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[height=0.4\textwidth]{figures/casosdeuso.png}
+    \caption{Diagrama de casos de uso}
+    \label{fig:casos_de_uso}
+    {\small Fonte: a autora\par}
+\end{figure}
+
+\begin{usecase}{UC01}{Gerenciar Regiões}
+    \ucitem{Descrição}{Permite cadastrar, alterar e excluir regiões utilizadas na organização das famílias avaliadas.}
+    \uclinha
+    \ucitem{Ator}{Usuário}
+    \uclinha
+    \ucitem{Pré-condições}{Aplicativo em funcionamento.}
+    \uclinha
+    \textbf{Fluxo principal}
+    \vspace{4pt}
+    \begin{enumerate}
+        \item O usuário acessa o menu de regiões.
+        \item O sistema apresenta as regiões cadastradas.
+        \item O usuário pode cadastrar uma nova região.
+        \item O sistema valida os dados.
+        \item A região é salva no banco de dados.
+    \end{enumerate}
+    \uclinha
+    \textbf{Fluxos alternativos}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Nome da região já existente.
+        \item Tentativa de exclusão de região com famílias vinculadas.
+        \item Cancelamento da operação.
+    \end{itemize}
+    \uclinha
+    \ucitem{Pós-condições}{A região fica disponível para associação às famílias.}
+\end{usecase}
+
+\vspace{8pt}
+
+\begin{usecase}{UC02}{Gerenciar Famílias}
+    \ucitem{Descrição}{Permite cadastrar, editar, consultar e remover famílias participantes da avaliação.}
+    \uclinha
+    \ucitem{Ator}{Usuário}
+    \uclinha
+    \ucitem{Pré-condições}{Existir pelo menos uma região cadastrada.}
+    \uclinha
+    \textbf{Fluxo principal}
+    \vspace{4pt}
+    \begin{enumerate}
+        \item O usuário acessa o cadastro de famílias.
+        \item Seleciona uma região.
+        \item Informa os dados da família.
+        \item O sistema valida os campos.
+        \item Os dados são armazenados.
+    \end{enumerate}
+    \uclinha
+    \textbf{Fluxos alternativos}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Campos obrigatórios não preenchidos.
+        \item Cadastro duplicado de família (nome do responsável e telefone).
+        \item Cancelamento da operação.
+    \end{itemize}
+    \uclinha
+    \ucitem{Pós-condições}{A família passa a estar disponível para realização das avaliações.}
+\end{usecase}
+
+\vspace{8pt}
+
+\begin{usecase}{UC03}{Realizar Avaliação}
+    \ucitem{Descrição}{Permite registrar uma nova avaliação agroecológica de uma família, preenchendo os indicadores das categorias propostas na metodologia e realizando automaticamente os cálculos fuzzy. Este é o principal caso de uso do sistema.}
+    \uclinha
+    \ucitem{Ator}{Usuário}
+    \uclinha
+    \textbf{Pré-condições}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Existir família cadastrada.
+        \item Indicadores previamente configurados.
+    \end{itemize}
+    \uclinha
+    \textbf{Fluxo principal}
+    \vspace{4pt}
+    \begin{enumerate}
+        \item O usuário seleciona uma família.
+        \item O sistema inicia uma nova avaliação.
+        \item São apresentados os indicadores da categoria.
+        \item O usuário responde cada indicador utilizando a escala Likert.
+        \item O sistema registra as respostas.
+        \item Após o preenchimento das categorias, o sistema executa os cálculos fuzzy.
+        \item O resultado é armazenado.
+        \item O sistema apresenta o resultado final.
+    \end{enumerate}
+    \uclinha
+    \textbf{Fluxos alternativos}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Avaliação interrompida antes da conclusão (salvamento em rascunho).
+        \item Indicadores não respondidos.
+    \end{itemize}
+    \uclinha
+    \ucitem{Pós-condições}{A avaliação fica registrada para consultas futuras.}
+\end{usecase}
+
+\vspace{8pt}
+
+\begin{usecase}{UC04}{Visualizar Avaliações}
+    \ucitem{Descrição}{Permite consultar avaliações por diferentes formas de busca, incluindo listagem geral e aplicação de filtros por período, região e família, com acesso aos detalhes de cada registro.}
+    \uclinha
+    \ucitem{Ator}{Usuário}
+    \uclinha
+    \ucitem{Pré-condições}{Existirem avaliações cadastradas.}
+    \uclinha
+    \textbf{Fluxo principal}
+    \vspace{4pt}
+    \begin{enumerate}
+        \item O usuário acessa a lista de avaliações.
+        \item O sistema apresenta as avaliações registradas.
+        \item O usuário aplica filtros de consulta (período, região e/ou família).
+        \item O sistema atualiza a listagem conforme os filtros selecionados.
+        \item O usuário seleciona uma avaliação.
+        \item O sistema exibe os detalhes e resultados da avaliação.
+    \end{enumerate}
+    \uclinha
+    \textbf{Fluxos alternativos}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Não existem avaliações cadastradas.
+        \item Não há resultados para o filtro aplicado.
+        \item O usuário limpa os filtros e retorna à listagem completa.
+    \end{itemize}
+    \uclinha
+    \ucitem{Pós-condições}{Nenhuma alteração é realizada nos dados.}
+\end{usecase}
+
+\vspace{8pt}
+
+\begin{usecase}{UC05}{Exportar Dados}
+    \ucitem{Descrição}{Permite exportar os dados das avaliações para utilização em planilhas eletrônicas, compartilhamento e geração de backup.}
+    \uclinha
+    \ucitem{Ator}{Usuário}
+    \uclinha
+    \ucitem{Pré-condições}{Existirem avaliações registradas.}
+    \uclinha
+    \textbf{Fluxo principal}
+    \vspace{4pt}
+    \begin{enumerate}
+        \item O usuário seleciona a opção de exportação.
+        \item O sistema gera o arquivo contendo os dados.
+        \item O arquivo é disponibilizado ao usuário.
+    \end{enumerate}
+    \uclinha
+    \textbf{Fluxos alternativos}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Não existem dados para exportação.
+    \end{itemize}
+    \uclinha
+    \ucitem{Pós-condições}{Arquivo exportado com sucesso.}
+\end{usecase}
+
+\vspace{8pt}
+
+\begin{usecase}{UC06}{Importar Dados}
+    \ucitem{Descrição}{Permite importar dados para o aplicativo por restauração de banco externo ou por arquivo JSON, mediante confirmação do usuário.}
+    \uclinha
+    \ucitem{Ator}{Usuário}
+    \uclinha
+    \ucitem{Pré-condições}{Existir arquivo de importação válido no dispositivo.}
+    \uclinha
+    \textbf{Fluxo principal}
+    \vspace{4pt}
+    \begin{enumerate}
+        \item O usuário acessa a opção de importação.
+        \item Seleciona o arquivo de entrada (BD ou JSON).
+        \item O sistema valida o arquivo selecionado.
+        \item O sistema solicita confirmação para substituição dos dados locais.
+        \item O usuário confirma a operação.
+        \item O sistema realiza a importação e atualiza a base local.
+    \end{enumerate}
+    \uclinha
+    \textbf{Fluxos alternativos}
+    \vspace{4pt}
+    \begin{itemize}
+        \item Arquivo inválido ou incompatível com a estrutura esperada.
+        \item Cancelamento da operação antes da confirmação final.
+        \item Falha na importação dos dados.
+    \end{itemize}
+    \uclinha
+    \ucitem{Pós-condições}{Dados locais atualizados a partir do arquivo importado.}
+\end{usecase}

@@ -97,6 +97,11 @@ class _ExportPageState extends State<ExportPage> {
         path.endsWith('.sqlite3');
   }
 
+  Future<bool> _isValidJsonFile(File file) async {
+    final path = file.path.toLowerCase();
+    return path.endsWith('.json');
+  }
+
   Future<void> _importDatabase() async {
     if (exportService == null) return;
 
@@ -168,6 +173,78 @@ class _ExportPageState extends State<ExportPage> {
     }
   }
 
+  Future<void> _importJsonData() async {
+    if (exportService == null) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      dialogTitle: 'Selecione o arquivo JSON exportado',
+    );
+
+    if (result == null ||
+        result.files.isEmpty ||
+        result.files.single.path == null) {
+      return;
+    }
+
+    final file = File(result.files.single.path!);
+    if (!await _isValidJsonFile(file)) {
+      _showMessage('Selecione um arquivo .json válido.', isError: true);
+      return;
+    }
+
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Importar JSON'),
+          content: const Text(
+            'Importar este arquivo irá substituir os dados atuais do aplicativo. Deseja continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Importar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => isLoading = true);
+    try {
+      await exportService!.importFromJson(file);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Dados importados com sucesso! Reiniciando app...'),
+        ),
+      );
+      await Future.delayed(const Duration(milliseconds: 300));
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomePage()),
+        (route) => false,
+      );
+    } catch (e) {
+      _showMessage('Erro ao importar JSON: $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
   Future<void> _exportTableCSV(String tableName) async {
     if (exportService == null) return;
     setState(() => isLoading = true);
@@ -229,6 +306,14 @@ class _ExportPageState extends State<ExportPage> {
       onPressed: isLoading || exportService == null ? null : _importDatabase,
       icon: const Icon(Icons.upload_file),
       label: const Text('Importar BD externo'),
+    );
+  }
+
+  Widget _buildImportJsonButton() {
+    return ElevatedButton.icon(
+      onPressed: isLoading || exportService == null ? null : _importJsonData,
+      icon: const Icon(Icons.upload_file_outlined),
+      label: const Text('Importar JSON'),
     );
   }
 
@@ -393,6 +478,8 @@ class _ExportPageState extends State<ExportPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildImportButton(),
+                const SizedBox(height: 12),
+                _buildImportJsonButton(),
                 const SizedBox(height: 16),
                 _buildBackupsList(),
                 const SizedBox(height: 24),

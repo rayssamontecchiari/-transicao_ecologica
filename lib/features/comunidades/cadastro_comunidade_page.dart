@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/comunidade_service.dart';
 
-/// Pagina para cadastro de uma nova comunidade.
+/// Pagina para cadastro ou edição de uma comunidade.
 class CadastroComunidadePage extends StatefulWidget {
-  const CadastroComunidadePage({super.key});
+  final ComunidadeData? comunidade;
+
+  const CadastroComunidadePage({super.key, this.comunidade});
 
   @override
   State<CadastroComunidadePage> createState() => _CadastroComunidadePageState();
@@ -18,10 +20,15 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
   bool _isSaving = false;
   late ComunidadeService _comunidadesService;
 
+  bool get _isEditing => widget.comunidade != null;
+
   @override
   void initState() {
     super.initState();
     _initService();
+    if (_isEditing) {
+      _nomeController.text = widget.comunidade!.nome;
+    }
   }
 
   Future<void> _initService() async {
@@ -37,17 +44,37 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
       final comunidade = ComunidadeCompanion(
         nome: Value(_nomeController.text.trim()),
       );
-      await _comunidadesService.inserir(comunidade);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Comunidade cadastrada com sucesso!')),
+
+      if (_isEditing) {
+        await _comunidadesService.atualizarComunidade(
+          widget.comunidade!.id,
+          comunidade,
         );
-        Navigator.of(context).pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Comunidade atualizada com sucesso!')),
+          );
+        }
+      } else {
+        await _comunidadesService.inserir(comunidade);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Comunidade cadastrada com sucesso!')),
+          );
+        }
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao cadastrar comunidade: $e')),
+          SnackBar(
+            content: Text(
+              'Erro ao ${_isEditing ? 'atualizar' : 'cadastrar'} comunidade: $e',
+            ),
+          ),
         );
       }
     } finally {
@@ -64,7 +91,10 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cadastro de Comunidade')),
+      appBar: AppBar(
+        title:
+            Text(_isEditing ? 'Editar Comunidade' : 'Cadastro de Comunidade'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -73,7 +103,9 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Cadastre uma nova comunidade para organizar familias e avaliacoes.',
+                _isEditing
+                    ? 'Atualize o nome da comunidade.'
+                    : 'Cadastre uma nova comunidade para organizar famílias e avaliações.',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 16),
@@ -85,7 +117,7 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Nome e obrigatorio';
+                    return 'Nome é obrigatório';
                   }
                   return null;
                 },
@@ -101,7 +133,9 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Cadastrar Comunidade'),
+                      : Text(_isEditing
+                          ? 'Salvar Alterações'
+                          : 'Cadastrar Comunidade'),
                 ),
               ),
             ],

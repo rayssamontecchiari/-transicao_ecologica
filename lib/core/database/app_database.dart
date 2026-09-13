@@ -30,6 +30,57 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal(super.e);
 
+  Future<void> _rebuildAvaliacaoItemTableAllowingZeroLikert() async {
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS avaliacao_item_new (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        avaliacao_id INTEGER NOT NULL REFERENCES avaliacao(id),
+        indicador_id INTEGER NOT NULL REFERENCES indicador(id),
+        pratica_id INTEGER NULL REFERENCES pratica(id),
+        valor_likert INTEGER NULL CHECK (valor_likert BETWEEN 0 AND 5),
+        valor_fuzzy REAL NULL
+      )
+    ''');
+
+    await customStatement('''
+      INSERT INTO avaliacao_item_new (
+        id,
+        avaliacao_id,
+        indicador_id,
+        pratica_id,
+        valor_likert,
+        valor_fuzzy
+      )
+      SELECT
+        id,
+        avaliacao_id,
+        indicador_id,
+        pratica_id,
+        valor_likert,
+        valor_fuzzy
+      FROM avaliacao_item
+    ''');
+
+    await customStatement('DROP TABLE avaliacao_item');
+    await customStatement(
+        'ALTER TABLE avaliacao_item_new RENAME TO avaliacao_item');
+  }
+
+  Future<void> _ensureLikertZeroAllowed() async {
+    final rows = await customSelect('''
+      SELECT sql
+      FROM sqlite_master
+      WHERE type = 'table' AND name = 'avaliacao_item'
+    ''').get();
+
+    if (rows.isEmpty) return;
+
+    final sql = rows.first.data['sql']?.toString() ?? '';
+    if (sql.contains('BETWEEN 1 AND 5')) {
+      await _rebuildAvaliacaoItemTableAllowingZeroLikert();
+    }
+  }
+
   static AppDatabase? _instance;
 
   static Future<AppDatabase> instance() async {
@@ -47,7 +98,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   /// We override [migration] so we can insert seed data when the database is
   /// first created. This ensures every install starts with the same base
@@ -471,6 +522,12 @@ class AppDatabase extends _$AppDatabase {
           peso: Value(0.11),
           categoriaId: cat4.id,
         ));
+      }, onUpgrade: (m, from, to) async {
+        if (from < 2) {
+          await _rebuildAvaliacaoItemTableAllowingZeroLikert();
+        }
+      }, beforeOpen: (details) async {
+        await _ensureLikertZeroAllowed();
       });
 }
 

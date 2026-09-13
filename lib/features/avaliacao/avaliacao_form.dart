@@ -593,9 +593,9 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(
-              5,
+              6,
               (index) {
-                final number = index + 1;
+                final number = index;
 
                 final selected = valor == number;
 

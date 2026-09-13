@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift hide Column, Table;
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
 import '../../core/services/categoria_service.dart';
+import '../../core/services/resultado_avaliacao_service.dart';
 import 'avaliacao_form.dart';
 import 'resultado_avaliacao_page.dart';
 
@@ -19,6 +20,7 @@ class IniciarAvaliacaoPage extends StatefulWidget {
 class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
   late FamiliasService _familiasService;
   late CategoriaService _categoriaService;
+  late ResultadoAvaliacaoService _resultadoAvaliacaoService;
   late AppDatabase _db;
 
   List<FamiliaData> _familias = [];
@@ -53,6 +55,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     _db = await AppDatabase.instance();
     _familiasService = FamiliasService(_db);
     _categoriaService = CategoriaService(_db);
+    _resultadoAvaliacaoService = ResultadoAvaliacaoService(_db);
 
     final familias = await _familiasService.getTodas();
     final categorias = await _categoriaService.getTodas();
@@ -114,6 +117,10 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
     return '$mes/${data.year}';
   }
 
+  DateTime _normalizarMesAno(DateTime data) {
+    return DateTime(data.year, data.month, 1);
+  }
+
   Future<void> _iniciarAvaliacao({required bool continuar}) async {
     if (_selectedFamilia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -133,7 +140,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
               ..where((a) => a.id.equals(avaliacaoIdExistente)))
             .write(
           AvaliacaoCompanion(
-            data: drift.Value(_dataAvaliacao),
+            data: drift.Value(_normalizarMesAno(_dataAvaliacao)),
             dataAlteracao: drift.Value(DateTime.now()),
             avaliador: drift.Value(_avaliadorController.text.trim()),
           ),
@@ -144,7 +151,7 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
           AvaliacaoCompanion.insert(
             familiaId: _selectedFamilia!.id,
             avaliador: _avaliadorController.text,
-            data: drift.Value(_dataAvaliacao),
+            data: drift.Value(_normalizarMesAno(_dataAvaliacao)),
             status: const drift.Value('draft'),
           ),
         );
@@ -202,6 +209,10 @@ class _IniciarAvaliacaoPageState extends State<IniciarAvaliacaoPage> {
             status: const drift.Value('completed'),
             dataAlteracao: drift.Value(DateTime.now()),
           ));
+
+          // Precalcula e persiste cache dos resultados ao finalizar a avaliacao.
+          await _resultadoAvaliacaoService
+              .calcularResultadosCompletos(_avaliacaoIdEmProgresso!);
 
           // Avaliação foi completada - ir para página de resultados
           Navigator.of(context).pushReplacement(

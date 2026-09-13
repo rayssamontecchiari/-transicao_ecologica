@@ -12,6 +12,8 @@ import '../models/resultado_avaliacao.dart';
 /// - dataAlteracao da avaliacao nao mudou
 /// - versao de configuracao (pesos/indicadores) nao mudou
 class ResultadoCacheService {
+  static const String _calculoVersion =
+      'fuzzy_media_ponderada_v3_cat2_agregado';
   static ResultadoCacheService? _instance;
 
   ResultadoCacheService._();
@@ -39,7 +41,8 @@ class ResultadoCacheService {
       final content = await file.readAsString();
       final data = jsonDecode(content);
       if (data is Map<String, dynamic>) {
-        data.putIfAbsent('configVersion', () => DateTime.now().toIso8601String());
+        data.putIfAbsent(
+            'configVersion', () => DateTime.now().toIso8601String());
         data.putIfAbsent('avaliacoes', () => <String, dynamic>{});
         return data;
       }
@@ -99,10 +102,12 @@ class ResultadoCacheService {
 
     final cachedDataAlteracao = entry['dataAlteracao'];
     final cachedConfigVersion = entry['configVersion'];
+    final cachedCalculoVersion = entry['calculoVersion'];
     final rawResultados = entry['resultados'];
 
     if (cachedDataAlteracao != dataAlteracao.toIso8601String()) return null;
     if (cachedConfigVersion != configVersion) return null;
+    if (cachedCalculoVersion != _calculoVersion) return null;
     if (rawResultados is! List) return null;
 
     final resultados = <ResultadoAvaliacao>[];
@@ -141,6 +146,7 @@ class ResultadoCacheService {
     avaliacoes[avaliacaoId.toString()] = {
       'dataAlteracao': dataAlteracao.toIso8601String(),
       'configVersion': configVersion,
+      'calculoVersion': _calculoVersion,
       'resultados': resultados
           .map(
             (r) => {

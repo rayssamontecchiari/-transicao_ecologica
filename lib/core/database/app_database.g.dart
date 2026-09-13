@@ -2036,7 +2036,7 @@ class $AvaliacaoItemTable extends AvaliacaoItem
       'valor_likert', aliasedName, true,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      $customConstraints: 'CHECK (valor_likert BETWEEN 1 AND 5)');
+      $customConstraints: 'CHECK (valor_likert BETWEEN 0 AND 5)');
   static const VerificationMeta _valorFuzzyMeta =
       const VerificationMeta('valorFuzzy');
   @override

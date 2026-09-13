@@ -43,13 +43,51 @@ class ResultadoAvaliacaoService {
       final notas = <int>[];
       final pesos = <double>[];
 
-      for (final item in itensDaCategoria) {
-        if (item.valorLikert != null) {
-          final indicador =
-              indicadores.firstWhere((i) => i.id == item.indicadorId);
+      if (categoriaId == 2) {
+        // Na categoria 2, cada marcacao gera uma linha (pratica x indicador)
+        // com valorLikert=1. Consolidamos isso em uma unica nota 0..5 por
+        // indicador antes do calculo fuzzy.
+        final praticasDaCategoria = await (_db.select(_db.pratica)
+              ..where((p) => p.categoriaId.equals(categoriaId)))
+            .get();
+        final totalPraticas = praticasDaCategoria.length;
 
-          notas.add(item.valorLikert!);
+        final marcacoesPorIndicador = <int, int>{};
+        for (final item in itensDaCategoria) {
+          if (item.valorLikert == null || item.valorLikert == 0) continue;
+          marcacoesPorIndicador.update(
+            item.indicadorId,
+            (v) => v + 1,
+            ifAbsent: () => 1,
+          );
+        }
+
+        for (final indicador in indicadores) {
+          final marcacoes = marcacoesPorIndicador[indicador.id] ?? 0;
+          int nota;
+
+          if (marcacoes == 0 || totalPraticas == 0) {
+            nota = 0;
+          } else {
+            final proporcao = marcacoes / totalPraticas;
+            nota = (proporcao * 5.0).round().clamp(1, 5);
+          }
+
+          notas.add(nota);
           pesos.add(indicador.peso);
+          print(
+            '[DEBUG] Categoria 2 - Indicador ${indicador.id}: marcacoes=$marcacoes/$totalPraticas -> nota=$nota',
+          );
+        }
+      } else {
+        for (final item in itensDaCategoria) {
+          if (item.valorLikert != null) {
+            final indicador =
+                indicadores.firstWhere((i) => i.id == item.indicadorId);
+
+            notas.add(item.valorLikert!);
+            pesos.add(indicador.peso);
+          }
         }
       }
 
