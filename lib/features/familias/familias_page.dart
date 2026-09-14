@@ -104,7 +104,25 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
     }
   }
 
-  void _confirmarDelecao(FamiliaData familia) {
+  Future<void> _confirmarDelecao(FamiliaData familia) async {
+    final quantidadeAvaliacoes =
+        await _familiasService.contarAvaliacoesVinculadas(familia.id);
+
+    if (quantidadeAvaliacoes > 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não é possível excluir uma família com avaliações vinculadas.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -303,12 +321,9 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
                                       backgroundColor: Theme.of(context)
                                           .primaryColor
                                           .withOpacity(0.1),
-                                      child: Text(
-                                        familia.id.toString(),
-                                        style: TextStyle(
-                                          color: Theme.of(context).primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Theme.of(context).primaryColor,
                                       ),
                                     ),
                                     title: Text(
@@ -316,9 +331,6 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w600,
                                       ),
-                                    ),
-                                    subtitle: Text(
-                                      'ID: ${familia.id}',
                                     ),
                                     trailing: PopupMenuButton<String>(
                                       onSelected: (value) {

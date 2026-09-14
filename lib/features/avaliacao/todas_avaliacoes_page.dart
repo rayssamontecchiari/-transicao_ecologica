@@ -4,7 +4,16 @@ import 'package:drift/drift.dart' hide Column, Table;
 import '../../core/database/app_database.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
+import '../../core/utils/natural_breaks_color_scale.dart';
+import 'iniciar_avaliacao_page.dart';
 import 'resultados_avaliacao_page.dart';
+
+enum _OrdenacaoAvaliacoes {
+  dataDesc,
+  dataAsc,
+  familiaAsc,
+  mediaDesc,
+}
 
 class TodasAvaliacoesPage extends StatefulWidget {
   const TodasAvaliacoesPage({super.key});
@@ -17,6 +26,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
   late AppDatabase _db;
   late ResultadoAvaliacaoService _resultadoService;
   bool _isLoading = true;
+  NaturalBreaksColorScale _colorScale =
+      NaturalBreaksColorScale.fromValues(const []);
   List<_AvaliacaoComResultados> _avaliacoes = [];
   List<_AvaliacaoComResultados> _allAvaliacoes = [];
   List<FamiliaData> _familias = [];
@@ -25,6 +36,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
   int? _selectedComunidadeFilter;
   DateTime? _filterStartDate;
   DateTime? _filterEndDate;
+  _OrdenacaoAvaliacoes _ordenacao = _OrdenacaoAvaliacoes.dataDesc;
 
   @override
   void initState() {
@@ -81,10 +93,16 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     }
 
     if (mounted) {
+      final medias = avaliacoesComResultados
+          .map((item) => item.media)
+          .whereType<double>()
+          .toList();
+
       setState(() {
         _familias = familias;
         _comunidades = comunidades;
         _allAvaliacoes = avaliacoesComResultados;
+        _colorScale = NaturalBreaksColorScale.fromValues(medias);
         _avaliacoes = _aplicarFiltros();
         _isLoading = false;
       });
@@ -92,16 +110,11 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
   }
 
   Color _obterCorPorValor(double? valor) {
-    if (valor == null) return Colors.grey;
-    if (valor >= 8.0) return Colors.green;
-    if (valor >= 6.0) return Colors.blue;
-    if (valor >= 4.0) return Colors.orange;
-    if (valor >= 2.0) return Colors.deepOrange;
-    return Colors.red;
+    return _colorScale.colorFor(valor);
   }
 
   List<_AvaliacaoComResultados> _aplicarFiltros() {
-    return _allAvaliacoes.where((item) {
+    final filtradas = _allAvaliacoes.where((item) {
       if (_selectedFamiliaFilter != null &&
           item.item.familiaId != _selectedFamiliaFilter) {
         return false;
@@ -119,37 +132,156 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
       }
       return true;
     }).toList();
-  }
 
-  Future<void> _selecionarDataInicial() async {
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: _filterStartDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-    if (selected == null) return;
-    setState(() {
-      _filterStartDate = selected;
-      if (_filterEndDate != null && _filterEndDate!.isBefore(selected)) {
-        _filterEndDate = selected;
+    filtradas.sort((a, b) {
+      switch (_ordenacao) {
+        case _OrdenacaoAvaliacoes.dataAsc:
+          final dataCompare = a.item.data.compareTo(b.item.data);
+          if (dataCompare != 0) return dataCompare;
+          return a.familiaNome.toLowerCase().compareTo(
+                b.familiaNome.toLowerCase(),
+              );
+        case _OrdenacaoAvaliacoes.familiaAsc:
+          final familiaCompare = a.familiaNome.toLowerCase().compareTo(
+                b.familiaNome.toLowerCase(),
+              );
+          if (familiaCompare != 0) return familiaCompare;
+          return b.item.data.compareTo(a.item.data);
+        case _OrdenacaoAvaliacoes.mediaDesc:
+          final mediaA = a.media;
+          final mediaB = b.media;
+          if (mediaA == null && mediaB == null) {
+            return b.item.data.compareTo(a.item.data);
+          }
+          if (mediaA == null) return 1;
+          if (mediaB == null) return -1;
+          final mediaCompare = mediaB.compareTo(mediaA);
+          if (mediaCompare != 0) return mediaCompare;
+          return b.item.data.compareTo(a.item.data);
+        case _OrdenacaoAvaliacoes.dataDesc:
+          final dataCompare = b.item.data.compareTo(a.item.data);
+          if (dataCompare != 0) return dataCompare;
+          return a.familiaNome.toLowerCase().compareTo(
+                b.familiaNome.toLowerCase(),
+              );
       }
-      _avaliacoes = _aplicarFiltros();
     });
+
+    return filtradas;
   }
 
-  Future<void> _selecionarDataFinal() async {
-    final selected = await showDatePicker(
+  Future<void> _selecionarMesAnoFiltro({required bool isStart}) async {
+    const meses = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ];
+
+    final baseDate = isStart
+        ? (_filterStartDate ?? DateTime.now())
+        : (_filterEndDate ?? DateTime.now());
+    final years = List.generate(31, (index) => 2000 + index);
+
+    final result = await showDialog<Map<String, int>>(
       context: context,
-      initialDate: _filterEndDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+      builder: (context) {
+        var mesSelecionado = baseDate.month;
+        var anoSelecionado = baseDate.year;
+
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(isStart ? 'Mês inicial' : 'Mês final'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<int>(
+                    value: mesSelecionado,
+                    decoration: const InputDecoration(
+                      labelText: 'Mês',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: List.generate(
+                      meses.length,
+                      (index) => DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Text(meses[index]),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setStateDialog(() => mesSelecionado = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: anoSelecionado,
+                    decoration: const InputDecoration(
+                      labelText: 'Ano',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: years
+                        .map(
+                          (year) => DropdownMenuItem<int>(
+                            value: year,
+                            child: Text('$year'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setStateDialog(() => anoSelecionado = value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(
+                    context,
+                    {'mes': mesSelecionado, 'ano': anoSelecionado},
+                  ),
+                  child: const Text('Confirmar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
-    if (selected == null) return;
+
+    if (result == null) return;
+
+    final mes = result['mes']!;
+    final ano = result['ano']!;
     setState(() {
-      _filterEndDate = selected;
-      if (_filterStartDate != null && _filterStartDate!.isAfter(selected)) {
-        _filterStartDate = selected;
+      if (isStart) {
+        _filterStartDate = DateTime(ano, mes, 1);
+        if (_filterEndDate != null &&
+            _filterEndDate!.isBefore(_filterStartDate!)) {
+          _filterEndDate = DateTime(ano, mes + 1, 0, 23, 59, 59);
+        }
+      } else {
+        _filterEndDate = DateTime(ano, mes + 1, 0, 23, 59, 59);
+        if (_filterStartDate != null &&
+            _filterStartDate!.isAfter(_filterEndDate!)) {
+          _filterStartDate = DateTime(ano, mes, 1);
+        }
       }
       _avaliacoes = _aplicarFiltros();
     });
@@ -161,6 +293,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
       _selectedComunidadeFilter = null;
       _filterStartDate = null;
       _filterEndDate = null;
+      _ordenacao = _OrdenacaoAvaliacoes.dataDesc;
       _avaliacoes = _aplicarFiltros();
     });
   }
@@ -170,37 +303,145 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
         TextEditingController(text: item.item.avaliador);
     final observacoesController =
         TextEditingController(text: item.item.observacoes ?? '');
+    DateTime dataSelecionada =
+        DateTime(item.item.data.year, item.item.data.month, 1);
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Editar avaliação'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: avaliadorController,
-                decoration: const InputDecoration(labelText: 'Avaliador'),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Editar avaliação'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: avaliadorController,
+                    decoration: const InputDecoration(labelText: 'Avaliador'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      const meses = [
+                        'Janeiro',
+                        'Fevereiro',
+                        'Março',
+                        'Abril',
+                        'Maio',
+                        'Junho',
+                        'Julho',
+                        'Agosto',
+                        'Setembro',
+                        'Outubro',
+                        'Novembro',
+                        'Dezembro',
+                      ];
+                      final years = List.generate(31, (index) => 2000 + index);
+
+                      final picked = await showDialog<Map<String, int>>(
+                        context: context,
+                        builder: (context) {
+                          var mes = dataSelecionada.month;
+                          var ano = dataSelecionada.year;
+                          return StatefulBuilder(
+                            builder: (context, setStateModal) {
+                              return AlertDialog(
+                                title: const Text('Selecione mês e ano'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    DropdownButtonFormField<int>(
+                                      value: mes,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Mês',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items: List.generate(
+                                        meses.length,
+                                        (index) => DropdownMenuItem<int>(
+                                          value: index + 1,
+                                          child: Text(meses[index]),
+                                        ),
+                                      ),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setStateModal(() => mes = value);
+                                        }
+                                      },
+                                    ),
+                                    const SizedBox(height: 12),
+                                    DropdownButtonFormField<int>(
+                                      value: ano,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Ano',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items: years
+                                          .map(
+                                            (year) => DropdownMenuItem<int>(
+                                              value: year,
+                                              child: Text('$year'),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setStateModal(() => ano = value);
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(
+                                      context,
+                                      {'mes': mes, 'ano': ano},
+                                    ),
+                                    child: const Text('Confirmar'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+
+                      if (picked != null) {
+                        setDialogState(() {
+                          dataSelecionada =
+                              DateTime(picked['ano']!, picked['mes']!, 1);
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.calendar_month),
+                    label: Text('Mês/ano: ${_formatarData(dataSelecionada)}'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: observacoesController,
+                    decoration: const InputDecoration(labelText: 'Observações'),
+                    maxLines: 3,
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: observacoesController,
-                decoration: const InputDecoration(labelText: 'Observações'),
-                maxLines: 3,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Salvar'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Salvar'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -211,6 +452,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
         .write(
       AvaliacaoCompanion(
         avaliador: Value(avaliadorController.text),
+        data: Value(DateTime(dataSelecionada.year, dataSelecionada.month, 1)),
+        dataAlteracao: Value(DateTime.now()),
         observacoes: Value(observacoesController.text.isEmpty
             ? null
             : observacoesController.text),
@@ -220,6 +463,17 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     await _init();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Avaliação atualizada com sucesso.')),
+    );
+  }
+
+  void _continuarAvaliacao(_AvaliacaoComResultados item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => IniciarAvaliacaoPage.comAvaliacaoEmRascunho(
+          initialFamiliaId: item.item.familiaId,
+          autoResumeAvaliacaoId: item.item.id,
+        ),
+      ),
     );
   }
 
@@ -346,11 +600,46 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                     },
                   ),
                   const SizedBox(height: 12),
+                  DropdownButtonFormField<_OrdenacaoAvaliacoes>(
+                    value: _ordenacao,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Ordenar por',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: _OrdenacaoAvaliacoes.dataDesc,
+                        child: Text('Mais recentes'),
+                      ),
+                      DropdownMenuItem(
+                        value: _OrdenacaoAvaliacoes.dataAsc,
+                        child: Text('Mais antigos'),
+                      ),
+                      DropdownMenuItem(
+                        value: _OrdenacaoAvaliacoes.familiaAsc,
+                        child: Text('Família A-Z'),
+                      ),
+                      DropdownMenuItem(
+                        value: _OrdenacaoAvaliacoes.mediaDesc,
+                        child: Text('Média maior'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _ordenacao = value;
+                        _avaliacoes = _aplicarFiltros();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: _selecionarDataInicial,
+                          onPressed: () =>
+                              _selecionarMesAnoFiltro(isStart: true),
                           icon: const Icon(Icons.calendar_month),
                           label: Text(_filterStartDate == null
                               ? 'Início'
@@ -360,7 +649,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: _selecionarDataFinal,
+                          onPressed: () =>
+                              _selecionarMesAnoFiltro(isStart: false),
                           icon: const Icon(Icons.calendar_today),
                           label: Text(_filterEndDate == null
                               ? 'Fim'
@@ -496,13 +786,20 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                       ),
                                     PopupMenuButton<String>(
                                       onSelected: (value) {
-                                        if (value == 'edit') {
+                                        if (value == 'resume') {
+                                          _continuarAvaliacao(item);
+                                        } else if (value == 'edit') {
                                           _editarAvaliacao(item);
                                         } else if (value == 'delete') {
                                           _confirmarExcluirAvaliacao(item);
                                         }
                                       },
                                       itemBuilder: (context) => [
+                                        if (item.item.status == 'draft')
+                                          const PopupMenuItem(
+                                            value: 'resume',
+                                            child: Text('Continuar'),
+                                          ),
                                         const PopupMenuItem(
                                           value: 'edit',
                                           child: Text('Editar'),
@@ -530,7 +827,9 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                           ),
                                         );
                                       }
-                                    : null,
+                                    : item.item.status == 'draft'
+                                        ? () => _continuarAvaliacao(item)
+                                        : null,
                               ),
                             );
                           },
@@ -542,7 +841,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
   }
 
   String _formatarData(DateTime data) {
-    return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 }
 

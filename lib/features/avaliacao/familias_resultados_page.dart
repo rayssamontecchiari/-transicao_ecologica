@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
+import '../../core/utils/natural_breaks_color_scale.dart';
 import 'familia_resultados_detalhes_page.dart';
 
 /// Página que lista famílias e permite visualizar seus resultados de avaliação
@@ -17,6 +18,8 @@ class _FamiliasResultadosPageState extends State<FamiliasResultadosPage> {
   late AppDatabase _db;
   late FamiliasService _familiasService;
   late ResultadoAvaliacaoService _resultadoService;
+  NaturalBreaksColorScale _colorScale =
+      NaturalBreaksColorScale.fromValues(const []);
 
   bool _isLoading = true;
   List<_FamiliaComResultados> _familias = [];
@@ -76,19 +79,20 @@ class _FamiliasResultadosPageState extends State<FamiliasResultadosPage> {
       return b.ultimaAvaliacao!.data.compareTo(a.ultimaAvaliacao!.data);
     });
 
+    final medias = familiasComResultados
+        .map((item) => item.mediaUltima)
+        .whereType<double>()
+        .toList();
+
     setState(() {
       _familias = familiasComResultados;
+      _colorScale = NaturalBreaksColorScale.fromValues(medias);
       _isLoading = false;
     });
   }
 
   Color _obterCorPorMedia(double? media) {
-    if (media == null) return Colors.grey;
-    if (media >= 8.0) return Colors.green;
-    if (media >= 6.0) return Colors.blue;
-    if (media >= 4.0) return Colors.orange;
-    if (media >= 2.0) return Colors.deepOrange;
-    return Colors.red;
+    return _colorScale.colorFor(media);
   }
 
   @override
@@ -192,7 +196,8 @@ class _FamiliasResultadosPageState extends State<FamiliasResultadosPage> {
   }
 
   String _formatarData(DateTime data) {
-    return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 }
 

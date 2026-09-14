@@ -1,11 +1,53 @@
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/familia_service.dart';
 import '../../core/services/comunidade_service.dart';
 
 /// Página para cadastro de novas famílias.
+class _TelefoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.isEmpty) {
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    final limitedDigits = digits.substring(
+      0,
+      digits.length > 11 ? 11 : digits.length,
+    );
+
+    String formatted;
+    if (limitedDigits.length <= 2) {
+      formatted = '(${limitedDigits}';
+    } else if (limitedDigits.length <= 7) {
+      formatted =
+          '(${limitedDigits.substring(0, 2)}) ${limitedDigits.substring(2)}';
+    } else if (limitedDigits.length <= 10) {
+      formatted =
+          '(${limitedDigits.substring(0, 2)}) ${limitedDigits.substring(2, 6)}-${limitedDigits.substring(6)}';
+    } else {
+      formatted =
+          '(${limitedDigits.substring(0, 2)}) ${limitedDigits.substring(2, 7)}-${limitedDigits.substring(7)}';
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
 class CadastroFamiliaPage extends StatefulWidget {
   final FamiliaData? familia;
 
@@ -174,6 +216,10 @@ class _CadastroFamiliaPageState extends State<CadastroFamiliaPage> {
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        _TelefoneInputFormatter(),
+                      ],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Telefone é obrigatório';

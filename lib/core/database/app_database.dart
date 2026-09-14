@@ -81,6 +81,39 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  Future<void> _repairLegacyDateColumns() async {
+    final tableExists = await customSelect(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'avaliacao' LIMIT 1",
+    ).get();
+
+    if (tableExists.isEmpty) return;
+
+    await customStatement('''
+      UPDATE avaliacao
+      SET
+        data = CAST(strftime('%s', data) AS INTEGER) * 1000,
+        data_alteracao = CAST(strftime('%s', data_alteracao) AS INTEGER) * 1000
+      WHERE typeof(data) = 'text' OR typeof(data_alteracao) = 'text';
+    ''');
+  }
+
+  static Future<void> repairLegacyDateColumns(QueryExecutor db) async {
+    final tableExists = await db.runSelect(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'avaliacao' LIMIT 1",
+      [],
+    );
+
+    if (tableExists.isEmpty) return;
+
+    await db.runCustom('''
+      UPDATE avaliacao
+      SET
+        data = CAST(strftime('%s', data) AS INTEGER) * 1000,
+        data_alteracao = CAST(strftime('%s', data_alteracao) AS INTEGER) * 1000
+      WHERE typeof(data) = 'text' OR typeof(data_alteracao) = 'text';
+    ''');
+  }
+
   static AppDatabase? _instance;
 
   static Future<AppDatabase> instance() async {
@@ -528,6 +561,7 @@ class AppDatabase extends _$AppDatabase {
         }
       }, beforeOpen: (details) async {
         await _ensureLikertZeroAllowed();
+        await _repairLegacyDateColumns();
       });
 }
 

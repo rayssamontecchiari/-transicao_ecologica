@@ -4,7 +4,9 @@ import 'package:transicao_ecologica/core/services/familia_service.dart';
 
 void main() {
   group('FamiliasService duplicate detection', () {
-    test('considers families duplicates when name and phone match ignoring case and whitespace', () {
+    test(
+        'considers families duplicates when name and phone match ignoring case and whitespace',
+        () {
       expect(
         FamiliasService.saoFamiliasDuplicadas(
           nomeResponsavel: '  Maria Souza  ',
@@ -25,6 +27,22 @@ void main() {
           telefoneExistente: '99999-8888',
         ),
         isFalse,
+      );
+    });
+  });
+
+  group('FamiliasService business rules', () {
+    test('treats a family with no linked evaluations as deletable', () {
+      expect(
+        FamiliasService.possuiAvaliacoesVinculadas(0, 0),
+        isFalse,
+      );
+    });
+
+    test('treats a family with linked evaluations as not deletable', () {
+      expect(
+        FamiliasService.possuiAvaliacoesVinculadas(7, 1),
+        isTrue,
       );
     });
   });

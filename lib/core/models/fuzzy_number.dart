@@ -7,10 +7,10 @@ class FuzzyNumber {
 
   Map<String, double> calcular() {
     return {
+      'd': _valorD(nota) / 10.0,
       'a': _valorA(nota) / 10.0,
       'b': _valorB(nota) / 10.0,
       'c': _valorC(nota) / 10.0,
-      'd': _valorD(nota) / 10.0,
     };
   }
 

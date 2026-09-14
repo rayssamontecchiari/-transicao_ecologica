@@ -3,8 +3,11 @@ import '../database/daos/familia_dao.dart';
 
 class FamiliasService {
   final FamiliaDao _familiasDao;
+  final AppDatabase _db;
 
-  FamiliasService(AppDatabase db) : _familiasDao = FamiliaDao(db);
+  FamiliasService(AppDatabase db)
+      : _db = db,
+        _familiasDao = FamiliaDao(db);
 
   Future<List<FamiliaData>> getTodas() {
     return _familiasDao.getTodas();
@@ -31,6 +34,18 @@ class FamiliasService {
 
   static bool possuiComunidadeAssociada(int? comunidadeId) {
     return comunidadeId != null && comunidadeId > 0;
+  }
+
+  static bool possuiAvaliacoesVinculadas(
+      int familiaId, int quantidadeAvaliacoes) {
+    return familiaId > 0 && quantidadeAvaliacoes > 0;
+  }
+
+  Future<int> contarAvaliacoesVinculadas(int familiaId) async {
+    final avaliacoes = await (_db.select(_db.avaliacao)
+          ..where((a) => a.familiaId.equals(familiaId)))
+        .get();
+    return avaliacoes.length;
   }
 
   Future<void> validarFamilia(
@@ -74,8 +89,15 @@ class FamiliasService {
   }
 
   /// Deleta uma família pelo ID
-  Future<void> deletarFamilia(int familiaId) {
-    return _familiasDao.deletar(familiaId);
+  Future<void> deletarFamilia(int familiaId) async {
+    final quantidadeAvaliacoes = await contarAvaliacoesVinculadas(familiaId);
+    if (possuiAvaliacoesVinculadas(familiaId, quantidadeAvaliacoes)) {
+      throw StateError(
+        'Não é possível excluir uma família com avaliações vinculadas.',
+      );
+    }
+
+    await _familiasDao.deletar(familiaId);
   }
 
   /// Atualiza uma família

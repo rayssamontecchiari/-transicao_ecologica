@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' hide Column, Table;
 import '../../core/database/app_database.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
+import '../../core/utils/natural_breaks_color_scale.dart';
 import 'resultados_avaliacao_page.dart';
 
 /// Página que exibe os detalhes de resultados de uma família específica
@@ -24,6 +25,8 @@ class _FamiliaResultadosDetalhesPageState
     extends State<FamiliaResultadosDetalhesPage> {
   late AppDatabase _db;
   late ResultadoAvaliacaoService _resultadoService;
+  NaturalBreaksColorScale _colorScale =
+      NaturalBreaksColorScale.fromValues(const []);
 
   bool _isLoading = true;
   List<_AvaliacaoComResultados> _avaliacoes = [];
@@ -65,19 +68,20 @@ class _FamiliaResultadosDetalhesPageState
       );
     }
 
+    final medias = avaliacoesComResultados
+        .map((item) => item.media)
+        .whereType<double>()
+        .toList();
+
     setState(() {
       _avaliacoes = avaliacoesComResultados;
+      _colorScale = NaturalBreaksColorScale.fromValues(medias);
       _isLoading = false;
     });
   }
 
   Color _obterCorPorValor(double? valor) {
-    if (valor == null) return Colors.grey;
-    if (valor >= 8.0) return Colors.green;
-    if (valor >= 6.0) return Colors.blue;
-    if (valor >= 4.0) return Colors.orange;
-    if (valor >= 2.0) return Colors.deepOrange;
-    return Colors.red;
+    return _colorScale.colorFor(valor);
   }
 
   String _obterNomeCategoria(int categoriaId) {
@@ -341,7 +345,8 @@ class _FamiliaResultadosDetalhesPageState
   }
 
   String _formatarData(DateTime data) {
-    return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 }
 

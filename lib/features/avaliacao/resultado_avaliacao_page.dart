@@ -313,26 +313,26 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
     Color cor;
     IconData icone;
 
-    if (valor < 0.2) {
-      qualidade = 'Muito Baixo';
-      cor = Colors.red;
-      icone = Icons.trending_down;
-    } else if (valor < 0.4) {
-      qualidade = 'Baixo';
-      cor = Colors.orange;
-      icone = Icons.arrow_downward;
-    } else if (valor < 0.6) {
-      qualidade = 'Médio';
-      cor = Colors.amber;
-      icone = Icons.unfold_more;
-    } else if (valor < 0.8) {
-      qualidade = 'Bom';
-      cor = Colors.lightGreen;
-      icone = Icons.arrow_upward;
-    } else {
-      qualidade = 'Excelente';
-      cor = Colors.green;
+    if (valor >= 0.8) {
+      qualidade = 'Muito bom';
+      cor = const Color(0xFF2E7D32);
       icone = Icons.trending_up;
+    } else if (valor >= 0.6) {
+      qualidade = 'Bom';
+      cor = const Color(0xFF689F38);
+      icone = Icons.arrow_upward;
+    } else if (valor >= 0.4) {
+      qualidade = 'Regular';
+      cor = const Color(0xFFF9A825);
+      icone = Icons.unfold_more;
+    } else if (valor >= 0.2) {
+      qualidade = 'Ruim';
+      cor = const Color(0xFFEF6C00);
+      icone = Icons.arrow_downward;
+    } else {
+      qualidade = 'Muito ruim';
+      cor = const Color(0xFFC62828);
+      icone = Icons.trending_down;
     }
 
     return Container(

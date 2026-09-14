@@ -24,15 +24,22 @@ class ResultadoAvaliacao {
     required this.base,
   });
 
+  static double _roundFinalValue(double value) {
+    if (value.isNaN || value.isInfinite) return value;
+    return double.parse(value.toStringAsFixed(2));
+  }
+
   /// Cria um resultado a partir de um mapa de cálculo fuzzy
   factory ResultadoAvaliacao.fromCalculation(
       {required int avaliacaoId,
       required int categoriaId,
       required Map<String, double> fuzzyResult}) {
+    final rawResultado = fuzzyResult['resultado'] ?? 0.0;
+
     return ResultadoAvaliacao(
       avaliacaoId: avaliacaoId,
       categoriaId: categoriaId,
-      valorFuzzyFinal: fuzzyResult['resultado'] ?? 0.0,
+      valorFuzzyFinal: _roundFinalValue(rawResultado),
       sumD: fuzzyResult['d'] ?? 0.0,
       sumA: fuzzyResult['a'] ?? 0.0,
       sumB: fuzzyResult['b'] ?? 0.0,

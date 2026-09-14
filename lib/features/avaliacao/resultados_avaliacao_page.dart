@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
+import '../../core/utils/natural_breaks_color_scale.dart';
 
 /// Página que exibe os resultados das avaliações com cálculos fuzzy
 class ResultadosAvaliacaoPage extends StatefulWidget {
@@ -21,6 +22,8 @@ class ResultadosAvaliacaoPage extends StatefulWidget {
 class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
   late AppDatabase _db;
   late ResultadoAvaliacaoService _resultadoService;
+  NaturalBreaksColorScale _colorScale =
+      NaturalBreaksColorScale.fromValues(const []);
 
   bool _isLoading = true;
   Map<String, dynamic> _estatisticas = {};
@@ -58,6 +61,11 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
       _avaliacao = avaliacao;
       _nomeFamilia = nomeFamilia;
       _estatisticas = estatisticas;
+      _colorScale = NaturalBreaksColorScale.fromValues(
+        ((estatisticas['resultados'] as List<ResultadoAvaliacao>?) ?? [])
+            .map((resultado) => resultado.valorFuzzyFinal)
+            .toList(),
+      );
       _isLoading = false;
     });
   }
@@ -73,11 +81,7 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
   }
 
   Color _obterCorPorValor(double valor) {
-    if (valor >= 8.0) return Colors.green;
-    if (valor >= 6.0) return Colors.blue;
-    if (valor >= 4.0) return Colors.orange;
-    if (valor >= 2.0) return Colors.deepOrange;
-    return Colors.red;
+    return _colorScale.colorFor(valor);
   }
 
   @override
@@ -120,7 +124,7 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Data: ${_avaliacao!.data.toString().split(' ')[0]}',
+                                    'Data: ${_formatarMesAno(_avaliacao!.data)}',
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                   Text(
@@ -357,5 +361,10 @@ class _ResultadosAvaliacaoPageState extends State<ResultadosAvaliacaoPage> {
         ],
       ),
     );
+  }
+
+  String _formatarMesAno(DateTime data) {
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 }

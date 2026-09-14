@@ -4,8 +4,8 @@ import 'package:drift/drift.dart' hide Column, Table;
 import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
+import '../../core/services/resultado_avaliacao_service.dart';
 
 enum _ResultadoViewMode {
   geral,
@@ -23,22 +23,28 @@ class ResultadosDashboardPage extends StatefulWidget {
 class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
   late AppDatabase _db;
   late ResultadoAvaliacaoService _resultadoService;
+
   bool _isLoading = true;
   double _mediaGeral = 0.0;
   double _chartMin = 0.0;
   double _chartMax = 0.0;
+
   List<AvaliacaoData> _allAvaliacoes = [];
   List<FamiliaData> _familias = [];
   List<ComunidadeData> _comunidades = [];
   List<CategoriaData> _categoriasData = [];
+
   int? _selectedFamiliaId;
   int? _selectedComunidadeId;
   DateTime? _startDate;
   DateTime? _endDate;
   _ResultadoViewMode _viewMode = _ResultadoViewMode.geral;
   int? _selectedCategoriaId;
+
   List<_AvaliacaoResumo> _evolucao = [];
   List<_CategoriaScore> _categorias = [];
+  List<_FamiliaComparacao> _comparacaoFamilias = [];
+  List<_EvolucaoFamilia> _evolucaoFamilias = [];
 
   @override
   void initState() {
@@ -55,7 +61,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     final categoriasData = await _db.select(_db.categoria).get();
     final avaliacoes = await (_db.select(_db.avaliacao)
           ..orderBy([
-            (a) => OrderingTerm(expression: a.data, mode: OrderingMode.asc)
+            (a) => OrderingTerm(expression: a.data, mode: OrderingMode.asc),
           ]))
         .get();
 
@@ -72,12 +78,11 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
   }
 
   Future<void> _applyFilters() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     final avaliacoesConcluidas =
         _allAvaliacoes.where((a) => a.status == 'completed').toList();
+
     final avaliacoesFiltradas = avaliacoesConcluidas.where((avaliacao) {
       if (_selectedFamiliaId != null &&
           avaliacao.familiaId != _selectedFamiliaId) {
@@ -85,10 +90,9 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
       }
 
       if (_selectedComunidadeId != null) {
-        final familiasMatch =
-            _familias.where((f) => f.id == avaliacao.familiaId).toList();
-        if (familiasMatch.isEmpty ||
-            familiasMatch.first.comunidadeId != _selectedComunidadeId) {
+        final familia = _familias.where((f) => f.id == avaliacao.familiaId);
+        if (familia.isEmpty ||
+            familia.first.comunidadeId != _selectedComunidadeId) {
           return false;
         }
       }
@@ -115,6 +119,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     }
 
     final avaliacoesResumo = <_AvaliacaoResumo>[];
+    final comparacaoBuilders = <int, _FamiliaComparacaoBuilder>{};
 
     for (final avaliacao in avaliacoesFiltradas) {
       final stats =
@@ -125,6 +130,8 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
 
       final resultados =
           (stats['resultados'] as List<ResultadoAvaliacao>?) ?? [];
+      final media = stats['media'] as double?;
+
       for (final resultado in resultados) {
         final score = categoriaMedia[resultado.categoriaId];
         if (score != null) {
@@ -133,28 +140,41 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
         }
       }
 
-      if (_viewMode == _ResultadoViewMode.geral) {
-        final media = stats['media'] as double?;
-        if (media == null) {
-          continue;
-        }
+      final familiaId = avaliacao.familiaId;
+      final builder = comparacaoBuilders.putIfAbsent(
+        familiaId,
+        () => _FamiliaComparacaoBuilder(
+          familiaId: familiaId,
+          familiaNome: _nomeFamilia(familiaId),
+        ),
+      );
 
-        avaliacoesResumo.add(_AvaliacaoResumo(avaliacao.data, media));
+      if (media != null) {
+        builder.addMedia(avaliacao.data, media);
+      }
+      for (final resultado in resultados) {
+        builder.addCategoria(resultado.categoriaId, resultado.valorFuzzyFinal);
+      }
+
+      if (_viewMode == _ResultadoViewMode.geral) {
+        if (media != null) {
+          avaliacoesResumo.add(_AvaliacaoResumo(avaliacao.data, media));
+        }
       } else {
         final categoriaId = _selectedCategoriaId;
-        if (categoriaId == null) {
-          continue;
+        if (categoriaId != null) {
+          final categoriaResultados = resultados
+              .where((resultado) => resultado.categoriaId == categoriaId)
+              .toList();
+          if (categoriaResultados.isNotEmpty) {
+            avaliacoesResumo.add(
+              _AvaliacaoResumo(
+                avaliacao.data,
+                categoriaResultados.first.valorFuzzyFinal,
+              ),
+            );
+          }
         }
-
-        final categoriaResultados = resultados
-            .where((resultado) => resultado.categoriaId == categoriaId)
-            .toList();
-        if (categoriaResultados.isEmpty) {
-          continue;
-        }
-
-        final valor = categoriaResultados.first.valorFuzzyFinal;
-        avaliacoesResumo.add(_AvaliacaoResumo(avaliacao.data, valor));
       }
     }
 
@@ -169,14 +189,376 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
         ? valoresResumo.reduce((a, b) => a > b ? a : b)
         : 0.0;
 
+    final comparacaoFamilias = comparacaoBuilders.values
+        .map((builder) => builder.build(_categoriasData))
+        .toList()
+      ..sort((a, b) => b.mediaFinal.compareTo(a.mediaFinal));
+
+    final evolucaoFamilias = comparacaoBuilders.values
+        .where((builder) => builder.series.length >= 2)
+        .map((builder) {
+      final serie = [...builder.series]
+        ..sort((a, b) => a.date.compareTo(b.date));
+      final inicio = serie.first;
+      final fim = serie.last;
+      return _EvolucaoFamilia(
+        familiaId: builder.familiaId,
+        familiaNome: builder.familiaNome,
+        inicio: inicio,
+        fim: fim,
+        variacao: fim.media - inicio.media,
+        quantidadeAvaliacoes: serie.length,
+      );
+    }).toList()
+      ..sort((a, b) => b.variacao.compareTo(a.variacao));
+
     setState(() {
       _mediaGeral = mediaAtual;
       _chartMin = minAtual;
       _chartMax = maxAtual;
       _evolucao = avaliacoesResumo;
       _categorias = categoriaMedia.values.toList();
+      _comparacaoFamilias = comparacaoFamilias;
+      _evolucaoFamilias = evolucaoFamilias;
       _isLoading = false;
     });
+  }
+
+  Future<void> _showFilterBottomSheet() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            Future<void> update(VoidCallback change) async {
+              setState(change);
+              setModalState(() {});
+              await _applyFilters();
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Filtros',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: const Text('Geral'),
+                            selected: _viewMode == _ResultadoViewMode.geral,
+                            onSelected: (_) async {
+                              await update(() {
+                                _viewMode = _ResultadoViewMode.geral;
+                              });
+                            },
+                          ),
+                          ChoiceChip(
+                            label: const Text('Por categoria'),
+                            selected: _viewMode == _ResultadoViewMode.categoria,
+                            onSelected: (_) async {
+                              await update(() {
+                                _viewMode = _ResultadoViewMode.categoria;
+                                _selectedCategoriaId ??= _categoriasData.isEmpty
+                                    ? null
+                                    : _categoriasData.first.id;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      if (_viewMode == _ResultadoViewMode.categoria) ...[
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int?>(
+                          isExpanded: true,
+                          value: _selectedCategoriaId,
+                          decoration: const InputDecoration(
+                            labelText: 'Categoria',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _categoriasData
+                              .map(
+                                (cat) => DropdownMenuItem<int?>(
+                                  value: cat.id,
+                                  child: Text(
+                                    cat.nome,
+                                    softWrap: true,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) async {
+                            await update(() => _selectedCategoriaId = value);
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int?>(
+                        isExpanded: true,
+                        value: _selectedFamiliaId,
+                        decoration: const InputDecoration(
+                          labelText: 'Família',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('Todas as famílias'),
+                          ),
+                          ..._familias.map(
+                            (familia) => DropdownMenuItem<int?>(
+                              value: familia.id,
+                              child: Text(
+                                familia.nomeResponsavel,
+                                softWrap: true,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) async {
+                          await update(() {
+                            _selectedFamiliaId = value;
+                            _selectedComunidadeId = value == null
+                                ? null
+                                : _familias
+                                    .firstWhere((f) => f.id == value)
+                                    .comunidadeId;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int?>(
+                        isExpanded: true,
+                        value: _selectedComunidadeId,
+                        decoration: InputDecoration(
+                          labelText: 'Comunidade',
+                          border: const OutlineInputBorder(),
+                          helperText: _selectedFamiliaId != null
+                              ? 'Comunidade definida pela família selecionada'
+                              : null,
+                        ),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('Todas as comunidades'),
+                          ),
+                          ..._comunidades.map(
+                            (comunidade) => DropdownMenuItem<int?>(
+                              value: comunidade.id,
+                              child: Text(
+                                comunidade.nome,
+                                softWrap: true,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: _selectedFamiliaId == null
+                            ? (value) async {
+                                await update(
+                                    () => _selectedComunidadeId = value);
+                              }
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _selectMonthYear(isStart: true),
+                              icon: const Icon(Icons.calendar_month),
+                              label: Text(
+                                _startDate == null
+                                    ? 'Mês inicial'
+                                    : _formatMonthYear(_startDate!),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _selectMonthYear(isStart: false),
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(
+                                _endDate == null
+                                    ? 'Mês final'
+                                    : _formatMonthYear(_endDate!),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () async {
+                            await update(() {
+                              _selectedFamiliaId = null;
+                              _selectedComunidadeId = null;
+                              _startDate = null;
+                              _endDate = null;
+                              _viewMode = _ResultadoViewMode.geral;
+                              _selectedCategoriaId = _categoriasData.isEmpty
+                                  ? null
+                                  : _categoriasData.first.id;
+                            });
+                          },
+                          icon: const Icon(Icons.clear),
+                          label: const Text('Limpar filtros'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _selectMonthYear({required bool isStart}) async {
+    const meses = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ];
+
+    final baseDate =
+        isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now());
+
+    final years = List.generate(31, (index) => 2000 + index);
+
+    final result = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) {
+        var mesSelecionado = baseDate.month;
+        var anoSelecionado = baseDate.year;
+
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(isStart ? 'Mês inicial' : 'Mês final'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<int>(
+                    value: mesSelecionado,
+                    decoration: const InputDecoration(
+                      labelText: 'Mês',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: List.generate(
+                      meses.length,
+                      (index) => DropdownMenuItem<int>(
+                        value: index + 1,
+                        child: Text(meses[index]),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setStateDialog(() => mesSelecionado = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: anoSelecionado,
+                    decoration: const InputDecoration(
+                      labelText: 'Ano',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: years
+                        .map(
+                          (year) => DropdownMenuItem<int>(
+                            value: year,
+                            child: Text('$year'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setStateDialog(() => anoSelecionado = value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(
+                    context,
+                    {'mes': mesSelecionado, 'ano': anoSelecionado},
+                  ),
+                  child: const Text('Confirmar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      final month = result['mes']!;
+      final year = result['ano']!;
+      if (isStart) {
+        _startDate = DateTime(year, month, 1);
+        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+          _endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+        }
+      } else {
+        _endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+        if (_startDate != null && _startDate!.isAfter(_endDate!)) {
+          _startDate = DateTime(year, month, 1);
+        }
+      }
+    });
+
+    await _applyFilters();
   }
 
   String _nomeFamilia(int? id) {
@@ -208,62 +590,34 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
       return 'Período: todo o histórico';
     }
 
-    final inicio = _startDate != null ? _formatDate(_startDate!) : 'início';
-    final fim = _endDate != null ? _formatDate(_endDate!) : 'presente';
+    final inicio =
+        _startDate != null ? _formatMonthYear(_startDate!) : 'início';
+    final fim = _endDate != null ? _formatMonthYear(_endDate!) : 'presente';
     return 'Período: $inicio até $fim';
   }
 
-  Future<void> _selectDate({required bool isStart}) async {
-    final initialDate =
-        isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now());
-    final firstDate = DateTime(2000);
-    final lastDate = DateTime.now().add(const Duration(days: 365));
-
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-    );
-
-    if (picked == null) return;
-
-    setState(() {
-      if (isStart) {
-        _startDate = picked;
-        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-          _endDate = _startDate;
-        }
-      } else {
-        _endDate = picked;
-        if (_startDate != null && _startDate!.isAfter(_endDate!)) {
-          _startDate = _endDate;
-        }
-      }
-    });
-
-    await _applyFilters();
+  bool _hasActiveFilters() {
+    return _selectedFamiliaId != null ||
+        _selectedComunidadeId != null ||
+        _startDate != null ||
+        _endDate != null ||
+        _viewMode == _ResultadoViewMode.categoria;
   }
 
-  Future<void> _clearFilters() async {
-    setState(() {
-      _selectedFamiliaId = null;
-      _selectedComunidadeId = null;
-      _startDate = null;
-      _endDate = null;
-      _viewMode = _ResultadoViewMode.geral;
-      _selectedCategoriaId =
-          _categoriasData.isNotEmpty ? _categoriasData.first.id : null;
-    });
-    await _applyFilters();
-  }
-
-  Color _corPorValor(double valor) {
-    if (valor >= 8.0) return Colors.green;
-    if (valor >= 6.0) return Colors.blue;
-    if (valor >= 4.0) return Colors.orange;
-    if (valor >= 2.0) return Colors.deepOrange;
-    return Colors.red;
+  _IndiceClasse _classificarIndice(double valor) {
+    if (valor >= 0.8) {
+      return const _IndiceClasse('Muito bom', Color(0xFF2E7D32));
+    }
+    if (valor >= 0.6) {
+      return const _IndiceClasse('Bom', Color(0xFF689F38));
+    }
+    if (valor >= 0.4) {
+      return const _IndiceClasse('Regular', Color(0xFFF9A825));
+    }
+    if (valor >= 0.2) {
+      return const _IndiceClasse('Ruim', Color(0xFFEF6C00));
+    }
+    return const _IndiceClasse('Muito ruim', Color(0xFFC62828));
   }
 
   @override
@@ -272,7 +626,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resultados e Dashboard'),
+        title: const Text('Resultados'),
         elevation: 0,
       ),
       body: _isLoading
@@ -285,12 +639,17 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildFilterCard(theme),
-                    const SizedBox(height: 18),
+                    _buildHeaderCard(theme),
+                    const SizedBox(height: 14),
+                    _buildLegendaCard(theme),
+                    const SizedBox(height: 14),
                     _buildEvolutionCard(theme),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                     _buildCategoryScoresCard(theme),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
+                    _buildComparacaoFamiliasCard(theme),
+                    const SizedBox(height: 14),
+                    _buildEvolucaoFamiliasCard(theme),
                   ],
                 ),
               ),
@@ -298,33 +657,122 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     );
   }
 
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required Color color,
-    required ThemeData theme,
-  }) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.14),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color.withOpacity(0.9),
+  Widget _buildHeaderCard(ThemeData theme) {
+    final filtroResumo =
+        '${_nomeFamilia(_selectedFamiliaId)} • ${_nomeComunidade(_selectedComunidadeId)}';
+
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Ferramenta participativa de monitoramento',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(_periodoLabel(), style: theme.textTheme.bodySmall),
+              Text(filtroResumo, style: theme.textTheme.bodySmall),
+              if (_viewMode == _ResultadoViewMode.categoria)
+                Text(
+                  'Modo: ${_nomeCategoria(_selectedCategoriaId)}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showFilterBottomSheet,
+                      icon: const Icon(Icons.filter_list),
+                      label: const Text('Filtro'),
+                    ),
+                  ),
+                  if (_hasActiveFilters()) ...[
+                    const SizedBox(width: 10),
+                    TextButton(
+                      onPressed: () async {
+                        setState(() {
+                          _selectedFamiliaId = null;
+                          _selectedComunidadeId = null;
+                          _startDate = null;
+                          _endDate = null;
+                          _viewMode = _ResultadoViewMode.geral;
+                          _selectedCategoriaId = _categoriasData.isEmpty
+                              ? null
+                              : _categoriasData.first.id;
+                        });
+                        await _applyFilters();
+                      },
+                      child: const Text('Limpar'),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegendaCard(ThemeData theme) {
+    final escala = [0.9, 0.7, 0.5, 0.3, 0.1]
+        .map((value) => _classificarIndice(value))
+        .toList();
+
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Escala dos índices',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: escala
+                    .map(
+                      (item) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item.color.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(999),
+                          border:
+                              Border.all(color: item.color.withOpacity(0.45)),
+                        ),
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            color: item.color,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -334,310 +782,335 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     final viewLabel = _viewMode == _ResultadoViewMode.geral
         ? 'Resultado geral'
         : 'Categoria: ${_nomeCategoria(_selectedCategoriaId)}';
-    final filterLabel =
-        '${_nomeFamilia(_selectedFamiliaId)} • ${_nomeComunidade(_selectedComunidadeId)}';
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Evolução dos Resultados',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(viewLabel, style: theme.textTheme.bodySmall),
-            Text(_periodoLabel(), style: theme.textTheme.bodySmall),
-            Text(filterLabel, style: theme.textTheme.bodySmall),
-            const SizedBox(height: 12),
-            if (_evolucao.isEmpty)
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               Text(
-                'Nenhuma avaliação concluída ainda para exibir a evolução.',
-                style: theme.textTheme.bodyMedium,
-              )
-            else ...[
-              Text(
-                'Últimas ${_evolucao.length} avaliações',
-                style: theme.textTheme.bodySmall,
+                'Evolução geral',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Mín: ${_chartMin.toStringAsFixed(2)}',
-                      style: theme.textTheme.bodySmall),
-                  Text('Média: ${_mediaGeral.toStringAsFixed(2)}',
+              const SizedBox(height: 8),
+              Text(viewLabel, style: theme.textTheme.bodySmall),
+              Text(_periodoLabel(), style: theme.textTheme.bodySmall),
+              const SizedBox(height: 10),
+              if (_evolucao.isEmpty)
+                Text(
+                  'Nenhuma avaliação concluída no período.',
+                  style: theme.textTheme.bodyMedium,
+                )
+              else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Mín: ${_chartMin.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodySmall),
+                    Text(
+                      'Média: ${_mediaGeral.toStringAsFixed(2)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary)),
-                  Text('Máx: ${_chartMax.toStringAsFixed(2)}',
-                      style: theme.textTheme.bodySmall),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 180,
-                child: SparklineChart(
-                  values: _evolucao.map((item) => item.media).toList(),
-                  lineColor: Colors.green.shade700,
-                  fillColor: Colors.green.withOpacity(0.12),
-                  xLabels: _evolucao.isNotEmpty
-                      ? [
-                          _formatDate(_evolucao.first.date),
-                          _formatDate(_evolucao.last.date),
-                        ]
-                      : [],
-                  yLabels: [
-                    _chartMax.toStringAsFixed(1),
-                    _mediaGeral.toStringAsFixed(1),
-                    _chartMin.toStringAsFixed(1),
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    Text('Máx: ${_chartMax.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodySmall),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 14),
+                SizedBox(
+                  height: 180,
+                  child: SparklineChart(
+                    values: _evolucao.map((item) => item.media).toList(),
+                    lineColor: Colors.green.shade700,
+                    fillColor: Colors.green.withOpacity(0.12),
+                    xLabels: _evolucao.isNotEmpty
+                        ? [
+                            _formatMonthYear(_evolucao.first.date),
+                            _formatMonthYear(_evolucao.last.date),
+                          ]
+                        : [],
+                    yLabels: [
+                      _chartMax.toStringAsFixed(1),
+                      _mediaGeral.toStringAsFixed(1),
+                      _chartMin.toStringAsFixed(1),
+                    ],
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCategoryScoresCard(ThemeData theme) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Pontuação Média por Categoria',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            if (_categorias.isEmpty)
-              Text('Ainda não há dados suficientes para calcular pontuação.',
-                  style: theme.textTheme.bodyMedium)
-            else
-              Column(
-                children: _categorias.map((item) {
-                  final average = item.quantidade > 0
-                      ? item.totalValor / item.quantidade
-                      : 0.0;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(child: Text(item.nome)),
-                        const SizedBox(width: 10),
-                        Text(
-                          average.isNaN ? '--' : average.toStringAsFixed(2),
-                          style: TextStyle(
-                            color: _corPorValor(average),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Índices médios por categoria',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterCard(ThemeData theme) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Filtros de resultado',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Geral'),
-                  selected: _viewMode == _ResultadoViewMode.geral,
-                  onSelected: (_) async {
-                    setState(() => _viewMode = _ResultadoViewMode.geral);
-                    await _applyFilters();
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Por categoria'),
-                  selected: _viewMode == _ResultadoViewMode.categoria,
-                  onSelected: (_) async {
-                    setState(() => _viewMode = _ResultadoViewMode.categoria);
-                    await _applyFilters();
-                  },
-                ),
-              ],
-            ),
-            if (_viewMode == _ResultadoViewMode.categoria) ...[
               const SizedBox(height: 12),
-              DropdownButtonFormField<int?>(
-                isExpanded: true,
-                value: _selectedCategoriaId,
-                decoration: const InputDecoration(
-                  labelText: 'Categoria',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  if (_categoriasData.isNotEmpty)
-                    ..._categoriasData.map(
-                      (cat) => DropdownMenuItem<int?>(
-                        value: cat.id,
-                        child: Text(
-                          cat.nome,
-                          softWrap: true,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              if (_categorias.isEmpty)
+                Text(
+                  'Ainda não há dados suficientes para cálculo.',
+                  style: theme.textTheme.bodyMedium,
+                )
+              else
+                Column(
+                  children: _categorias.map((item) {
+                    final average = item.quantidade > 0
+                        ? item.totalValor / item.quantidade
+                        : 0.0;
+                    final classe = _classificarIndice(average);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.nome,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            average.toStringAsFixed(2),
+                            style: TextStyle(
+                              color: classe.color,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                ],
-                onChanged: (value) async {
-                  setState(() => _selectedCategoriaId = value);
-                  await _applyFilters();
-                },
-              ),
+                    );
+                  }).toList(),
+                ),
             ],
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int?>(
-              isExpanded: true,
-              value: _selectedFamiliaId,
-              decoration: const InputDecoration(
-                labelText: 'Família',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text('Todas as famílias'),
-                ),
-                ..._familias.map(
-                  (familia) => DropdownMenuItem<int?>(
-                    value: familia.id,
-                    child: Text(
-                      familia.nomeResponsavel,
-                      softWrap: true,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-              onChanged: (value) async {
-                setState(() {
-                  _selectedFamiliaId = value;
-                  _selectedComunidadeId = value == null
-                      ? null
-                      : _familias.firstWhere((f) => f.id == value).comunidadeId;
-                });
-                await _applyFilters();
-              },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<int?>(
-              isExpanded: true,
-              value: _selectedComunidadeId,
-              decoration: InputDecoration(
-                labelText: 'Comunidade',
-                border: const OutlineInputBorder(),
-                helperText: _selectedFamiliaId != null
-                    ? 'Comunidade definida pela família selecionada'
-                    : null,
-              ),
-              items: [
-                const DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text('Todas as comunidades'),
-                ),
-                ..._comunidades.map(
-                  (comunidade) => DropdownMenuItem<int?>(
-                    value: comunidade.id,
-                    child: Text(
-                      comunidade.nome,
-                      softWrap: true,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-              onChanged: _selectedFamiliaId == null
-                  ? (value) async {
-                      setState(() => _selectedComunidadeId = value);
-                      await _applyFilters();
-                    }
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectDate(isStart: true),
-                    child: Text(
-                      _startDate != null
-                          ? 'Início: ${_formatDate(_startDate!)}'
-                          : 'Data de início',
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectDate(isStart: false),
-                    child: Text(
-                      _endDate != null
-                          ? 'Fim: ${_formatDate(_endDate!)}'
-                          : 'Data de fim',
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (_startDate != null ||
-                _endDate != null ||
-                _selectedFamiliaId != null ||
-                _selectedComunidadeId != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _clearFilters,
-                    child: const Text('Limpar filtros'),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  Widget _buildComparacaoFamiliasCard(ThemeData theme) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Comparação de famílias por resultados',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Barras horizontais por família (ordenado do maior para o menor).',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              if (_comparacaoFamilias.isEmpty)
+                Text(
+                  'Sem dados no período selecionado.',
+                  style: theme.textTheme.bodyMedium,
+                )
+              else
+                Column(
+                  children: _comparacaoFamilias.map((familia) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            familia.familiaNome,
+                            style: theme.textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 10),
+                          ...familia.barras.map((barra) {
+                            final classe = _classificarIndice(barra.valor);
+                            return _HorizontalIndiceBar(
+                              label: barra.label,
+                              value: barra.valor,
+                              color: classe.color,
+                            );
+                          }),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEvolucaoFamiliasCard(ThemeData theme) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Evolução das famílias',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              if (_evolucaoFamilias.isEmpty)
+                Text(
+                  'São necessárias ao menos 2 avaliações por família no período.',
+                  style: theme.textTheme.bodyMedium,
+                )
+              else
+                Column(
+                  children: _evolucaoFamilias.map((item) {
+                    final cor = item.variacao >= 0 ? Colors.green : Colors.red;
+                    final sinal = item.variacao >= 0 ? '+' : '';
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.familiaNome,
+                                  style: theme.textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_formatMonthYear(item.inicio.date)} ${item.inicio.media.toStringAsFixed(2)} → ${_formatMonthYear(item.fim.date)} ${item.fim.media.toStringAsFixed(2)}',
+                                  style: theme.textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$sinal${item.variacao.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: cor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatMonthYear(DateTime date) {
+    final mes = date.month.toString().padLeft(2, '0');
+    return '$mes/${date.year}';
+  }
+}
+
+class _HorizontalIndiceBar extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+
+  const _HorizontalIndiceBar({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = value.clamp(0.0, 1.0).toDouble();
+    final widthFactor = clamped;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 78,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: Stack(
+                children: [
+                  Container(
+                    height: 18,
+                    color: Colors.grey.shade200,
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: widthFactor,
+                    child: Container(
+                      height: 18,
+                      color: color.withOpacity(0.85),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 40,
+            child: Text(
+              clamped.toStringAsFixed(2),
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -674,7 +1147,12 @@ class _SparklinePainter extends CustomPainter {
   final List<String> yLabels;
 
   _SparklinePainter(
-      this.values, this.lineColor, this.fillColor, this.xLabels, this.yLabels);
+    this.values,
+    this.lineColor,
+    this.fillColor,
+    this.xLabels,
+    this.yLabels,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -711,10 +1189,10 @@ class _SparklinePainter extends CustomPainter {
 
     final startX = leftPadding;
     final startY = topPadding + chartHeight;
+    final valueSteps = values.length > 1 ? values.length - 1 : 1;
 
     for (var i = 0; i < values.length; i++) {
-      final x = startX +
-          (i * (chartWidth / (values.length - 1).clamp(1, values.length - 1)));
+      final x = startX + (i * (chartWidth / valueSteps));
       final normalized = (values[i] - minValue) / range;
       final y = topPadding + chartHeight - (normalized * chartHeight);
 
@@ -736,11 +1214,15 @@ class _SparklinePainter extends CustomPainter {
     canvas.drawLine(
         Offset(startX, topPadding), Offset(startX, startY), axisPaint);
     canvas.drawLine(
-        Offset(startX, startY), Offset(startX + chartWidth, startY), axisPaint);
+      Offset(startX, startY),
+      Offset(startX + chartWidth, startY),
+      axisPaint,
+    );
 
+    final yLabelSteps = yLabels.length > 1 ? yLabels.length - 1 : 1;
     for (var labelIndex = 0; labelIndex < yLabels.length; labelIndex++) {
       final label = yLabels[labelIndex];
-      final y = topPadding + (chartHeight * labelIndex / (yLabels.length - 1));
+      final y = topPadding + (chartHeight * labelIndex / yLabelSteps);
       final textPainter = TextPainter(
         text: TextSpan(
           text: label,
@@ -753,9 +1235,9 @@ class _SparklinePainter extends CustomPainter {
       );
       textPainter.layout();
       textPainter.paint(
-          canvas,
-          Offset(
-              leftPadding - textPainter.width - 8, y - textPainter.height / 2));
+        canvas,
+        Offset(leftPadding - textPainter.width - 8, y - textPainter.height / 2),
+      );
 
       canvas.drawLine(
         Offset(startX, y),
@@ -765,12 +1247,10 @@ class _SparklinePainter extends CustomPainter {
     }
 
     if (xLabels.isNotEmpty) {
+      final xLabelSteps = xLabels.length > 1 ? xLabels.length - 1 : 1;
       for (var i = 0; i < xLabels.length; i++) {
         final label = xLabels[i];
-        final x = startX +
-            (i *
-                chartWidth /
-                (xLabels.length - 1).clamp(1, xLabels.length - 1));
+        final x = startX + (i * chartWidth / xLabelSteps);
         final textPainter = TextPainter(
           text: TextSpan(
             text: label,
@@ -818,4 +1298,103 @@ class _CategoriaScore {
     required this.totalValor,
     required this.quantidade,
   });
+}
+
+class _IndiceClasse {
+  final String label;
+  final Color color;
+
+  const _IndiceClasse(this.label, this.color);
+}
+
+class _FamiliaComparacaoBuilder {
+  final int familiaId;
+  final String familiaNome;
+  final Map<int, _Aggregate> _categoriaAgg = {};
+  final _Aggregate _mediaAgg = _Aggregate();
+  final List<_AvaliacaoResumo> series = [];
+
+  _FamiliaComparacaoBuilder({
+    required this.familiaId,
+    required this.familiaNome,
+  });
+
+  void addCategoria(int categoriaId, double valor) {
+    _categoriaAgg.putIfAbsent(categoriaId, _Aggregate.new).add(valor);
+  }
+
+  void addMedia(DateTime date, double media) {
+    _mediaAgg.add(media);
+    series.add(_AvaliacaoResumo(date, media));
+  }
+
+  _FamiliaComparacao build(List<CategoriaData> categorias) {
+    final orderedCategories = [...categorias]
+      ..sort((a, b) => a.id.compareTo(b.id));
+
+    final barras = <_IndiceBarData>[];
+    for (final categoria in orderedCategories.take(4)) {
+      final media = _categoriaAgg[categoria.id]?.average ?? 0.0;
+      barras.add(_IndiceBarData('Cat ${categoria.id}', media));
+    }
+    barras.add(_IndiceBarData('Média final', _mediaAgg.average));
+
+    return _FamiliaComparacao(
+      familiaId: familiaId,
+      familiaNome: familiaNome,
+      barras: barras,
+      mediaFinal: _mediaAgg.average,
+    );
+  }
+}
+
+class _FamiliaComparacao {
+  final int familiaId;
+  final String familiaNome;
+  final List<_IndiceBarData> barras;
+  final double mediaFinal;
+
+  _FamiliaComparacao({
+    required this.familiaId,
+    required this.familiaNome,
+    required this.barras,
+    required this.mediaFinal,
+  });
+}
+
+class _IndiceBarData {
+  final String label;
+  final double valor;
+
+  _IndiceBarData(this.label, this.valor);
+}
+
+class _EvolucaoFamilia {
+  final int familiaId;
+  final String familiaNome;
+  final _AvaliacaoResumo inicio;
+  final _AvaliacaoResumo fim;
+  final double variacao;
+  final int quantidadeAvaliacoes;
+
+  _EvolucaoFamilia({
+    required this.familiaId,
+    required this.familiaNome,
+    required this.inicio,
+    required this.fim,
+    required this.variacao,
+    required this.quantidadeAvaliacoes,
+  });
+}
+
+class _Aggregate {
+  double total = 0.0;
+  int count = 0;
+
+  void add(double value) {
+    total += value;
+    count += 1;
+  }
+
+  double get average => count == 0 ? 0.0 : total / count;
 }

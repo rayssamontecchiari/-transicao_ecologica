@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/services/familia_service.dart';
 import '../../core/services/avaliacao_service.dart';
 import '../avaliacao/avaliacao_form.dart';
 
@@ -19,7 +18,6 @@ class FamiliaDetalhesPage extends StatefulWidget {
 
 class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
   late AppDatabase _db;
-  late FamiliasService _familiasService;
   late AvaliacaoService _avaliacaoService;
 
   FamiliaData? _familia;
@@ -34,7 +32,6 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
 
   Future<void> _init() async {
     _db = await AppDatabase.instance();
-    _familiasService = FamiliasService(_db);
     _avaliacaoService = AvaliacaoService(_db);
 
     await _carregarDados();
@@ -159,11 +156,8 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
                                       ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 8),
-                                Text('ID: ${_familia!.id}'),
-                                if (_familia!.telefone != null)
-                                  Text('Telefone: ${_familia!.telefone}'),
-                                if (_familia!.endereco != null)
-                                  Text('Endereço: ${_familia!.endereco}'),
+                                Text('Telefone: ${_familia!.telefone}'),
+                                Text('Endereço: ${_familia!.endereco}'),
                               ],
                             ),
                           ),
@@ -210,10 +204,7 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
                                 child: Card(
                                   child: ListTile(
                                     title: Text(avaliacao.avaliador),
-                                    subtitle: Text(
-                                      '${data.day}/${data.month}/${data.year} '
-                                      'às ${data.hour}:${data.minute.toString().padLeft(2, '0')}',
-                                    ),
+                                    subtitle: Text(_formatarMesAno(data)),
                                     trailing: PopupMenuButton<String>(
                                       onSelected: (value) {
                                         if (value == 'edit') {
@@ -261,5 +252,10 @@ class _FamiliaDetalhesPageState extends State<FamiliaDetalhesPage> {
                   ),
                 ),
     );
+  }
+
+  String _formatarMesAno(DateTime data) {
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 }
