@@ -18,6 +18,7 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
   List<FamiliaData> _familias = [];
   List<FamiliaData> _familiasFiltradas = [];
   List<ComunidadeData> _comunidades = [];
+  Map<int, int> _avaliacoesPorFamilia = {};
   int? _selectedComunidadeFilter;
   String _searchQuery = '';
   bool _isLoading = true;
@@ -57,10 +58,17 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
 
     try {
       final familias = await _familiasService.getTodas();
+      final avaliacoesPorFamilia = <int, int>{};
+
+      for (final familia in familias) {
+        avaliacoesPorFamilia[familia.id] =
+            await _familiasService.contarAvaliacoesVinculadas(familia.id);
+      }
 
       if (mounted) {
         setState(() {
           _familias = familias;
+          _avaliacoesPorFamilia = avaliacoesPorFamilia;
           _aplicarFiltros();
           _isLoading = false;
         });
@@ -300,6 +308,11 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
                             itemCount: _familiasFiltradas.length,
                             itemBuilder: (context, index) {
                               final familia = _familiasFiltradas[index];
+                              final quantidadeAvaliacoes =
+                                  _avaliacoesPorFamilia[familia.id] ?? 0;
+                              final podeExcluir =
+                                  FamiliasService.podeExcluirFamilia(
+                                      quantidadeAvaliacoes);
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
@@ -340,8 +353,8 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
                                           _confirmarDelecao(familia);
                                         }
                                       },
-                                      itemBuilder: (context) => const [
-                                        PopupMenuItem(
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
                                           value: 'edit',
                                           child: Row(
                                             children: [
@@ -354,17 +367,25 @@ class _FamiliasListPageState extends State<FamiliasListPage> {
                                         ),
                                         PopupMenuItem(
                                           value: 'delete',
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.delete,
-                                                  color: Colors.red, size: 20),
-                                              SizedBox(width: 8),
-                                              Text(
-                                                'Deletar',
-                                                style: TextStyle(
-                                                    color: Colors.red),
-                                              ),
-                                            ],
+                                          enabled: podeExcluir,
+                                          child: Opacity(
+                                            opacity: podeExcluir ? 1.0 : 0.5,
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.delete,
+                                                    color: Colors.red,
+                                                    size: 20),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  'Deletar',
+                                                  style: TextStyle(
+                                                    color: podeExcluir
+                                                        ? Colors.red
+                                                        : Colors.grey,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ],

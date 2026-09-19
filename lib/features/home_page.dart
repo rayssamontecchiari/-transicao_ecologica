@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'package:transicao_ecologica/features/avaliacao/iniciar_avaliacao_page.dart';
 import 'package:transicao_ecologica/features/avaliacao/resultados_dashboard_page.dart';
 import 'package:transicao_ecologica/features/comunidades/comunidades_page.dart';
-import 'package:transicao_ecologica/features/configuracoes/indicadores_page.dart';
 import 'package:transicao_ecologica/features/exportacao/export_page.dart';
 import 'package:transicao_ecologica/features/familias/familias_page.dart';
 
@@ -277,28 +276,6 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Tooltip(
-                          message:
-                              'Metodologia e configurações administrativas',
-                          child: IconButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const IndicadoresPage(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.settings_outlined),
-                            style: IconButton.styleFrom(
-                              backgroundColor:
-                                  const Color(0xFF00897B).withOpacity(0.12),
-                              foregroundColor: const Color(0xFF00897B),
-                              padding: const EdgeInsets.all(12),
-                              shape: const CircleBorder(),
-                            ),
                           ),
                         ),
                       ],

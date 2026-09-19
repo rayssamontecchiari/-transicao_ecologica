@@ -41,6 +41,10 @@ class FamiliasService {
     return familiaId > 0 && quantidadeAvaliacoes > 0;
   }
 
+  static bool podeExcluirFamilia(int quantidadeAvaliacoes) {
+    return quantidadeAvaliacoes <= 0;
+  }
+
   Future<int> contarAvaliacoesVinculadas(int familiaId) async {
     final avaliacoes = await (_db.select(_db.avaliacao)
           ..where((a) => a.familiaId.equals(familiaId)))

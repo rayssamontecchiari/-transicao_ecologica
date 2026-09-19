@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:transicao_ecologica/core/models/resultado_avaliacao.dart';
 import 'package:transicao_ecologica/core/services/fuzzy_calculator.dart';
+import 'package:transicao_ecologica/core/services/resultado_avaliacao_service.dart';
 
 void main() {
   group('FuzzyCalculator', () {
@@ -30,29 +31,28 @@ void main() {
       expect(nota0['resultado'], closeTo(0.0, 1e-12));
     });
 
-    test('calcula o exemplo da planilha sem arredondamento antecipado', () {
+    test('calcula o exemplo da planilha com arredondamento para 2 casas', () {
       final notas = [3, 4, 1, 2, 1, 5, 2, 2, 3];
       final pesos = [1.0, 0.5, 0.8, 0.8, 0.9, 0.7, 0.8, 0.9, 0.6];
 
       final result = FuzzyCalculator.calcularPorNotas(notas, pesos);
 
-      expect(result['d'], closeTo(0.23333333333333334, 1e-12));
-      expect(result['a'], closeTo(0.3888888888888889, 1e-12));
-      expect(result['b'], closeTo(0.4222222222222222, 1e-12));
-      expect(result['c'], closeTo(0.6, 1e-12));
-      expect(result['base'], closeTo(0.36666666666666664, 1e-12));
-      expect(result['centroide'], closeTo(0.4111111111111111, 1e-12));
-      expect(result['resultado'], closeTo(0.3888888888888889, 1e-12));
+      expect(result['d'], closeTo(0.21, 1e-12));
+      expect(result['a'], closeTo(0.36, 1e-12));
+      expect(result['b'], closeTo(0.4, 1e-12));
+      expect(result['c'], closeTo(0.58, 1e-12));
+      expect(result['base'], closeTo(0.37, 1e-12));
+      expect(result['centroide'], closeTo(0.39, 1e-12));
+      expect(result['resultado'], closeTo(0.36, 1e-12));
     });
 
-    test('mantém o cálculo bruto e arredonda apenas no valor final salvo', () {
+    test('arredonda o cálculo antes de salvar o resultado final', () {
       final notas = [3, 4, 1, 2, 1, 5, 2, 2, 3];
       final pesos = [1.0, 0.5, 0.8, 0.8, 0.9, 0.7, 0.8, 0.9, 0.6];
 
       final fuzzyResult = FuzzyCalculator.calcularPorNotas(notas, pesos);
 
-      expect(fuzzyResult['resultado'],
-          closeTo(0.3888888888888889, 1e-12));
+      expect(fuzzyResult['resultado'], closeTo(0.36, 1e-12));
 
       final salvo = ResultadoAvaliacao.fromCalculation(
         avaliacaoId: 1,
@@ -60,7 +60,7 @@ void main() {
         fuzzyResult: fuzzyResult,
       );
 
-      expect(salvo.valorFuzzyFinal, closeTo(0.39, 1e-12));
+      expect(salvo.valorFuzzyFinal, closeTo(0.36, 1e-12));
     });
 
     test('conforme a planilha, usa a tabela exata e a média ponderada', () {
@@ -69,13 +69,44 @@ void main() {
 
       final result = FuzzyCalculator.calcularPorNotas(notas, pesos);
 
-      expect(result['d'], closeTo(0.39529411764705874, 1e-12));
-      expect(result['a'], closeTo(0.5647058823529412, 1e-12));
-      expect(result['b'], closeTo(0.6058823529411764, 1e-12));
-      expect(result['c'], closeTo(0.7541176470588237, 1e-12));
+      expect(result['d'], closeTo(0.4, 1e-12));
+      expect(result['a'], closeTo(0.56, 1e-12));
+      expect(result['b'], closeTo(0.61, 1e-12));
+      expect(result['c'], closeTo(0.75, 1e-12));
       expect(result['centroide'], closeTo(0.58, 1e-12));
-      expect(result['base'], closeTo(0.35882352941176493, 1e-12));
+      expect(result['base'], closeTo(0.36, 1e-12));
       expect(result['resultado'], closeTo(0.6, 1e-12));
+    });
+
+    test('calcula nota da prática por percentual de aspectos selecionados', () {
+      expect(
+        ResultadoAvaliacaoService.calcularNotaPratica(
+          marcacoes: 0,
+          totalAspectos: 6,
+        ),
+        0,
+      );
+      expect(
+        ResultadoAvaliacaoService.calcularNotaPratica(
+          marcacoes: 2,
+          totalAspectos: 6,
+        ),
+        2,
+      );
+      expect(
+        ResultadoAvaliacaoService.calcularNotaPratica(
+          marcacoes: 3,
+          totalAspectos: 6,
+        ),
+        3,
+      );
+      expect(
+        ResultadoAvaliacaoService.calcularNotaPratica(
+          marcacoes: 6,
+          totalAspectos: 6,
+        ),
+        5,
+      );
     });
 
     test('lanca erro quando listas de notas e pesos tem tamanhos diferentes',

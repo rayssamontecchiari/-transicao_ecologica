@@ -37,12 +37,20 @@ void main() {
         FamiliasService.possuiAvaliacoesVinculadas(0, 0),
         isFalse,
       );
+      expect(
+        FamiliasService.podeExcluirFamilia(0),
+        isTrue,
+      );
     });
 
     test('treats a family with linked evaluations as not deletable', () {
       expect(
         FamiliasService.possuiAvaliacoesVinculadas(7, 1),
         isTrue,
+      );
+      expect(
+        FamiliasService.podeExcluirFamilia(1),
+        isFalse,
       );
     });
   });

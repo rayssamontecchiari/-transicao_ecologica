@@ -10,6 +10,18 @@ class ResultadoAvaliacaoService {
 
   ResultadoAvaliacaoService(this._db);
 
+  static int calcularNotaPratica({
+    required int marcacoes,
+    required int totalAspectos,
+  }) {
+    if (totalAspectos <= 0) return 0;
+    if (marcacoes <= 0) return 0;
+    if (marcacoes >= totalAspectos) return 5;
+
+    final proporcao = marcacoes / totalAspectos;
+    return (proporcao * 5.0).round().clamp(0, 5);
+  }
+
   /// Calcula o resultado fuzzy de uma avaliação por categoria
   Future<ResultadoAvaliacao?> calcularResultadoCategoria({
     required int avaliacaoId,
@@ -44,39 +56,33 @@ class ResultadoAvaliacaoService {
       final pesos = <double>[];
 
       if (categoriaId == 2) {
-        // Na categoria 2, cada marcacao gera uma linha (pratica x indicador)
-        // com valorLikert=1. Consolidamos isso em uma unica nota 0..5 por
-        // indicador antes do calculo fuzzy.
+        // Na categoria 2, cada prática recebe uma nota com base na quantidade de
+        // aspectos norteadores selecionados dentro dela. A regra é: para cada
+        // prática, a pontuação final é proporcional ao número de aspectos
+        // marcados em relação ao total de aspectos da categoria (6). Isso reflete
+        // a lógica descrita no trabalho, em que cada resposta positiva vale 1 ponto
+        // dentro da prática.
         final praticasDaCategoria = await (_db.select(_db.pratica)
               ..where((p) => p.categoriaId.equals(categoriaId)))
             .get();
-        final totalPraticas = praticasDaCategoria.length;
+        final totalAspectos = indicadores.length;
 
-        final marcacoesPorIndicador = <int, int>{};
-        for (final item in itensDaCategoria) {
-          if (item.valorLikert == null || item.valorLikert == 0) continue;
-          marcacoesPorIndicador.update(
-            item.indicadorId,
-            (v) => v + 1,
-            ifAbsent: () => 1,
+        for (final pratica in praticasDaCategoria) {
+          final marcacoes = itensDaCategoria
+              .where((item) => item.praticaId == pratica.id)
+              .map((item) => item.indicadorId)
+              .toSet()
+              .length;
+
+          final nota = calcularNotaPratica(
+            marcacoes: marcacoes,
+            totalAspectos: totalAspectos,
           );
-        }
-
-        for (final indicador in indicadores) {
-          final marcacoes = marcacoesPorIndicador[indicador.id] ?? 0;
-          int nota;
-
-          if (marcacoes == 0 || totalPraticas == 0) {
-            nota = 0;
-          } else {
-            final proporcao = marcacoes / totalPraticas;
-            nota = (proporcao * 5.0).round().clamp(1, 5);
-          }
 
           notas.add(nota);
-          pesos.add(indicador.peso);
+          pesos.add(1.0);
           print(
-            '[DEBUG] Categoria 2 - Indicador ${indicador.id}: marcacoes=$marcacoes/$totalPraticas -> nota=$nota',
+            '[DEBUG] Categoria 2 - Prática ${pratica.id}: marcacoes=$marcacoes/$totalAspectos -> nota=$nota',
           );
         }
       } else {

@@ -552,7 +552,7 @@ class AppDatabase extends _$AppDatabase {
           nome: 'Ação educativa não disponibilizada',
           descricao:
               'Acesso ocasional a informações advindas de diferentes fontes.',
-          peso: Value(0.11),
+          peso: Value(0.1),
           categoriaId: cat4.id,
         ));
       }, onUpgrade: (m, from, to) async {

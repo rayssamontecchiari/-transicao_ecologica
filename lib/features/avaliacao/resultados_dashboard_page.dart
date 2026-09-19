@@ -631,35 +631,206 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _init,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeaderCard(theme),
-                    const SizedBox(height: 14),
-                    _buildLegendaCard(theme),
-                    const SizedBox(height: 14),
-                    _buildEvolutionCard(theme),
-                    const SizedBox(height: 14),
-                    _buildCategoryScoresCard(theme),
-                    const SizedBox(height: 14),
-                    _buildComparacaoFamiliasCard(theme),
-                    const SizedBox(height: 14),
-                    _buildEvolucaoFamiliasCard(theme),
-                  ],
-                ),
+          : DefaultTabController(
+              length: 3,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    child: _buildHeaderCard(theme),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final totalWidth = constraints.maxWidth;
+                          final sideTabWidth = totalWidth * 0.27;
+                          final middleTabWidth = totalWidth * 0.46;
+
+                          return TabBar(
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            labelPadding: EdgeInsets.zero,
+                            dividerColor: Colors.transparent,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            indicator: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            labelColor: theme.colorScheme.onPrimary,
+                            unselectedLabelColor:
+                                theme.colorScheme.onSurfaceVariant,
+                            tabs: [
+                              SizedBox(
+                                width: sideTabWidth,
+                                child: const Tab(text: 'Geral'),
+                              ),
+                              SizedBox(
+                                width: middleTabWidth,
+                                child: const Tab(text: 'Comparação'),
+                              ),
+                              SizedBox(
+                                width: sideTabWidth,
+                                child: const Tab(text: 'Evolução'),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _buildVisaoGeralTab(theme),
+                        _buildComparacaoTab(theme),
+                        _buildEvolucaoTab(theme),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
     );
   }
 
+  Widget _buildVisaoGeralTab(ThemeData theme) {
+    return RefreshIndicator(
+      onRefresh: _init,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        children: [
+          _buildMelhorPiorFamiliaCard(theme),
+          const SizedBox(height: 14),
+          _buildEvolutionCard(theme),
+          const SizedBox(height: 14),
+          _buildCategoryScoresCard(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComparacaoTab(ThemeData theme) {
+    return RefreshIndicator(
+      onRefresh: _init,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        children: [
+          _buildComparacaoMediaFinalChartCard(theme),
+          const SizedBox(height: 14),
+          _buildComparacaoFamiliasCard(theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEvolucaoTab(ThemeData theme) {
+    return RefreshIndicator(
+      onRefresh: _init,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        children: [
+          _buildEvolucaoFamiliasCard(theme),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeaderCard(ThemeData theme) {
-    final filtroResumo =
-        '${_nomeFamilia(_selectedFamiliaId)} • ${_nomeComunidade(_selectedComunidadeId)}';
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        children: [
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: _showFilterBottomSheet,
+              icon: const Icon(Icons.filter_list),
+              label: const Text(
+                'Abrir filtros',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: _hasActiveFilters()
+                  ? () async {
+                      setState(() {
+                        _selectedFamiliaId = null;
+                        _selectedComunidadeId = null;
+                        _startDate = null;
+                        _endDate = null;
+                        _viewMode = _ResultadoViewMode.geral;
+                        _selectedCategoriaId = _categoriasData.isEmpty
+                            ? null
+                            : _categoriasData.first.id;
+                      });
+                      await _applyFilters();
+                    }
+                  : null,
+              icon: const Icon(Icons.clear),
+              label: const Text(
+                'Limpar filtros',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+                backgroundColor: Colors.white,
+                foregroundColor: theme.colorScheme.onSurface,
+                disabledBackgroundColor: Colors.white,
+                disabledForegroundColor:
+                    theme.colorScheme.onSurface.withOpacity(0.38),
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMelhorPiorFamiliaCard(ThemeData theme) {
+    if (_comparacaoFamilias.isEmpty) {
+      return SizedBox(
+        width: double.infinity,
+        child: Card(
+          margin: EdgeInsets.zero,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Sem dados para destacar melhor e pior família no período selecionado.',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final melhor = _comparacaoFamilias.first;
+    final pior = _comparacaoFamilias.last;
 
     return SizedBox(
       width: double.infinity,
@@ -672,48 +843,25 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Ferramenta participativa de monitoramento',
+                'Melhor x pior família avaliada',
                 style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
-              Text(_periodoLabel(), style: theme.textTheme.bodySmall),
-              Text(filtroResumo, style: theme.textTheme.bodySmall),
-              if (_viewMode == _ResultadoViewMode.categoria)
-                Text(
-                  'Modo: ${_nomeCategoria(_selectedCategoriaId)}',
-                  style: theme.textTheme.bodySmall,
-                ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _showFilterBottomSheet,
-                      icon: const Icon(Icons.filter_list),
-                      label: const Text('Filtro'),
-                    ),
-                  ),
-                  if (_hasActiveFilters()) ...[
-                    const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () async {
-                        setState(() {
-                          _selectedFamiliaId = null;
-                          _selectedComunidadeId = null;
-                          _startDate = null;
-                          _endDate = null;
-                          _viewMode = _ResultadoViewMode.geral;
-                          _selectedCategoriaId = _categoriasData.isEmpty
-                              ? null
-                              : _categoriasData.first.id;
-                        });
-                        await _applyFilters();
-                      },
-                      child: const Text('Limpar'),
-                    ),
-                  ],
-                ],
+              _buildResumoFamiliaExtremo(
+                theme,
+                title: 'Melhor avaliada',
+                familia: melhor,
+                color: Colors.green.shade700,
+                icon: Icons.trending_up,
+              ),
+              const SizedBox(height: 10),
+              _buildResumoFamiliaExtremo(
+                theme,
+                title: 'Pior avaliada',
+                familia: pior,
+                color: Colors.red.shade700,
+                icon: Icons.trending_down,
               ),
             ],
           ),
@@ -722,58 +870,54 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     );
   }
 
-  Widget _buildLegendaCard(ThemeData theme) {
-    final escala = [0.9, 0.7, 0.5, 0.3, 0.1]
-        .map((value) => _classificarIndice(value))
-        .toList();
-
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Escala dos índices',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: escala
-                    .map(
-                      (item) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: item.color.withOpacity(0.14),
-                          borderRadius: BorderRadius.circular(999),
-                          border:
-                              Border.all(color: item.color.withOpacity(0.45)),
-                        ),
-                        child: Text(
-                          item.label,
-                          style: TextStyle(
-                            color: item.color,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
+  Widget _buildResumoFamiliaExtremo(
+    ThemeData theme, {
+    required String title,
+    required _FamiliaComparacao familia,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.09),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  familia.familiaNome,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
           ),
-        ),
+          Text(
+            familia.mediaFinal.toStringAsFixed(2),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -924,13 +1068,13 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Comparação de famílias por resultados',
+                'Comparação por família',
                 style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               Text(
-                'Barras horizontais por família (ordenado do maior para o menor).',
+                'Cada família mostra 4 categorias + média final.',
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
@@ -943,29 +1087,87 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                 Column(
                   children: _comparacaoFamilias.map((familia) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            familia.familiaNome,
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                      padding: const EdgeInsets.only(bottom: 22),
+                      child: Container(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.shade200,
+                              width: 1,
+                            ),
                           ),
-                          const SizedBox(height: 10),
-                          ...familia.barras.map((barra) {
-                            final classe = _classificarIndice(barra.valor);
-                            return _HorizontalIndiceBar(
-                              label: barra.label,
-                              value: barra.valor,
-                              color: classe.color,
-                            );
-                          }),
-                        ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              familia.familiaNome,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            ...familia.barras.map((barra) {
+                              final classe = _classificarIndice(barra.valor);
+                              return _HorizontalIndiceBar(
+                                label: barra.label,
+                                value: barra.valor,
+                                color: classe.color,
+                                labelWidth: 170,
+                                barWidthRatio: 0.38,
+                              );
+                            }),
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComparacaoMediaFinalChartCard(ThemeData theme) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Famílias por resultado final',
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              if (_comparacaoFamilias.isEmpty)
+                Text(
+                  'Sem dados no período selecionado.',
+                  style: theme.textTheme.bodyMedium,
+                )
+              else ...[
+                Column(
+                  children: _comparacaoFamilias.map((familia) {
+                    final classe = _classificarIndice(familia.mediaFinal);
+                    return _HorizontalIndiceBar(
+                      label: familia.familiaNome,
+                      value: familia.mediaFinal,
+                      color: classe.color,
+                      labelWidth: 180,
+                      barWidthRatio: 0.38,
+                    );
+                  }).toList(),
+                ),
+              ],
             ],
           ),
         ),
@@ -998,8 +1200,14 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
               else
                 Column(
                   children: _evolucaoFamilias.map((item) {
-                    final cor = item.variacao >= 0 ? Colors.green : Colors.red;
-                    final sinal = item.variacao >= 0 ? '+' : '';
+                    final inicioExibicao = _roundTo2(item.inicio.media);
+                    final fimExibicao = _roundTo2(item.fim.media);
+                    final variacaoExibicao =
+                        _roundTo2(fimExibicao - inicioExibicao);
+                    final cor =
+                        variacaoExibicao >= 0 ? Colors.green : Colors.red;
+                    final sinal = variacaoExibicao >= 0 ? '+' : '';
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Row(
@@ -1016,7 +1224,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${_formatMonthYear(item.inicio.date)} ${item.inicio.media.toStringAsFixed(2)} → ${_formatMonthYear(item.fim.date)} ${item.fim.media.toStringAsFixed(2)}',
+                                  '${_formatMonthYear(item.inicio.date)} ${inicioExibicao.toStringAsFixed(2)} → ${_formatMonthYear(item.fim.date)} ${fimExibicao.toStringAsFixed(2)}',
                                   style: theme.textTheme.bodySmall,
                                 ),
                               ],
@@ -1024,7 +1232,7 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '$sinal${item.variacao.toStringAsFixed(2)}',
+                            '$sinal${variacaoExibicao.toStringAsFixed(2)}',
                             style: TextStyle(
                               color: cor,
                               fontWeight: FontWeight.bold,
@@ -1042,6 +1250,10 @@ class _ResultadosDashboardPageState extends State<ResultadosDashboardPage> {
     );
   }
 
+  double _roundTo2(double value) {
+    return double.parse(value.toStringAsFixed(2));
+  }
+
   String _formatMonthYear(DateTime date) {
     final mes = date.month.toString().padLeft(2, '0');
     return '$mes/${date.year}';
@@ -1052,64 +1264,86 @@ class _HorizontalIndiceBar extends StatelessWidget {
   final String label;
   final double value;
   final Color color;
+  final double labelWidth;
+  final double barWidthRatio;
 
   const _HorizontalIndiceBar({
     required this.label,
     required this.value,
     required this.color,
+    this.labelWidth = 78,
+    this.barWidthRatio = 0.5,
   });
 
   @override
   Widget build(BuildContext context) {
     final clamped = value.clamp(0.0, 1.0).toDouble();
-    final widthFactor = clamped;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 78,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: Stack(
-                children: [
-                  Container(
-                    height: 18,
-                    color: Colors.grey.shade200,
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: widthFactor,
-                    child: Container(
-                      height: 18,
-                      color: color.withOpacity(0.85),
-                    ),
-                  ),
-                ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalLabelWidth =
+            labelWidth.clamp(110.0, constraints.maxWidth * 0.72);
+        final totalBarWidth = constraints.maxWidth - totalLabelWidth - 48;
+        final barWidth =
+            (totalBarWidth * barWidthRatio).clamp(50.0, totalBarWidth);
+        final filledWidth = barWidth * clamped;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: totalLabelWidth,
+                child: Text(
+                  label,
+                  maxLines: 3,
+                  softWrap: true,
+                  overflow: TextOverflow.visible,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 13,
+                        height: 1.2,
+                      ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 40,
-            child: Text(
-              clamped.toStringAsFixed(2),
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+              const SizedBox(width: 8),
+              SizedBox(
+                width: barWidth,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 14,
+                        color: Colors.grey.shade200,
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: filledWidth,
+                        height: 14,
+                        color: color.withOpacity(0.85),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  clamped.toStringAsFixed(2),
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1335,7 +1569,7 @@ class _FamiliaComparacaoBuilder {
     final barras = <_IndiceBarData>[];
     for (final categoria in orderedCategories.take(4)) {
       final media = _categoriaAgg[categoria.id]?.average ?? 0.0;
-      barras.add(_IndiceBarData('Cat ${categoria.id}', media));
+      barras.add(_IndiceBarData(categoria.nome, media));
     }
     barras.add(_IndiceBarData('Média final', _mediaAgg.average));
 

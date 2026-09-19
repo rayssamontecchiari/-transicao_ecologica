@@ -25,11 +25,8 @@ class ExportService {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
     final backupName = 'backup_$timestamp.db';
 
-    final directory = await getApplicationDocumentsDirectory();
-    final backupPath = '${directory.path}/backups/$backupName';
-
-    // Cria pasta de backups se não existir
-    await Directory('${directory.path}/backups').create(recursive: true);
+    final directory = await getBackupsDirectory();
+    final backupPath = '${directory.path}/$backupName';
 
     final backupFile = await sourceFile.copy(backupPath);
     return backupFile;
@@ -40,11 +37,8 @@ class ExportService {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
     final fileName = 'exportacao_$timestamp.json';
 
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/exports/$fileName';
-
-    // Cria pasta de exports se não existir
-    await Directory('${directory.path}/exports').create(recursive: true);
+    final directory = await getExportsDirectory();
+    final filePath = '${directory.path}/$fileName';
 
     // Coleta dados de todas as tabelas (usando nomes no singular)
     final data = {
@@ -71,11 +65,8 @@ class ExportService {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
     final fileName = '${tableName}_$timestamp.csv';
 
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/exports/$fileName';
-
-    // Cria pasta de exports se não existir
-    await Directory('${directory.path}/exports').create(recursive: true);
+    final directory = await getExportsDirectory();
+    final filePath = '${directory.path}/$fileName';
 
     List<List<dynamic>> data = [];
 
@@ -176,10 +167,8 @@ class ExportService {
     final timestamp = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
     final fileName = 'exportacao_completa_$timestamp.csv';
 
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/exports/$fileName';
-
-    await Directory('${directory.path}/exports').create(recursive: true);
+    final directory = await getExportsDirectory();
+    final filePath = '${directory.path}/$fileName';
 
     StringBuffer csvBuffer = StringBuffer();
 
@@ -442,10 +431,32 @@ class ExportService {
     return value;
   }
 
+  /// Retorna uma pasta pública visível ao usuário, em Downloads.
+  /// Em Android isso aparece no gestor de ficheiros e no celular do usuário.
+  Future<Directory> _getPublicRootDirectory() async {
+    if (Platform.isAndroid) {
+      final downloadsDir = await getDownloadsDirectory();
+      if (downloadsDir != null) {
+        final rootDir = Directory('${downloadsDir.path}/transicao_ecologica');
+        if (!rootDir.existsSync()) {
+          rootDir.createSync(recursive: true);
+        }
+        return rootDir;
+      }
+    }
+
+    final appDir = await getApplicationDocumentsDirectory();
+    final fallbackDir = Directory('${appDir.path}/transicao_ecologica');
+    if (!fallbackDir.existsSync()) {
+      fallbackDir.createSync(recursive: true);
+    }
+    return fallbackDir;
+  }
+
   /// Retorna a pasta de exportações
   Future<Directory> getExportsDirectory() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final exportsDir = Directory('${directory.path}/exports');
+    final publicRoot = await _getPublicRootDirectory();
+    final exportsDir = Directory('${publicRoot.path}/exports');
     if (!exportsDir.existsSync()) {
       exportsDir.createSync(recursive: true);
     }
@@ -454,8 +465,8 @@ class ExportService {
 
   /// Retorna a pasta de backups
   Future<Directory> getBackupsDirectory() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final backupsDir = Directory('${directory.path}/backups');
+    final publicRoot = await _getPublicRootDirectory();
+    final backupsDir = Directory('${publicRoot.path}/backups');
     if (!backupsDir.existsSync()) {
       backupsDir.createSync(recursive: true);
     }

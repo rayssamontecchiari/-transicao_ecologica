@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 
 import '../../core/database/app_database.dart';
+import '../../core/models/fuzzy_number.dart';
 import '../../core/services/indicador_service.dart';
 
 class CategoriaFormPage extends StatefulWidget {
@@ -374,8 +375,11 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                           child: Row(
                             children: [
                               const SizedBox(
-                                  width: 220,
-                                  child: Text('Práticas agrícolas')),
+                                  width: 170,
+                                  child: Text(
+                                    'Práticas agrícolas',
+                                    softWrap: true,
+                                  )),
                               const SizedBox(
                                 width: 110,
                                 child: Text(
@@ -410,8 +414,11 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                                 child: Row(
                                   children: [
                                     SizedBox(
-                                      width: 220,
-                                      child: Text(pratica.nome),
+                                      width: 170,
+                                      child: Text(
+                                        pratica.nome,
+                                        softWrap: true,
+                                      ),
                                     ),
                                     Container(
                                       width: 110,
@@ -604,6 +611,25 @@ class _CategoriaFormPageState extends State<CategoriaFormPage> {
                     setState(() {
                       _respostas[indicador.id] = number;
                     });
+
+                    if ((widget.categoriaAtual ?? 0) == 1) {
+                      final fuzzy = FuzzyNumber(nota: number).calcular();
+                      final peso = indicador.peso;
+                      final ponderado = {
+                        'd': double.parse(
+                            (fuzzy['d']! * peso).toStringAsFixed(2)),
+                        'a': double.parse(
+                            (fuzzy['a']! * peso).toStringAsFixed(2)),
+                        'b': double.parse(
+                            (fuzzy['b']! * peso).toStringAsFixed(2)),
+                        'c': double.parse(
+                            (fuzzy['c']! * peso).toStringAsFixed(2)),
+                      };
+
+                      debugPrint(
+                        '[FUZZY DEBUG] categoria=${widget.categoriaAtual} | indicador=${indicador.nome} | nota=$number | peso=${peso.toStringAsFixed(2)} | fuzzy=${fuzzy.toString()} | ponderado=${ponderado.toString()}',
+                      );
+                    }
                   },
                   child: AnimatedContainer(
                     duration: const Duration(

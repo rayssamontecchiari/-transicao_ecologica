@@ -232,7 +232,7 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    resultado.valorFuzzyFinal.toStringAsFixed(4),
+                    resultado.valorFuzzyFinal.toStringAsFixed(2),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
