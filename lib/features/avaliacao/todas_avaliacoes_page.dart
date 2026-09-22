@@ -6,7 +6,7 @@ import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
 import '../../core/utils/natural_breaks_color_scale.dart';
 import 'iniciar_avaliacao_page.dart';
-import 'resultados_avaliacao_page.dart';
+import 'resultado_avaliacao_page.dart';
 
 enum _OrdenacaoAvaliacoes {
   dataDesc,
@@ -466,7 +466,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
     );
   }
 
-  void _continuarAvaliacao(_AvaliacaoComResultados item) {
+  void _abrirFluxoAvaliacao(_AvaliacaoComResultados item) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => IniciarAvaliacaoPage.comAvaliacaoEmRascunho(
@@ -475,6 +475,10 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
         ),
       ),
     );
+  }
+
+  void _continuarAvaliacao(_AvaliacaoComResultados item) {
+    _abrirFluxoAvaliacao(item);
   }
 
   Future<void> _confirmarExcluirAvaliacao(_AvaliacaoComResultados item) async {
@@ -767,7 +771,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            item.media!.toStringAsFixed(1),
+                                            item.media!.toStringAsFixed(2),
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color:
@@ -790,6 +794,8 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                           _continuarAvaliacao(item);
                                         } else if (value == 'edit') {
                                           _editarAvaliacao(item);
+                                        } else if (value == 'edit-indicators') {
+                                          _abrirFluxoAvaliacao(item);
                                         } else if (value == 'delete') {
                                           _confirmarExcluirAvaliacao(item);
                                         }
@@ -802,8 +808,14 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                           ),
                                         const PopupMenuItem(
                                           value: 'edit',
-                                          child: Text('Editar'),
+                                          child: Text('Editar dados'),
                                         ),
+                                        if (item.item.status != 'draft')
+                                          const PopupMenuItem(
+                                            value: 'edit-indicators',
+                                            child:
+                                                Text('Modificar indicadores'),
+                                          ),
                                         const PopupMenuItem(
                                           value: 'delete',
                                           child: Text('Excluir'),
@@ -821,7 +833,7 @@ class _TodasAvaliacoesPageState extends State<TodasAvaliacoesPage> {
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                ResultadosAvaliacaoPage(
+                                                ResultadoAvaliacaoPage(
                                               avaliacaoId: item.item.id,
                                             ),
                                           ),

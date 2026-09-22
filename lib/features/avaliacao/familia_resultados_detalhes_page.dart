@@ -5,7 +5,7 @@ import '../../core/database/app_database.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
 import '../../core/models/resultado_avaliacao.dart';
 import '../../core/utils/natural_breaks_color_scale.dart';
-import 'resultados_avaliacao_page.dart';
+import 'resultado_avaliacao_page.dart';
 
 /// Página que exibe os detalhes de resultados de uma família específica
 class FamiliaResultadosDetalhesPage extends StatefulWidget {
@@ -329,8 +329,9 @@ class _FamiliaResultadosDetalhesPageState
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => ResultadosAvaliacaoPage(
+                      builder: (_) => ResultadoAvaliacaoPage(
                         avaliacaoId: item.avaliacao.id,
+                        familia: widget.familia,
                       ),
                     ),
                   );

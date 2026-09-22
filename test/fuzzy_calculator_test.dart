@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:transicao_ecologica/core/models/resultado_avaliacao.dart';
 import 'package:transicao_ecologica/core/services/fuzzy_calculator.dart';
 import 'package:transicao_ecologica/core/services/resultado_avaliacao_service.dart';
+import 'package:transicao_ecologica/core/utils/natural_breaks_color_scale.dart';
 
 void main() {
   group('FuzzyCalculator', () {
@@ -107,6 +109,14 @@ void main() {
         ),
         5,
       );
+    });
+
+    test('usa faixas consistentes para cores de média fuzzy', () {
+      final scale = NaturalBreaksColorScale.fromValues([0.4, 0.47, 0.6, 0.9]);
+
+      expect(scale.colorFor(0.4), const Color(0xFFFDD835));
+      expect(scale.colorFor(0.47), const Color(0xFFFDD835));
+      expect(scale.colorFor(0.6), const Color(0xFF32CD32));
     });
 
     test('lanca erro quando listas de notas e pesos tem tamanhos diferentes',

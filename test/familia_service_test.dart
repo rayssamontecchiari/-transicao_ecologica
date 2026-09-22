@@ -69,5 +69,15 @@ void main() {
         isTrue,
       );
     });
+
+    test('considers community names duplicates when they differ only by case and spacing', () {
+      expect(
+        ComunidadeService.saoComunidadesDuplicadas(
+          nome: '  norte  ',
+          nomeExistente: 'NORTE',
+        ),
+        isTrue,
+      );
+    });
   });
 }

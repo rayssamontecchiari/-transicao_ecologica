@@ -1,18 +1,19 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/models/resultado_avaliacao.dart';
 import '../../core/services/resultado_avaliacao_service.dart';
+import '../../core/utils/natural_breaks_color_scale.dart';
 
-/// Página para exibir os resultados da avaliação completa
+/// Página única para exibir os resultados de uma avaliação.
 class ResultadoAvaliacaoPage extends StatefulWidget {
   final int avaliacaoId;
-  final FamiliaData familia;
+  final FamiliaData? familia;
 
   const ResultadoAvaliacaoPage({
     super.key,
     required this.avaliacaoId,
-    required this.familia,
+    this.familia,
   });
 
   @override
@@ -22,10 +23,15 @@ class ResultadoAvaliacaoPage extends StatefulWidget {
 class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
   late AppDatabase _db;
   late ResultadoAvaliacaoService _resultadoService;
+  NaturalBreaksColorScale _colorScale =
+      NaturalBreaksColorScale.fromValues(const []);
 
+  bool _isLoading = true;
+  Map<String, dynamic> _estatisticas = {};
   List<ResultadoAvaliacao> _resultados = [];
   Map<int, CategoriaData> _categoriaMap = {};
-  bool _isLoading = true;
+  AvaliacaoData? _avaliacao;
+  String? _nomeFamilia;
 
   @override
   void initState() {
@@ -38,16 +44,34 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
     _resultadoService = ResultadoAvaliacaoService(_db);
 
     try {
-      final resultados = await _resultadoService
-          .calcularResultadosCompletos(widget.avaliacaoId);
+      final avaliacao = await (_db.select(_db.avaliacao)
+            ..where((a) => a.id.equals(widget.avaliacaoId)))
+          .getSingleOrNull();
+
+      FamiliaData? familia = widget.familia;
+      if (familia == null && avaliacao != null) {
+        familia = await (_db.select(_db.familia)
+              ..where((f) => f.id.equals(avaliacao.familiaId)))
+            .getSingleOrNull();
+      }
+
+      final estatisticas = await _resultadoService
+          .obterEstatisticasAvaliacao(widget.avaliacaoId);
+      final resultados =
+          (estatisticas['resultados'] as List<ResultadoAvaliacao>?) ?? [];
       final categorias = await _db.select(_db.categoria).get();
 
-      // Mapear categorias por ID
-      final mapa = {for (var cat in categorias) cat.id: cat};
+      if (!mounted) return;
 
       setState(() {
+        _avaliacao = avaliacao;
+        _nomeFamilia = familia?.nomeResponsavel;
+        _estatisticas = estatisticas;
         _resultados = resultados;
-        _categoriaMap = mapa;
+        _categoriaMap = {for (var cat in categorias) cat.id: cat};
+        _colorScale = NaturalBreaksColorScale.fromValues(
+          resultados.map((resultado) => resultado.valorFuzzyFinal).toList(),
+        );
         _isLoading = false;
       });
     } catch (e) {
@@ -57,12 +81,16 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao calcular resultados: $e'),
+          content: Text('Erro ao carregar resultados: $e'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
+
+  Color _obterCorPorValor(double valor) => _colorScale.colorFor(valor);
+
+  Color _obterCorNeutra() => Colors.grey.shade700;
 
   @override
   Widget build(BuildContext context) {
@@ -72,14 +100,15 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Resultados da Avaliação'),
-            Text(
-              widget.familia.nomeResponsavel,
-              style: const TextStyle(fontSize: 12),
-              overflow: TextOverflow.ellipsis,
-            ),
+            if ((_nomeFamilia ?? '').isNotEmpty)
+              Text(
+                _nomeFamilia!,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
           ],
         ),
-        elevation: 2,
+        elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -89,59 +118,88 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Cabeçalho com informações da avaliação
                     Card(
+                      elevation: 0,
                       color: Theme.of(context).primaryColor.withOpacity(0.1),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (_avaliacao != null)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Data: ${_formatarMesAno(_avaliacao!.data)}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  Text(
+                                    'Avaliador: ${_avaliacao!.avaliador}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
                             Text(
-                              'Resumo da Avaliação',
+                              'Resumo Geral',
                               style: Theme.of(context)
                                   .textTheme
-                                  .titleLarge
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                const Icon(Icons.home, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'Família ${widget.familia.id} - ${widget.familia.nomeResponsavel}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.check_circle,
-                                    size: 18, color: Colors.green),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${_resultados.length} fatores avaliados',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            if ((_nomeFamilia ?? '').isNotEmpty)
+                              Text(
+                                'Família: $_nomeFamilia',
+                                style: const TextStyle(fontSize: 12),
+                              ),
                           ],
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
+                    if (_estatisticas.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatCard(
+                              titulo: 'Média',
+                              valor:
+                                  '${(_estatisticas['media'] as double).toStringAsFixed(2)}',
+                              cor: _obterCorNeutra(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildStatCard(
+                              titulo: 'Mínima',
+                              valor:
+                                  '${(_estatisticas['minValor'] as double).toStringAsFixed(2)}',
+                              cor: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildStatCard(
+                              titulo: 'Máxima',
+                              valor:
+                                  '${(_estatisticas['maxValor'] as double).toStringAsFixed(2)}',
+                              cor: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                    Text(
+                      'Detalhamento por Categoria',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
                     if (_resultados.isEmpty)
                       Card(
                         child: Padding(
@@ -169,22 +227,16 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
                       ..._resultados.map((resultado) {
                         final categoria = _categoriaMap[resultado.categoriaId];
                         return _buildResultadoCard(resultado, categoria);
-                      }).toList(),
-
+                      }),
                     const SizedBox(height: 24),
-
-                    // Botão para voltar
                     SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.arrow_back),
                         label: const Text('Voltar'),
                       ),
                     ),
-
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -193,170 +245,142 @@ class _ResultadoAvaliacaoPageState extends State<ResultadoAvaliacaoPage> {
     );
   }
 
-  Widget _buildResultadoCard(
-      ResultadoAvaliacao resultado, CategoriaData? categoria) {
-    final nomeCate = categoria?.nome ?? 'Categoria ${resultado.categoriaId}';
-
+  Widget _buildStatCard({
+    required String titulo,
+    required String valor,
+    required Color cor,
+  }) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título da categoria
             Text(
-              nomeCate,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              titulo,
+              style: const TextStyle(fontSize: 12),
             ),
-
-            const SizedBox(height: 16),
-
-            // Resultado Final (valor fuzzy)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Resultado Final:',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    resultado.valorFuzzyFinal.toStringAsFixed(2),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Text(
+              valor,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: cor,
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Expandable com detalhes do cálculo fuzzy
-            ExpansionTile(
-              title: const Text(
-                'Parâmetros Fuzzy',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(
-                            label: Text('Parâmetro',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(
-                            label: Text('Valor',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                      rows: [
-                        DataRow(cells: [
-                          const DataCell(Text('Centroide')),
-                          DataCell(Text(resultado.centroid.toStringAsFixed(4))),
-                        ]),
-                        DataRow(cells: [
-                          const DataCell(Text('Base')),
-                          DataCell(Text(resultado.base.toStringAsFixed(4))),
-                        ]),
-                        DataRow(cells: [
-                          const DataCell(Text('Soma A')),
-                          DataCell(Text(resultado.sumA.toStringAsFixed(4))),
-                        ]),
-                        DataRow(cells: [
-                          const DataCell(Text('Soma B')),
-                          DataCell(Text(resultado.sumB.toStringAsFixed(4))),
-                        ]),
-                        DataRow(cells: [
-                          const DataCell(Text('Soma C')),
-                          DataCell(Text(resultado.sumC.toStringAsFixed(4))),
-                        ]),
-                        DataRow(cells: [
-                          const DataCell(Text('Soma D')),
-                          DataCell(Text(resultado.sumD.toStringAsFixed(4))),
-                        ]),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Indicador de qualidade baseado no resultado
-            _buildQualityIndicator(resultado.valorFuzzyFinal),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildQualityIndicator(double valor) {
-    String qualidade;
-    Color cor;
-    IconData icone;
+  Widget _buildResultadoCard(
+      ResultadoAvaliacao resultado, CategoriaData? categoria) {
+    final cor = _obterCorNeutra();
+    final nomeCate = categoria?.nome ?? 'Categoria ${resultado.categoriaId}';
 
-    if (valor >= 0.8) {
-      qualidade = 'Muito bom';
-      cor = const Color(0xFF2E7D32);
-      icone = Icons.trending_up;
-    } else if (valor >= 0.6) {
-      qualidade = 'Bom';
-      cor = const Color(0xFF689F38);
-      icone = Icons.arrow_upward;
-    } else if (valor >= 0.4) {
-      qualidade = 'Regular';
-      cor = const Color(0xFFF9A825);
-      icone = Icons.unfold_more;
-    } else if (valor >= 0.2) {
-      qualidade = 'Ruim';
-      cor = const Color(0xFFEF6C00);
-      icone = Icons.arrow_downward;
-    } else {
-      qualidade = 'Muito ruim';
-      cor = const Color(0xFFC62828);
-      icone = Icons.trending_down;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cor.withOpacity(0.1),
-        border: Border.all(color: cor.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icone, color: cor, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              qualidade,
-              style: TextStyle(
-                color: cor,
-                fontWeight: FontWeight.w600,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          initiallyExpanded: false,
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  nomeCate,
+                  softWrap: true,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
+              const SizedBox(width: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: cor.withOpacity(0.2),
+                  border: Border.all(color: cor),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  resultado.valorFuzzyFinal.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: cor,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cálculo Fuzzy',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                      'Centróide', resultado.centroid.toStringAsFixed(2)),
+                  _buildDetailRow('Base', resultado.base.toStringAsFixed(2)),
+                  _buildDetailRow('Soma A', resultado.sumA.toStringAsFixed(2)),
+                  _buildDetailRow('Soma B', resultado.sumB.toStringAsFixed(2)),
+                  _buildDetailRow('Soma C', resultado.sumC.toStringAsFixed(2)),
+                  _buildDetailRow('Soma D', resultado.sumD.toStringAsFixed(2)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _formatarMesAno(DateTime data) {
+    final mes = data.month.toString().padLeft(2, '0');
+    return '$mes/${data.year}';
   }
 }

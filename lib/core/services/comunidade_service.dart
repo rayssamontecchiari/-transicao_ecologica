@@ -9,16 +9,55 @@ class ComunidadeService {
       : _db = db,
         _comunidadesDao = ComunidadeDao(db);
 
+  static bool saoComunidadesDuplicadas({
+    required String? nome,
+    required String? nomeExistente,
+  }) {
+    final nomeNormalizado = _normalizarTexto(nome);
+    final nomeExistenteNormalizado = _normalizarTexto(nomeExistente);
+
+    if (nomeNormalizado.isEmpty) {
+      return false;
+    }
+
+    return nomeNormalizado == nomeExistenteNormalizado;
+  }
+
   Future<List<ComunidadeData>> getTodas() {
     return _comunidadesDao.getTodas();
   }
 
-  Future<int> inserir(ComunidadeCompanion comunidade) {
+  Future<void> validarComunidade(
+    ComunidadeCompanion comunidade, {
+    int? comunidadeIdIgnorada,
+  }) async {
+    final nome = comunidade.nome.present ? comunidade.nome.value : '';
+    final comunidadesCadastradas = await _comunidadesDao.getTodas();
+
+    final duplicada = comunidadesCadastradas.any((comunidadeExistente) {
+      if (comunidadeExistente.id == comunidadeIdIgnorada) {
+        return false;
+      }
+
+      return saoComunidadesDuplicadas(
+        nome: nome,
+        nomeExistente: comunidadeExistente.nome,
+      );
+    });
+
+    if (duplicada) {
+      throw StateError('Já existe uma comunidade cadastrada com esse nome.');
+    }
+  }
+
+  Future<int> inserir(ComunidadeCompanion comunidade) async {
+    await validarComunidade(comunidade);
     return _comunidadesDao.inserir(comunidade);
   }
 
   Future<bool> atualizarComunidade(
-      int comunidadeId, ComunidadeCompanion comunidade) {
+      int comunidadeId, ComunidadeCompanion comunidade) async {
+    await validarComunidade(comunidade, comunidadeIdIgnorada: comunidadeId);
     return _comunidadesDao.atualizar(comunidadeId, comunidade);
   }
 
@@ -43,5 +82,9 @@ class ComunidadeService {
     }
 
     await _comunidadesDao.deletar(comunidadeId);
+  }
+
+  static String _normalizarTexto(String? valor) {
+    return (valor ?? '').trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 }

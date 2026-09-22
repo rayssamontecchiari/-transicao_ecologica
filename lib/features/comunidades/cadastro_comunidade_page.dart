@@ -67,6 +67,15 @@ class _CadastroComunidadePageState extends State<CadastroComunidadePage> {
       if (mounted) {
         Navigator.of(context).pop(true);
       }
+    } on StateError catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
