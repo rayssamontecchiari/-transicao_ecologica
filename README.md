@@ -162,4 +162,4 @@ Este repositório também contém materiais adicionais:
 
 ## Licença
 
-Este projeto foi desenvolvido como parte de um trabalho acadêmico e, por padrão, está sem configuração de licença pública definida. Caso queira distribuir ou reutilizar o código em outro contexto, confirme com o responsável do projeto antes de publicar.
+Este projeto foi desenvolvido como parte de um trabalho acadêmico e, por padrão, está sem configuração de licença pública definida. 
